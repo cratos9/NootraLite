@@ -108,6 +108,7 @@ input:focus{
     nav-right: 20px;
     transform: none;
     background-color: transparent;
+    cursor: pointer;
 }
 
 #register-btn{
@@ -224,6 +225,50 @@ input:focus{
     background: radial-gradient(circle at 70% 70%, rgba(124, 58, 237, 0.5) 0%, rgba(124, 58, 237, 0.08) 55%, rgba(124, 58, 237, 0) 70%);
 }
 
+.light-mode{
+    background-color: #f0f0f0;
+}
+
+.hidden{
+    display: none;
+}
+
+.light-mode-dec{
+    background: radial-gradient(circle at 70% 70%, #ff0080aa 0%, #FF007E88 55%, #FF007E00 70%);
+}
+
+.light-mode-label{
+    color: white;
+}
+
+.light-mode-input{
+    background-color: #9f9fe4;
+}
+
+#google.light-mode-google{
+    background:
+        linear-gradient(135deg, #45424b, #45424b) padding-box,
+        linear-gradient(120deg, #ea4335, #fbbc05, #34a853, #4285f4) border-box;
+}
+
+#register-btn.light-mode-btn-register{
+    background:
+        linear-gradient(135deg, #5f458c, #7e3b5d) padding-box,
+        linear-gradient(120deg, #7c3aed, #ec4899) border-box;
+}
+
+.error{
+    position: absolute;
+    top: 20px;
+    z-index: 30;
+    color: #ff4d4d;
+    background-color: #ffe5e5;
+    border: 1px solid #ff4d4d;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-family: poppins, sans-serif;
+}
 
 @media screen and (max-width:750px){
     body{

@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
 
     if ($usuario->Register($fullname, $email, $password, $username)) {
-        $mensaje = "Registro exitoso";
+        header('Location: Login.php');
+        exit();
     } else {
         $mensaje = "Error al registrar";
     }
