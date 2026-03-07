@@ -19,3 +19,105 @@ body {
     min-height: 100vh;
     display: flex;
 }
+
+.sidebar {
+    width: 260px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    min-height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px; color: white;
+}
+
+.logo-text {
+    font-size: 18px; font-weight: 800;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sidebar-nav { padding: 16px 12px; }
+
+.nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none; margin-bottom: 2px;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.nav-item.active { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 60px;
+    display: flex; align-items: center; gap: 16px;
+}
+
+.topbar-title { font-size: 15px; font-weight: 700; margin-right: 8px; }
+
+.view-toggle {
+    display: flex;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.view-btn {
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer;
+    border: none; background: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+.view-btn.active { background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; }
+
+.month-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+
+.month-nav button {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 7px; width: 30px; height: 30px;
+    cursor: pointer; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+}
+
+#month-label { font-size: 13px; font-weight: 600; min-width: 120px; text-align: center; }
+
+.btn-add {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border: none; border-radius: 8px;
+    color: white; font-family: 'Poppins', sans-serif;
+    font-size: 13px; font-weight: 600;
+    padding: 7px 16px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+}

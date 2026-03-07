@@ -31,8 +31,20 @@ $events = [
 </aside>
 
 <div class="main">
-    <h1>Calendario</h1>
-    <p>aqui va el grid del calendario</p>
+    <div class="topbar">
+        <span class="topbar-title">Calendario Académico</span>
+        <div class="view-toggle">
+            <button class="view-btn active">Mensual</button>
+            <button class="view-btn">Agenda</button>
+        </div>
+        <div class="month-nav">
+            <button id="prev-month"><i class="fa-solid fa-chevron-left"></i></button>
+            <span id="month-label">Marzo 2026</span>
+            <button id="next-month"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <button class="btn-add"><i class="fa-solid fa-plus"></i> Nuevo evento</button>
+    </div>
+    <p>aqui va el grid</p>
 </div>
 
 </body>
