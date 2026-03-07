@@ -1,24 +1,26 @@
 <?php
-// eventos de prueba por ahora
-$events = [
-    ['day' =>  6, 'title' => 'Quiz Química',          'color' => '#f87171', 'time' => '08:30'],
-    ['day' => 10, 'title' => 'Entrega Lab. Física',   'color' => '#34d399', 'time' => '09:00'],
-    ['day' => 14, 'title' => 'Tarea Estadística',     'color' => '#fbbf24', 'time' => '23:59'],
-    ['day' => 18, 'title' => 'Parcial Cálculo II',    'color' => '#f472b6', 'time' => '11:00'],
-    ['day' => 25, 'title' => 'Entrega Prog. Web',     'color' => '#60a5fa', 'time' => '18:00'],
-    ['day' => 28, 'title' => 'Exposición Historia',   'color' => '#a78bfa', 'time' => '10:00'],
-];
+require_once '../includes/db.php';
 
-// indexar por dia para el grid
-$eventsByDay = [];
-foreach ($events as $ev) {
-    $eventsByDay[$ev['day']][] = $ev;
+// por ahora user_id fijo hasta que haya sesion
+$uid  = 1;
+$stmt = $pdo->prepare("SELECT title, color, start_datetime, all_day FROM tasks WHERE user_id = ? ORDER BY start_datetime");
+$stmt->execute([$uid]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$events = [];
+foreach ($rows as $r) {
+    $dt = new DateTime($r['start_datetime']);
+    $events[] = [
+        'title' => $r['title'],
+        'color' => $r['color'] ?: '#7c3aed',
+        'day'   => (int)$dt->format('j'),
+        'month' => (int)$dt->format('n') - 1, // 0-indexed igual que JS
+        'year'  => (int)$dt->format('Y'),
+        'time'  => $r['all_day'] ? 'Todo el día' : $dt->format('H:i'),
+    ];
 }
 
-// marzo 2026 empieza en domingo, offset 6 (lunes primero)
-$calDays  = array_merge(array_fill(0, 6, null), range(1, 31));
 $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-$today    = 6;
 ?>
 <!DOCTYPE html>
 <html lang="es-mx">
@@ -59,34 +61,151 @@ $today    = 6;
         <button class="btn-add"><i data-lucide="plus"></i> Nuevo evento</button>
     </div>
     <div class="calendar-wrap">
-        <!-- cabecera dias de la semana -->
         <div class="cal-grid">
             <?php foreach ($weekDays as $d): ?>
             <div class="cal-header-day"><?= $d ?></div>
             <?php endforeach; ?>
-
-            <?php foreach ($calDays as $d): ?>
-            <div class="cal-cell">
-                <?php if ($d): ?>
-                <div class="cal-day-num<?= $d === $today ? ' today' : '' ?>"><?= $d ?></div>
-                <?php if (isset($eventsByDay[$d])): ?>
-                    <?php foreach (array_slice($eventsByDay[$d], 0, 2) as $ev): ?>
-                    <div class="cal-event" style="background:<?= $ev['color'] ?>22; color:<?= $ev['color'] ?>;" title="<?= $ev['title'] ?> · <?= $ev['time'] ?>">
-                        <?= $ev['title'] ?>
-                    </div>
-                    <?php endforeach; ?>
-                    <?php if (count($eventsByDay[$d]) > 2): ?>
-                    <div class="cal-more">+<?= count($eventsByDay[$d]) - 2 ?> más</div>
-                    <?php endif; ?>
-                <?php endif; ?>
-                <?php endif; ?>
-            </div>
-            <?php endforeach; ?>
+            <!-- las celdas las genera JS -->
         </div>
     </div>
 </div>
 
 <script>
+var events = <?= json_encode(array_values($events)) ?>;
+
+var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+var calState = { month: 2, year: 2026 };
+
+function renderCalendar(month, year) {
+    // primer dia del mes
+    var firstDay = new Date(year, month, 1).getDay();
+    // convertir a lunes=0 ... domingo=6
+    var offset = (firstDay === 0) ? 6 : firstDay - 1;
+
+    var totalDays = new Date(year, month + 1, 0).getDate();
+
+    // filtrar eventos del mes/año actual
+    var monthEvents = {};
+    for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        if (ev.month === month && ev.year === year) {
+            if (!monthEvents[ev.day]) monthEvents[ev.day] = [];
+            monthEvents[ev.day].push(ev);
+        }
+    }
+
+    // actualizar label
+    document.getElementById('month-label').textContent = meses[month] + ' ' + year;
+
+    // borrar celdas actuales (mantener los 7 headers)
+    var grid = document.querySelector('.cal-grid');
+    var cells = grid.querySelectorAll('.cal-cell');
+    for (var c = 0; c < cells.length; c++) {
+        cells[c].remove();
+    }
+
+    var hoy = new Date();
+    var esHoy = (hoy.getMonth() === month && hoy.getFullYear() === year);
+    var diaHoy = hoy.getDate();
+
+    // celdas vacias del offset
+    for (var o = 0; o < offset; o++) {
+        var empty = document.createElement('div');
+        empty.className = 'cal-cell';
+        grid.appendChild(empty);
+    }
+
+    // dias del mes
+    for (var d = 1; d <= totalDays; d++) {
+        var cell = document.createElement('div');
+        cell.className = 'cal-cell';
+
+        var numEl = document.createElement('div');
+        numEl.className = 'cal-day-num' + (esHoy && d === diaHoy ? ' today' : '');
+        numEl.textContent = d;
+        cell.appendChild(numEl);
+
+        // eventos del dia
+        if (monthEvents[d]) {
+            var evList = monthEvents[d];
+            var max = Math.min(evList.length, 2);
+            for (var e = 0; e < max; e++) {
+                var evEl = document.createElement('div');
+                evEl.className = 'cal-event';
+                evEl.style.background = evList[e].color + '22';
+                evEl.style.color = evList[e].color;
+                evEl.dataset.title = evList[e].title;
+                evEl.dataset.time  = evList[e].time;
+                evEl.dataset.color = evList[e].color;
+                evEl.dataset.day   = d;
+                evEl.textContent = evList[e].title;
+                cell.appendChild(evEl);
+            }
+            if (evList.length > 2) {
+                var more = document.createElement('div');
+                more.className = 'cal-more';
+                more.textContent = '+' + (evList.length - 2) + ' más';
+                cell.appendChild(more);
+            }
+        }
+
+        grid.appendChild(cell);
+    }
+}
+
+document.getElementById('prev-month').addEventListener('click', function() {
+    calState.month--;
+    if (calState.month < 0) {
+        calState.month = 11;
+        calState.year--;
+    }
+    renderCalendar(calState.month, calState.year);
+});
+
+document.getElementById('next-month').addEventListener('click', function() {
+    calState.month++;
+    if (calState.month > 11) {
+        calState.month = 0;
+        calState.year++;
+    }
+    renderCalendar(calState.month, calState.year);
+});
+
+// popup de ver evento
+var popup = document.createElement('div');
+popup.className = 'ev-popup';
+popup.innerHTML = '<div class="ev-popup-header">'
+    + '<div class="ev-popup-dot" id="pop-dot"></div>'
+    + '<span class="ev-popup-title" id="pop-title"></span>'
+    + '<button class="ev-popup-close" id="pop-close"><i data-lucide="x"></i></button>'
+    + '</div>'
+    + '<div class="ev-popup-meta"><i data-lucide="clock" style="width:12px;height:12px"></i><span id="pop-time"></span></div>'
+    + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>';
+document.body.appendChild(popup);
+
+document.getElementById('pop-close').addEventListener('click', function() {
+    popup.classList.remove('show');
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.cal-event')) {
+        var el = e.target.closest('.cal-event');
+        document.getElementById('pop-dot').style.background   = el.dataset.color;
+        document.getElementById('pop-title').textContent = el.dataset.title;
+        document.getElementById('pop-time').textContent  = el.dataset.time;
+        document.getElementById('pop-date').textContent  = el.dataset.day + ' de ' + meses[calState.month] + ' ' + calState.year;
+        var rect = el.getBoundingClientRect();
+        popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+        popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+        popup.classList.add('show');
+        lucide.createIcons();
+    } else if (!e.target.closest('.ev-popup')) {
+        popup.classList.remove('show');
+    }
+});
+
+renderCalendar(calState.month, calState.year);
 lucide.createIcons();
 </script>
 </body>
