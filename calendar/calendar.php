@@ -13,7 +13,7 @@ $events = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario — NOOTRA</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
@@ -24,9 +24,9 @@ $events = [
         <span class="logo-text">NOOTRA</span>
     </div>
     <nav class="sidebar-nav">
-        <a class="nav-item active" href="calendar.php"><i class="fa-solid fa-calendar-days"></i> Calendario</a>
-        <a class="nav-item" href="#"><i class="fa-solid fa-house"></i> Dashboard</a>
-        <a class="nav-item" href="#"><i class="fa-solid fa-book"></i> Cuadernos</a>
+        <a class="nav-item active" href="calendar.php"><i data-lucide="calendar-days"></i> Calendario</a>
+        <a class="nav-item" href="#"><i data-lucide="house"></i> Dashboard</a>
+        <a class="nav-item" href="#"><i data-lucide="book"></i> Cuadernos</a>
     </nav>
 </aside>
 
@@ -38,14 +38,17 @@ $events = [
             <button class="view-btn">Agenda</button>
         </div>
         <div class="month-nav">
-            <button id="prev-month"><i class="fa-solid fa-chevron-left"></i></button>
+            <button id="prev-month"><i data-lucide="chevron-left"></i></button>
             <span id="month-label">Marzo 2026</span>
-            <button id="next-month"><i class="fa-solid fa-chevron-right"></i></button>
+            <button id="next-month"><i data-lucide="chevron-right"></i></button>
         </div>
-        <button class="btn-add"><i class="fa-solid fa-plus"></i> Nuevo evento</button>
+        <button class="btn-add"><i data-lucide="plus"></i> Nuevo evento</button>
     </div>
     <p>aqui va el grid</p>
 </div>
 
+<script>
+lucide.createIcons();
+</script>
 </body>
 </html>
