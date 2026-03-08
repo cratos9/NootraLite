@@ -81,7 +81,30 @@ body {
     display: flex; align-items: center; gap: 16px;
 }
 
-.topbar-title { font-size: 15px; font-weight: 700; margin-right: 8px; }
+.topbar-left {
+    display: flex; align-items: center; gap: 14px;
+}
+
+.topbar-right {
+    display: flex; align-items: center; gap: 10px;
+    margin-left: auto;
+}
+
+.topbar-title { font-size: 15px; font-weight: 700; }
+
+/* estos son solo para tablet, en desktop se ocultan */
+.tb-logo, .tb-logotext, .view-toggle-tab, .btn-label-short, .btn-hamburger { display: none; }
+
+.btn-today {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 7px;
+    padding: 5px 13px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
 
 .view-toggle {
     display: flex;
@@ -100,7 +123,7 @@ body {
 
 .view-btn.active { background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; }
 
-.month-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.month-nav { display: flex; align-items: center; gap: 6px; }
 
 .month-nav button {
     background: var(--bg-tertiary);
@@ -248,4 +271,45 @@ body {
     font-size: 11px;
     color: var(--text-secondary);
     margin-top: 4px;
+}
+
+@media screen and (max-width: 1024px) {
+    .sidebar { width: 200px; }
+
+    .topbar { padding: 0 16px; gap: 10px; }
+
+    .calendar-wrap { padding: 14px 16px; }
+
+    .cal-cell { min-height: 80px; }
+}
+
+@media screen and (max-width: 750px) {
+    .sidebar { display: none; }
+
+    body { flex-direction: column; }
+
+    .topbar {
+        height: auto;
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .topbar-title { display: none; }
+
+    .month-nav { margin-left: 0; }
+
+    .calendar-wrap { padding: 12px; }
+
+    .cal-cell { min-height: 64px; padding: 4px; }
+
+    .cal-event { font-size: 9px; padding: 2px 4px; }
+}
+
+@media screen and (max-width: 400px) {
+    .cal-cell { min-height: 48px; padding: 3px; }
+
+    .cal-header-day { font-size: 10px; padding: 7px 0; }
+
+    .btn-add { font-size: 12px; padding: 6px 11px; }
 }

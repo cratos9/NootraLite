@@ -48,17 +48,34 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 <div class="main">
     <div class="topbar">
-        <span class="topbar-title">Calendario Académico</span>
-        <div class="view-toggle">
-            <button class="view-btn active">Mensual</button>
-            <button class="view-btn">Agenda</button>
+        <div class="topbar-left">
+            <div class="logo-icon tb-logo">N</div>
+            <span class="logo-text tb-logotext">NOOTRA</span>
+            <span class="topbar-title">Calendario Académico</span>
+            <div class="view-toggle" id="view-toggle-desk">
+                <button class="view-btn active">Mensual</button>
+                <button class="view-btn">Semana</button>
+                <button class="view-btn">Agenda</button>
+            </div>
         </div>
-        <div class="month-nav">
-            <button id="prev-month"><i data-lucide="chevron-left"></i></button>
-            <span id="month-label">Marzo 2026</span>
-            <button id="next-month"><i data-lucide="chevron-right"></i></button>
+        <div class="topbar-right">
+            <div class="month-nav">
+                <button id="prev-month"><i data-lucide="chevron-left"></i></button>
+                <span id="month-label">Marzo 2026</span>
+                <button id="next-month"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="view-toggle view-toggle-tab">
+                <button class="view-btn active">Mes</button>
+                <button class="view-btn">Sem.</button>
+            </div>
+            <button class="btn-today">Hoy</button>
+            <button class="btn-add">
+                <i data-lucide="plus"></i>
+                <span class="btn-label-full">Agregar evento</span>
+                <span class="btn-label-short">Evento</span>
+            </button>
+            <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
         </div>
-        <button class="btn-add"><i data-lucide="plus"></i> Nuevo evento</button>
     </div>
     <div class="calendar-wrap">
         <div class="cal-grid">
