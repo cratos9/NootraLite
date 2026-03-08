@@ -77,6 +77,38 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
             <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
         </div>
     </div>
+    <!-- solo mobile -->
+    <div class="topbar-mobile">
+        <button class="btn-hamburger-m" aria-label="Menú"><i data-lucide="menu"></i></button>
+        <span class="topbar-title-m">Calendario</span>
+        <button class="btn-add-m" aria-label="Nuevo evento"><i data-lucide="plus"></i></button>
+    </div>
+
+    <div class="view-chips">
+        <button class="view-chip active">Mensual</button>
+        <button class="view-chip">Semana</button>
+        <button class="view-chip">Agenda</button>
+    </div>
+
+    <div class="mobile-cal-panel">
+        <div class="mini-cal">
+            <div class="mini-cal-nav">
+                <button class="mini-prev"><i data-lucide="chevron-left"></i></button>
+                <span class="mini-month-label">Marzo 2026</span>
+                <button class="mini-next"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="mini-cal-grid" id="mini-cal-grid"></div>
+        </div>
+        <div class="mobile-event-list" id="mobile-event-list"></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a class="bottom-nav-item" href="#"><i data-lucide="house"></i><span>Inicio</span></a>
+        <a class="bottom-nav-item active" href="calendar.php"><i data-lucide="calendar-days"></i><span>Calendario</span></a>
+        <a class="bottom-nav-item" href="#"><i data-lucide="check-square"></i><span>Tareas</span></a>
+        <a class="bottom-nav-item" href="#"><i data-lucide="book-open"></i><span>Cuadernos</span></a>
+    </nav>
+
     <div class="calendar-wrap">
         <div class="cal-grid">
             <?php foreach ($weekDays as $d): ?>
@@ -222,7 +254,136 @@ document.addEventListener('click', function(e) {
     }
 });
 
+function renderMiniCal(month, year) {
+    var grid = document.getElementById('mini-cal-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    var days = ['L','M','M','J','V','S','D'];
+    for (var i = 0; i < days.length; i++) {
+        var h = document.createElement('div');
+        h.className = 'mini-day-header';
+        h.textContent = days[i];
+        grid.appendChild(h);
+    }
+
+    var firstDay = new Date(year, month, 1).getDay();
+    var offset = firstDay === 0 ? 6 : firstDay - 1;
+    var totalDays = new Date(year, month + 1, 0).getDate();
+
+    var monthEvs = {};
+    for (var e = 0; e < events.length; e++) {
+        var ev = events[e];
+        if (ev.month === month && ev.year === year) {
+            if (!monthEvs[ev.day]) monthEvs[ev.day] = [];
+            monthEvs[ev.day].push(ev);
+        }
+    }
+
+    var hoy = new Date();
+    var esHoy = hoy.getMonth() === month && hoy.getFullYear() === year;
+
+    for (var o = 0; o < offset; o++) {
+        grid.appendChild(document.createElement('div'));
+    }
+
+    for (var d = 1; d <= totalDays; d++) {
+        var cell = document.createElement('div');
+        cell.className = 'mini-day-cell';
+        cell.dataset.day = d;
+
+        var num = document.createElement('div');
+        num.className = 'mini-day-num' + (esHoy && d === hoy.getDate() ? ' today' : '');
+        num.textContent = d;
+        cell.appendChild(num);
+
+        if (monthEvs[d]) {
+            var dots = document.createElement('div');
+            dots.className = 'mini-dots';
+            var max = Math.min(monthEvs[d].length, 3);
+            for (var x = 0; x < max; x++) {
+                var dot = document.createElement('span');
+                dot.className = 'mini-dot';
+                dot.style.background = monthEvs[d][x].color;
+                dots.appendChild(dot);
+            }
+            cell.appendChild(dots);
+        }
+
+        cell.addEventListener('click', function() {
+            renderMobileEventList(parseInt(this.dataset.day), calState.month, calState.year);
+        });
+
+        grid.appendChild(cell);
+    }
+
+    document.querySelector('.mini-month-label').textContent = meses[month] + ' ' + year;
+}
+
+function renderMobileEventList(day, month, year) {
+    var list = document.getElementById('mobile-event-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    var filtered = events.filter(function(ev) {
+        if (ev.month !== month || ev.year !== year) return false;
+        return day === null || ev.day === day;
+    });
+
+    if (filtered.length === 0) {
+        var empty = document.createElement('p');
+        empty.style.cssText = 'color:var(--text-muted);font-size:12px;padding:12px 0;text-align:center';
+        empty.textContent = 'Sin eventos';
+        list.appendChild(empty);
+        return;
+    }
+
+    for (var i = 0; i < filtered.length; i++) {
+        var ev = filtered[i];
+        var card = document.createElement('div');
+        card.className = 'mobile-ev-card';
+
+        var bar = document.createElement('div');
+        bar.className = 'mobile-ev-bar';
+        bar.style.background = ev.color;
+
+        var info = document.createElement('div');
+        info.className = 'mobile-ev-info';
+        info.innerHTML = '<span class="mobile-ev-title">' + ev.title + '</span>'
+            + '<span class="mobile-ev-time">' + ev.time + '</span>';
+
+        card.appendChild(bar);
+        card.appendChild(info);
+        list.appendChild(card);
+    }
+}
+
+document.querySelectorAll('.view-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.view-chip').forEach(function(c) { c.classList.remove('active'); });
+        this.classList.add('active');
+    });
+});
+
+document.querySelector('.mini-prev').addEventListener('click', function() {
+    calState.month--;
+    if (calState.month < 0) { calState.month = 11; calState.year--; }
+    renderCalendar(calState.month, calState.year);
+    renderMiniCal(calState.month, calState.year);
+    renderMobileEventList(null, calState.month, calState.year);
+});
+
+document.querySelector('.mini-next').addEventListener('click', function() {
+    calState.month++;
+    if (calState.month > 11) { calState.month = 0; calState.year++; }
+    renderCalendar(calState.month, calState.year);
+    renderMiniCal(calState.month, calState.year);
+    renderMobileEventList(null, calState.month, calState.year);
+});
+
 renderCalendar(calState.month, calState.year);
+renderMiniCal(calState.month, calState.year);
+renderMobileEventList(null, calState.month, calState.year);
 lucide.createIcons();
 </script>
 </body>
