@@ -35,6 +35,7 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 <body>
 <script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light-mode');</script>
 
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
     <div class="sidebar-logo">
         <div class="logo-icon">N</div>
@@ -113,6 +114,51 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
         <a class="bottom-nav-item" href="#"><i data-lucide="check-square"></i><span>Tareas</span></a>
         <a class="bottom-nav-item" href="#"><i data-lucide="book-open"></i><span>Cuadernos</span></a>
     </nav>
+
+    <!-- modal nuevo evento -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-box" id="modal-box">
+            <div class="modal-header">
+                <span class="modal-title">Nuevo evento</span>
+                <button class="modal-close" id="modal-close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" class="form-input" id="ev-title" placeholder="Ej. Parcial de Cálculo">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" class="form-input" id="ev-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora</label>
+                        <input type="time" class="form-input" id="ev-time">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Todo el día</label>
+                    <input type="checkbox" id="ev-allday" style="margin-left:6px;cursor:pointer">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-swatches">
+                        <span class="swatch active" data-color="#7c3aed" style="background:#7c3aed"></span>
+                        <span class="swatch" data-color="#ec4899" style="background:#ec4899"></span>
+                        <span class="swatch" data-color="#10b981" style="background:#10b981"></span>
+                        <span class="swatch" data-color="#f59e0b" style="background:#f59e0b"></span>
+                        <span class="swatch" data-color="#3b82f6" style="background:#3b82f6"></span>
+                        <span class="swatch" data-color="#ef4444" style="background:#ef4444"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+                <button class="btn-save">Guardar</button>
+            </div>
+        </div>
+    </div>
 
     <div class="calendar-wrap">
         <div class="cal-grid">
@@ -218,6 +264,65 @@ function renderCalendar(month, year) {
     }
 }
 
+// modal
+var modalOverlay = document.getElementById('modal-overlay');
+
+function openModal() {
+    var hoy = new Date();
+    var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    var dd = String(hoy.getDate()).padStart(2, '0');
+    document.getElementById('ev-date').value = hoy.getFullYear() + '-' + mm + '-' + dd;
+    modalOverlay.classList.add('show');
+    lucide.createIcons();
+}
+
+function closeModal() {
+    modalOverlay.classList.remove('show');
+}
+
+document.querySelector('.btn-add').addEventListener('click', openModal);
+document.querySelector('.btn-add-m').addEventListener('click', openModal);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+modalOverlay.addEventListener('click', function(e) {
+    if (e.target === modalOverlay) closeModal();
+});
+
+// swatches color
+document.querySelectorAll('.swatch').forEach(function(sw) {
+    sw.addEventListener('click', function() {
+        document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+        this.classList.add('active');
+    });
+});
+
+// todo el dia — deshabilita el campo hora
+document.getElementById('ev-allday').addEventListener('change', function() {
+    document.getElementById('ev-time').disabled = this.checked;
+    document.getElementById('ev-time').style.opacity = this.checked ? '0.4' : '1';
+});
+
+document.querySelector('.btn-today').addEventListener('click', function() {
+    var hoy = new Date();
+    calState.month = hoy.getMonth();
+    calState.year = hoy.getFullYear();
+    renderCalendar(calState.month, calState.year);
+});
+
+var sidebar = document.querySelector('.sidebar');
+var overlay = document.getElementById('sidebar-overlay');
+
+document.querySelector('.btn-hamburger').addEventListener('click', function() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+});
+
+overlay.addEventListener('click', function() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+});
+
 document.getElementById('prev-month').addEventListener('click', function() {
     calState.month--;
     if (calState.month < 0) {
@@ -250,7 +355,17 @@ document.body.appendChild(popup);
 
 document.getElementById('pop-close').addEventListener('click', function() {
     popup.classList.remove('show');
+    clearActiveCell();
 });
+
+var activeCell = null;
+
+function clearActiveCell() {
+    if (activeCell) {
+        activeCell.classList.remove('active-cell');
+        activeCell = null;
+    }
+}
 
 document.addEventListener('click', function(e) {
     if (e.target.closest('.cal-event')) {
@@ -263,9 +378,13 @@ document.addEventListener('click', function(e) {
         popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
         popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
         popup.classList.add('show');
+        clearActiveCell();
+        activeCell = el.closest('.cal-cell');
+        if (activeCell) activeCell.classList.add('active-cell');
         lucide.createIcons();
     } else if (!e.target.closest('.ev-popup')) {
         popup.classList.remove('show');
+        clearActiveCell();
     }
 });
 
@@ -398,7 +517,11 @@ document.querySelector('.mini-next').addEventListener('click', function() {
 
 renderCalendar(calState.month, calState.year);
 renderMiniCal(calState.month, calState.year);
-renderMobileEventList(null, calState.month, calState.year);
+
+var _hoyInit = new Date();
+var _mismoMes = _hoyInit.getMonth() === calState.month && _hoyInit.getFullYear() === calState.year;
+renderMobileEventList(_mismoMes ? _hoyInit.getDate() : null, calState.month, calState.year);
+
 lucide.createIcons();
 </script>
 </body>

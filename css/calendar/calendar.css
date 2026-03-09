@@ -28,6 +28,7 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .sidebar {
@@ -38,6 +39,7 @@ body {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.2s;
 }
 
 .sidebar-logo {
@@ -106,6 +108,7 @@ body {
     padding: 0 28px;
     height: 60px;
     display: flex; align-items: center; gap: 16px;
+    transition: background-color 0.2s;
 }
 
 .topbar-left {
@@ -135,6 +138,8 @@ body {
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
 }
+
+.btn-today:hover { background: var(--bg-primary); color: var(--text-primary); }
 
 .view-toggle {
     display: flex;
@@ -205,7 +210,11 @@ body {
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
     vertical-align: top;
+    cursor: pointer;
 }
+
+.cal-cell:hover { background: rgba(124,58,237,0.06); }
+.cal-cell.active-cell { background: rgba(124,58,237,0.1); }
 
 .cal-cell:nth-child(7n) { border-right: none; }
 
@@ -303,6 +312,126 @@ body {
     margin-top: 4px;
 }
 
+/* modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show { display: flex; }
+
+.modal-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 420px;
+    margin: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: modal-in .18s ease;
+    transition: background-color 0.2s;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: scale(.95) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-title { font-size: 15px; font-weight: 700; }
+
+.modal-close {
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; padding: 2px;
+}
+
+.modal-close:hover { color: var(--text-primary); }
+
+.modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-input {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    width: 100%;
+}
+
+.form-input:focus { border-color: #7c3aed; }
+
+.color-swatches { display: flex; gap: 8px; }
+
+.swatch {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform .1s;
+}
+
+.swatch.active { border-color: white; transform: scale(1.15); }
+.swatch:hover { transform: scale(1.1); }
+.light-mode .swatch.active { border-color: #1e2030; }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-cancel {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-cancel:hover { background: var(--bg-primary); }
+
+.btn-save {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border: none; border-radius: 8px;
+    color: white;
+    padding: 7px 20px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-save:hover { opacity: 0.88; }
+
+.form-input::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+.light-mode .form-input::-webkit-calendar-picker-indicator { filter: invert(0); }
+
 @media screen and (max-width: 1024px) {
     .sidebar { width: 200px; }
 
@@ -313,8 +442,25 @@ body {
     .cal-cell { min-height: 80px; }
 }
 
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+}
+.sidebar-overlay.show { display: block; }
+
 @media screen and (max-width: 768px) {
     .sidebar { display: none; }
+
+    .sidebar.open {
+        display: flex;
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh;
+        z-index: 200;
+    }
 
     body { flex-direction: column; }
 
