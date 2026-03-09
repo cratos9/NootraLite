@@ -126,6 +126,7 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
                 <div class="form-group">
                     <label>Título</label>
                     <input type="text" class="form-input" id="ev-title" placeholder="Ej. Parcial de Cálculo">
+                    <span class="form-error" id="ev-title-error" style="display:none;font-size:11px;color:#ef4444;margin-top:2px"></span>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -301,6 +302,54 @@ document.querySelectorAll('.swatch').forEach(function(sw) {
 document.getElementById('ev-allday').addEventListener('change', function() {
     document.getElementById('ev-time').disabled = this.checked;
     document.getElementById('ev-time').style.opacity = this.checked ? '0.4' : '1';
+});
+
+document.querySelector('.btn-save').addEventListener('click', function() {
+    var titleVal = document.getElementById('ev-title').value.trim();
+    var dateVal  = document.getElementById('ev-date').value;
+    var errEl    = document.getElementById('ev-title-error');
+
+    errEl.style.display = 'none';
+
+    if (!titleVal) {
+        errEl.textContent = 'El título es obligatorio';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!dateVal) {
+        errEl.textContent = 'La fecha es obligatoria';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    var fd = new FormData();
+    fd.append('title',   titleVal);
+    fd.append('date',    dateVal);
+    fd.append('time',    document.getElementById('ev-time').value);
+    fd.append('color',   document.querySelector('.swatch.active').dataset.color);
+    if (document.getElementById('ev-allday').checked) fd.append('all_day', '1');
+
+    fetch('save_event.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) {
+                errEl.textContent = data.error;
+                errEl.style.display = 'block';
+                return;
+            }
+            events.push(data.event);
+            closeModal();
+            renderCalendar(calState.month, calState.year);
+            renderMiniCal(calState.month, calState.year);
+            // limpiar form
+            document.getElementById('ev-title').value = '';
+            document.getElementById('ev-time').value = '';
+            document.getElementById('ev-allday').checked = false;
+            document.getElementById('ev-time').disabled = false;
+            document.getElementById('ev-time').style.opacity = '1';
+            document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+            document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+        });
 });
 
 document.querySelector('.btn-today').addEventListener('click', function() {
