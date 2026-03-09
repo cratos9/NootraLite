@@ -33,6 +33,7 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
+<script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light-mode');</script>
 
 <aside class="sidebar">
     <div class="sidebar-logo">
@@ -74,6 +75,7 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
                 <span class="btn-label-full">Agregar evento</span>
                 <span class="btn-label-short">Evento</span>
             </button>
+            <button class="btn-theme" id="btn-theme-desk"><i data-lucide="sun" class="icon-sun"></i><i data-lucide="moon" class="icon-moon"></i></button>
             <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
         </div>
     </div>
@@ -81,7 +83,10 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     <div class="topbar-mobile">
         <button class="btn-hamburger-m" aria-label="Menú"><i data-lucide="menu"></i></button>
         <span class="topbar-title-m">Calendario</span>
-        <button class="btn-add-m" aria-label="Nuevo evento"><i data-lucide="plus"></i></button>
+        <div style="display:flex;align-items:center;gap:4px">
+            <button class="btn-theme" id="btn-theme-m"><i data-lucide="sun" class="icon-sun"></i><i data-lucide="moon" class="icon-moon"></i></button>
+            <button class="btn-add-m" aria-label="Nuevo evento"><i data-lucide="plus"></i></button>
+        </div>
     </div>
 
     <div class="view-chips">
@@ -121,6 +126,16 @@ $weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 <script>
 var events = <?= json_encode(array_values($events)) ?>;
+
+// toggle tema
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    var isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+document.getElementById('btn-theme-desk').addEventListener('click', toggleTheme);
+document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
