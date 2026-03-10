@@ -129,12 +129,12 @@ document.querySelector('.btn-save').addEventListener('click', function() {
 
     if (!titleVal) {
         errEl.textContent = 'El título es obligatorio';
-        errEl.style.display = 'block';
+        showErr(errEl);
         return;
     }
     if (!dateVal) {
         errEl.textContent = 'La fecha es obligatoria';
-        errEl.style.display = 'block';
+        showErr(errEl);
         return;
     }
 
@@ -162,7 +162,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             saveBtn.textContent = 'Guardar';
             if (!data.ok) {
                 errEl.textContent = data.error;
-                errEl.style.display = 'block';
+                showErr(errEl);
                 return;
             }
             if (editingEventId) {
@@ -193,7 +193,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             saveBtn.disabled = false;
             saveBtn.textContent = 'Guardar';
             errEl.textContent = 'error al guardar, intenta de nuevo';
-            errEl.style.display = 'block';
+            showErr(errEl);
         });
 });
 
@@ -374,6 +374,13 @@ document.addEventListener('click', function(e) {
         closePopup();
     }
 });
+
+function showErr(el) {
+    el.classList.remove('form-error');
+    el.style.display = 'block';
+    el.offsetHeight; // fuerza reflow para re-disparar animation
+    el.classList.add('form-error');
+}
 
 function showToast(msg) {
     var t = document.createElement('div');
@@ -610,12 +617,12 @@ document.getElementById('mfp-save').addEventListener('click', function() {
 
     if (!titleVal) {
         errEl.textContent = 'El título es obligatorio';
-        errEl.style.display = 'block';
+        showErr(errEl);
         return;
     }
     if (!dateVal) {
         errEl.textContent = 'La fecha es obligatoria';
-        errEl.style.display = 'block';
+        showErr(errEl);
         return;
     }
 
@@ -637,7 +644,7 @@ document.getElementById('mfp-save').addEventListener('click', function() {
         .then(function(data) {
             if (!data.ok) {
                 errEl.textContent = data.error;
-                errEl.style.display = 'block';
+                showErr(errEl);
                 return;
             }
             if (mobileEditingId) {
@@ -655,7 +662,7 @@ document.getElementById('mfp-save').addEventListener('click', function() {
         })
         .catch(function() {
             errEl.textContent = 'error al guardar, intenta de nuevo';
-            errEl.style.display = 'block';
+            showErr(errEl);
         });
 });
 

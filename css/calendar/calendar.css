@@ -753,6 +753,16 @@ body {
     #mev-swatches .swatch { width: 32px; height: 32px; }
 }
 
+/* errores inline */
+.form-error {
+    animation: err-in 0.18s ease;
+}
+
+@keyframes err-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 /* transicion en botones del popup */
 #pop-edit, #pop-delete {
     transition: color 0.15s;
