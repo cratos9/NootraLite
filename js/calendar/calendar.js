@@ -324,11 +324,14 @@ document.getElementById('pop-delete').addEventListener('click', function() {
             btn.style.color = '#ef4444';
             return;
         }
-        events = events.filter(function(ev) { return ev.id !== currentEventId; });
+        var deletedId = currentEventId;
+        events = events.filter(function(ev) { return ev.id !== deletedId; });
         currentEventId = null;
-        renderCalendar(calState.month, calState.year);
-        renderMiniCal(calState.month, calState.year);
-        closePopup();
+        closePopup(function() {
+            renderCalendar(calState.month, calState.year);
+            renderMiniCal(calState.month, calState.year);
+        });
+        return;
     })
     .catch(function() {
         btn.textContent = 'Eliminar';
