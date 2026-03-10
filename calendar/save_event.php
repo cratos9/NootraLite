@@ -1,5 +1,6 @@
 <?php
-require_once '../includes/db.php';
+require_once '../config/db.php';
+require_once '../Models/EventModel.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -25,19 +26,18 @@ if ($date === '') {
 
 $start_dt = $date . ' ' . ($all_day || $time === '' ? '00:00:00' : $time . ':00');
 
-// insertar
 try {
-    $stmt = $pdo->prepare(
-      "INSERT INTO tasks (user_id, title, start_datetime, all_day, color)
-       VALUES (1, ?, ?, ?, ?)"
-    );
-    $stmt->execute([$title, $start_dt, $all_day, $color]);
-    $newId = $pdo->lastInsertId();
+    $database = new Database();
+    $pdo = $database->connect();
+    $model = new EventModel($pdo);
+
+    $newId = $model->create(1, $title, $start_dt, $all_day, $color);
 
     $dt = new DateTime($start_dt);
     echo json_encode([
         'ok' => true,
         'event' => [
+            'id'    => (int)$newId,
             'title' => $title,
             'color' => $color,
             'day'   => (int)$dt->format('j'),
