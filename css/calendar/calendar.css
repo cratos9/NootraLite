@@ -210,6 +210,15 @@ body {
     overflow: hidden;
 }
 
+.cal-grid.month-fade {
+    animation: month-in 0.18s ease;
+}
+
+@keyframes month-in {
+    from { opacity: 0.3; }
+    to   { opacity: 1; }
+}
+
 .cal-header-day {
     background: var(--bg-tertiary);
     text-align: center;

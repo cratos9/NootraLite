@@ -29,6 +29,10 @@ function renderCalendar(month, year) {
     document.getElementById('month-label').textContent = meses[month] + ' ' + year;
 
     var grid = document.querySelector('.cal-grid');
+    grid.classList.remove('month-fade');
+    grid.offsetHeight;
+    grid.classList.add('month-fade');
+
     var cells = grid.querySelectorAll('.cal-cell');
     for (var c = 0; c < cells.length; c++) {
         cells[c].remove();
