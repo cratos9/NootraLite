@@ -28,5 +28,13 @@ class EventModel {
         $stmt->execute([$id, $uid]);
         return $stmt->rowCount() > 0;
     }
+
+    public function update($id, $uid, $title, $start_dt, $all_day, $color) {
+        $stmt = $this->db->prepare(
+            "UPDATE tasks SET title=?, start_datetime=?, all_day=?, color=? WHERE id=? AND user_id=?"
+        );
+        $stmt->execute([$title, $start_dt, $all_day, $color, $id, $uid]);
+        return $stmt->rowCount() > 0;
+    }
 }
 ?>

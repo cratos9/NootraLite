@@ -42,10 +42,6 @@
                 <span id="month-label">Marzo 2026</span>
                 <button id="next-month"><i data-lucide="chevron-right"></i></button>
             </div>
-            <div class="view-toggle view-toggle-tab">
-                <button class="view-btn active">Mes</button>
-                <button class="view-btn">Sem.</button>
-            </div>
             <button class="btn-today">Hoy</button>
             <button class="btn-add">
                 <i data-lucide="plus"></i>
@@ -58,7 +54,6 @@
     </div>
     <!-- solo mobile -->
     <div class="topbar-mobile">
-        <button class="btn-hamburger-m" aria-label="Menú"><i data-lucide="menu"></i></button>
         <span class="topbar-title-m">Calendario</span>
         <div style="display:flex;align-items:center;gap:4px">
             <button class="btn-theme" id="btn-theme-m"><i data-lucide="sun" class="icon-sun"></i><i data-lucide="moon" class="icon-moon"></i></button>
@@ -133,6 +128,66 @@
             <div class="modal-footer">
                 <button class="btn-cancel" id="modal-cancel">Cancelar</button>
                 <button class="btn-save">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- panel full-screen móvil nuevo/editar evento -->
+    <div class="mobile-form-panel" id="mobile-form-panel">
+        <div class="mfp-header">
+            <button class="mfp-back" id="mfp-back"><i data-lucide="arrow-left"></i></button>
+            <span class="mfp-title" id="mfp-title">Nuevo evento</span>
+        </div>
+        <div class="mfp-body">
+            <div class="form-group">
+                <label>Título</label>
+                <input type="text" class="form-input" id="mev-title" placeholder="Ej. Parcial de Cálculo">
+                <span class="form-error" id="mev-title-error" style="display:none;font-size:11px;color:#ef4444;margin-top:2px"></span>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" class="form-input" id="mev-date">
+                </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <input type="time" class="form-input" id="mev-time">
+                </div>
+            </div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+                <label style="margin:0">Todo el día</label>
+                <input type="checkbox" id="mev-allday" style="cursor:pointer">
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-swatches" id="mev-swatches">
+                    <span class="swatch active" data-color="#7c3aed" style="background:#7c3aed"></span>
+                    <span class="swatch" data-color="#ec4899" style="background:#ec4899"></span>
+                    <span class="swatch" data-color="#10b981" style="background:#10b981"></span>
+                    <span class="swatch" data-color="#f59e0b" style="background:#f59e0b"></span>
+                    <span class="swatch" data-color="#3b82f6" style="background:#3b82f6"></span>
+                    <span class="swatch" data-color="#ef4444" style="background:#ef4444"></span>
+                </div>
+            </div>
+        </div>
+        <div class="mfp-footer">
+            <button class="btn-save mfp-save" id="mfp-save">Guardar</button>
+        </div>
+    </div>
+
+    <!-- bottom sheet detalle evento móvil -->
+    <div class="mev-sheet-overlay" id="mev-sheet-overlay">
+        <div class="mev-sheet">
+            <div class="mev-sheet-handle"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div class="mev-sheet-dot" id="mev-sheet-dot"></div>
+                <span class="mev-sheet-title" id="mev-sheet-title"></span>
+            </div>
+            <div class="mev-sheet-meta"><i data-lucide="clock" style="width:13px;height:13px"></i><span id="mev-sheet-time"></span></div>
+            <div class="mev-sheet-meta"><i data-lucide="calendar" style="width:13px;height:13px"></i><span id="mev-sheet-date"></span></div>
+            <div class="mev-sheet-actions">
+                <button class="mev-sheet-btn mev-btn-edit" id="mev-sheet-edit"><i data-lucide="pencil"></i><span>Editar</span></button>
+                <button class="mev-sheet-btn mev-btn-delete" id="mev-sheet-delete"><i data-lucide="trash-2"></i><span>Eliminar</span></button>
             </div>
         </div>
     </div>
