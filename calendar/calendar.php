@@ -3,7 +3,7 @@ require_once '../includes/db.php';
 
 // por ahora user_id fijo hasta que haya sesion
 $uid  = 1;
-$stmt = $pdo->prepare("SELECT title, color, start_datetime, all_day FROM tasks WHERE user_id = ? ORDER BY start_datetime");
+$stmt = $pdo->prepare("SELECT id, title, color, start_datetime, all_day FROM tasks WHERE user_id = ? ORDER BY start_datetime");
 $stmt->execute([$uid]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -11,6 +11,7 @@ $events = [];
 foreach ($rows as $r) {
     $dt = new DateTime($r['start_datetime']);
     $events[] = [
+        'id'    => (int)$r['id'],
         'title' => $r['title'],
         'color' => $r['color'] ?: '#7c3aed',
         'day'   => (int)$dt->format('j'),
@@ -246,6 +247,7 @@ function renderCalendar(month, year) {
                 evEl.className = 'cal-event';
                 evEl.style.background = evList[e].color + '22';
                 evEl.style.color = evList[e].color;
+                evEl.dataset.id    = evList[e].id;
                 evEl.dataset.title = evList[e].title;
                 evEl.dataset.time  = evList[e].time;
                 evEl.dataset.color = evList[e].color;
@@ -403,12 +405,58 @@ popup.innerHTML = '<div class="ev-popup-header">'
     + '<button class="ev-popup-close" id="pop-close"><i data-lucide="x"></i></button>'
     + '</div>'
     + '<div class="ev-popup-meta"><i data-lucide="clock" style="width:12px;height:12px"></i><span id="pop-time"></span></div>'
-    + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>';
+    + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>'
+    + '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">'
+    + '<button id="pop-delete" style="background:none;border:none;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;padding:0">Eliminar</button>'
+    + '</div>';
 document.body.appendChild(popup);
 
 document.getElementById('pop-close').addEventListener('click', function() {
     popup.classList.remove('show');
     clearActiveCell();
+});
+
+var deleteTimer = null;
+var currentEventId = null;
+
+document.getElementById('pop-delete').addEventListener('click', function() {
+    var btn = this;
+
+    if (btn.textContent === 'Eliminar') {
+        btn.textContent = '¿Confirmar?';
+        btn.style.color = '#f59e0b';
+        deleteTimer = setTimeout(function() {
+            btn.textContent = 'Eliminar';
+            btn.style.color = '#ef4444';
+        }, 2000);
+        return;
+    }
+
+    clearTimeout(deleteTimer);
+    if (!currentEventId) return;
+
+    fetch('delete_event.php', {
+        method: 'POST',
+        body: new URLSearchParams({ id: currentEventId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.ok) {
+            btn.textContent = 'Eliminar';
+            btn.style.color = '#ef4444';
+            return;
+        }
+        events = events.filter(function(ev) { return ev.id !== currentEventId; });
+        popup.classList.remove('show');
+        clearActiveCell();
+        currentEventId = null;
+        renderCalendar(calState.month, calState.year);
+        renderMiniCal(calState.month, calState.year);
+    })
+    .catch(function() {
+        btn.textContent = 'Eliminar';
+        btn.style.color = '#ef4444';
+    });
 });
 
 var activeCell = null;
@@ -431,6 +479,9 @@ document.addEventListener('click', function(e) {
         popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
         popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
         popup.classList.add('show');
+        currentEventId = el.dataset.id ? parseInt(el.dataset.id) : null;
+        var delBtn = document.getElementById('pop-delete');
+        if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
         clearActiveCell();
         activeCell = el.closest('.cal-cell');
         if (activeCell) activeCell.classList.add('active-cell');
