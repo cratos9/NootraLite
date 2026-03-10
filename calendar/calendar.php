@@ -349,6 +349,10 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             document.getElementById('ev-time').style.opacity = '1';
             document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
             document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+        })
+        .catch(function() {
+            errEl.textContent = 'error al guardar, intenta de nuevo';
+            errEl.style.display = 'block';
         });
 });
 
@@ -532,8 +536,16 @@ function renderMobileEventList(day, month, year) {
 
         var info = document.createElement('div');
         info.className = 'mobile-ev-info';
-        info.innerHTML = '<span class="mobile-ev-title">' + ev.title + '</span>'
-            + '<span class="mobile-ev-time">' + ev.time + '</span>';
+        var titleSpan = document.createElement('span');
+        titleSpan.className = 'mobile-ev-title';
+        titleSpan.textContent = ev.title;
+
+        var timeSpan = document.createElement('span');
+        timeSpan.className = 'mobile-ev-time';
+        timeSpan.textContent = ev.time;
+
+        info.appendChild(titleSpan);
+        info.appendChild(timeSpan);
 
         card.appendChild(bar);
         card.appendChild(info);
