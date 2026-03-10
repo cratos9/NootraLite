@@ -170,9 +170,11 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             } else {
                 events.push(data.event);
             }
+            var msg = editingEventId ? 'Evento actualizado' : 'Evento guardado';
             closeModal();
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
+            showToast(msg);
             document.getElementById('ev-title').value = '';
             document.getElementById('ev-time').value = '';
             document.getElementById('ev-allday').checked = false;
@@ -354,6 +356,17 @@ document.addEventListener('click', function(e) {
         closePopup();
     }
 });
+
+function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'cal-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() {
+        t.classList.add('hide');
+        t.addEventListener('animationend', function() { t.remove(); });
+    }, 2500);
+}
 
 function renderMiniCal(month, year) {
     var grid = document.getElementById('mini-cal-grid');
@@ -614,9 +627,11 @@ document.getElementById('mfp-save').addEventListener('click', function() {
             } else {
                 events.push(data.event);
             }
+            var toastMsg = mobileEditingId ? 'Evento actualizado' : 'Evento guardado';
             closeMobileForm();
             renderMiniCal(calState.month, calState.year);
             renderMobileEventList(null, calState.month, calState.year);
+            showToast(toastMsg);
         })
         .catch(function() {
             errEl.textContent = 'error al guardar, intenta de nuevo';
