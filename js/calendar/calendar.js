@@ -151,9 +151,15 @@ document.querySelector('.btn-save').addEventListener('click', function() {
         url = 'update_event.php';
     }
 
+    var saveBtn = document.querySelector('.btn-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+
     fetch(url, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar';
             if (!data.ok) {
                 errEl.textContent = data.error;
                 errEl.style.display = 'block';
@@ -184,6 +190,8 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
         })
         .catch(function() {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar';
             errEl.textContent = 'error al guardar, intenta de nuevo';
             errEl.style.display = 'block';
         });
