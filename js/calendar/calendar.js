@@ -443,6 +443,8 @@ function renderMiniCal(month, year) {
         }
 
         cell.addEventListener('click', function() {
+            document.querySelectorAll('.mini-day-num.selected').forEach(function(n) { n.classList.remove('selected'); });
+            this.querySelector('.mini-day-num').classList.add('selected');
             renderMobileEventList(parseInt(this.dataset.day), calState.month, calState.year);
         });
 

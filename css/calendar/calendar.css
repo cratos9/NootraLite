@@ -544,8 +544,9 @@ body {
     .mini-day-header { text-align: center; font-size: 10px; font-weight: 600; color: var(--text-muted); padding: 4px 0; }
     .mini-day-cell { display: flex; flex-direction: column; align-items: center; padding: 2px 0; cursor: pointer; border-radius: 6px; transition: background 0.12s; }
     .mini-day-cell:hover .mini-day-num { background: rgba(124,58,237,0.15); }
-    .mini-day-num { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .mini-day-num { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: 500; color: var(--text-secondary); transition: background 0.12s, color 0.12s; }
     .mini-day-num.today { background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; }
+    .mini-day-num.selected { background: rgba(124,58,237,0.25); color: var(--text-primary); }
     .mini-dots { display: flex; gap: 2px; margin-top: 2px; min-height: 4px; }
     .mini-dot { width: 4px; height: 4px; border-radius: 50%; }
 
