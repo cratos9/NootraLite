@@ -189,6 +189,16 @@ document.querySelector('.btn-save').addEventListener('click', function() {
         });
 });
 
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (modalOverlay.classList.contains('show')) { closeModal(); return; }
+    if (popup.classList.contains('show')) { closePopup(); return; }
+    var mevSheet = document.getElementById('mev-sheet-overlay');
+    if (mevSheet && mevSheet.classList.contains('show')) { closeMevSheet(); return; }
+    var mfp = document.getElementById('mobile-form-panel');
+    if (mfp && mfp.classList.contains('open')) closeMobileForm();
+});
+
 document.querySelector('.btn-today').addEventListener('click', function() {
     var hoy = new Date();
     calState.month = hoy.getMonth();
