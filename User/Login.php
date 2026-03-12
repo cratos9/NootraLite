@@ -15,21 +15,6 @@ $user = new User($conn);
 
 $mensaje = "";
 
-session_start();
-
-if(!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
-    $token = $_COOKIE['remember_me'];
-
-    $sql = "SELECT * FROM users WHERE remember_token = ? AND remember_expires > NOW()";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$token]);
-    $userInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($userInfo){
-        $_SESSION['user'] = $userInfo;
-        $mensaje = "Sesión iniciada automáticamente: " . $userInfo['full_name'];
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -45,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare($sql);
             $stmt->execute([$token, $userInfo['id']]);
         }
-        $mensaje = "Sesión iniciada correctamente: " . $userInfo['full_name'];
+        header("Location: ../Dashboard/index.php");
+        exit();
     } else {
         $mensaje = "Error al iniciar sesión";
     }

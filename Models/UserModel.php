@@ -38,13 +38,14 @@ class User{
             $sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$user['id']]);
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['user'] = $user;
             return $user;
         } else {
             return false;
         }
-
-        session_start();
-        $_SESSION['user'] = $user;
     }
 
     public function Logout(){
