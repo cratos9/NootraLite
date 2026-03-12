@@ -35,6 +35,9 @@ class User{
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
+            $sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([$user['id']]);
             return $user;
         } else {
             return false;
@@ -47,6 +50,9 @@ class User{
     public function Logout(){
         session_start();
         session_destroy();
+        setcookie('remember_me', '', time() - 3600, "/");
+        header('Location: Login.php');
+        exit;
     }
 }
 ?>
