@@ -192,6 +192,11 @@
         </div>
     </div>
 
+    <div class="agenda-wrap" id="agenda-wrap" style="display:none">
+        <h3 class="agenda-title" id="agenda-title"></h3>
+        <div id="agenda-list"></div>
+    </div>
+
     <div class="calendar-wrap">
         <div class="cal-grid">
             <?php foreach ($weekDays as $d): ?>

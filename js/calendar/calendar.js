@@ -11,6 +11,7 @@ document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 var calState = { month: 2, year: 2026 };
+var currentView = 'month';
 
 function renderCalendar(month, year) {
     var firstDay = new Date(year, month, 1).getDay();
@@ -184,6 +185,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             closeModal();
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
+            if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
             showToast(msg);
             document.getElementById('ev-title').value = '';
             document.getElementById('ev-time').value = '';
@@ -216,6 +218,7 @@ document.querySelector('.btn-today').addEventListener('click', function() {
     calState.month = hoy.getMonth();
     calState.year = hoy.getFullYear();
     renderCalendar(calState.month, calState.year);
+    if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
 });
 
 var sidebar = document.querySelector('.sidebar');
@@ -238,6 +241,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
         calState.year--;
     }
     renderCalendar(calState.month, calState.year);
+    if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
 });
 
 document.getElementById('next-month').addEventListener('click', function() {
@@ -247,6 +251,7 @@ document.getElementById('next-month').addEventListener('click', function() {
         calState.year++;
     }
     renderCalendar(calState.month, calState.year);
+    if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
 });
 
 // popup de ver evento
@@ -330,6 +335,7 @@ document.getElementById('pop-delete').addEventListener('click', function() {
         closePopup(function() {
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
+            if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
         });
         return;
     })
@@ -518,10 +524,138 @@ function renderMobileEventList(day, month, year) {
     }
 }
 
+function renderAgenda(month, year) {
+    var list = document.getElementById('agenda-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    document.getElementById('agenda-title').textContent = 'Próximos eventos — ' + meses[month] + ' ' + year;
+
+    var filtered = [];
+    for (var i = 0; i < events.length; i++) {
+        if (events[i].month === month && events[i].year === year) filtered.push(events[i]);
+    }
+    filtered.sort(function(a, b) { return a.day - b.day; });
+
+    if (filtered.length === 0) {
+        var empty = document.createElement('p');
+        empty.style.cssText = 'color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0';
+        empty.textContent = 'Sin eventos este mes';
+        list.appendChild(empty);
+        return;
+    }
+
+    var mesAbrev = meses[month].substring(0, 3).toUpperCase();
+
+    for (var j = 0; j < filtered.length; j++) {
+        var ev = filtered[j];
+        var item = document.createElement('div');
+        item.className = 'agenda-item';
+
+        var dateBlock = document.createElement('div');
+        dateBlock.className = 'agenda-date';
+        dateBlock.style.background = ev.color + '22';
+
+        var abbr = document.createElement('span');
+        abbr.className = 'agenda-month-abbr';
+        abbr.style.color = ev.color;
+        abbr.textContent = mesAbrev;
+
+        var dayNum = document.createElement('span');
+        dayNum.className = 'agenda-day-num';
+        dayNum.style.color = ev.color;
+        dayNum.textContent = ev.day;
+
+        dateBlock.appendChild(abbr);
+        dateBlock.appendChild(dayNum);
+
+        var info = document.createElement('div');
+        info.className = 'agenda-info';
+
+        var titleEl = document.createElement('span');
+        titleEl.className = 'agenda-ev-title';
+        titleEl.textContent = ev.title;
+
+        var metaEl = document.createElement('span');
+        metaEl.className = 'agenda-ev-meta';
+        metaEl.textContent = ev.time || 'Todo el día';
+
+        info.appendChild(titleEl);
+        info.appendChild(metaEl);
+
+        var dot = document.createElement('div');
+        dot.className = 'agenda-dot';
+        dot.style.background = ev.color;
+
+        item.appendChild(dateBlock);
+        item.appendChild(info);
+        item.appendChild(dot);
+
+        item.addEventListener('click', (function(evData, itemEl) {
+            return function() {
+                if (window.innerWidth <= 480) {
+                    openMobileEventSheet(evData.id);
+                } else {
+                    document.getElementById('pop-dot').style.background = evData.color;
+                    document.getElementById('pop-title').textContent = evData.title;
+                    document.getElementById('pop-time').textContent = evData.time || 'Todo el día';
+                    document.getElementById('pop-date').textContent = evData.day + ' de ' + meses[evData.month] + ' ' + evData.year;
+                    var rect = itemEl.getBoundingClientRect();
+                    popup.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+                    popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+                    popup.classList.add('show');
+                    currentEventId = evData.id;
+                    var delBtn = document.getElementById('pop-delete');
+                    if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+                    lucide.createIcons();
+                }
+            };
+        })(ev, item));
+
+        list.appendChild(item);
+    }
+}
+
+function switchView(view) {
+    currentView = view;
+    var calWrap = document.querySelector('.calendar-wrap');
+    var agendaWrap = document.getElementById('agenda-wrap');
+    var mobilePanel = document.querySelector('.mobile-cal-panel');
+
+    if (view === 'agenda') {
+        calWrap.style.display = 'none';
+        if (mobilePanel) mobilePanel.style.display = 'none';
+        agendaWrap.style.display = '';
+        agendaWrap.style.animation = 'none';
+        void agendaWrap.offsetWidth;
+        agendaWrap.style.animation = 'agendaFadeIn 0.18s ease both';
+        renderAgenda(calState.month, calState.year);
+    } else {
+        agendaWrap.style.display = 'none';
+        if (window.innerWidth <= 480) {
+            calWrap.style.display = 'none';
+            if (mobilePanel) mobilePanel.style.display = '';
+        } else {
+            calWrap.style.display = '';
+        }
+    }
+}
+
 document.querySelectorAll('.view-chip').forEach(function(chip) {
     chip.addEventListener('click', function() {
         document.querySelectorAll('.view-chip').forEach(function(c) { c.classList.remove('active'); });
         this.classList.add('active');
+        var view = this.textContent.trim() === 'Agenda' ? 'agenda' : 'month';
+        switchView(view);
+    });
+});
+
+document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        var view = this.textContent.trim() === 'Agenda' ? 'agenda' : 'month';
+        switchView(view);
     });
 });
 
@@ -665,6 +799,7 @@ document.getElementById('mfp-save').addEventListener('click', function() {
             closeMobileForm();
             renderMiniCal(calState.month, calState.year);
             renderMobileEventList(null, calState.month, calState.year);
+            if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
             showToast(toastMsg);
         })
         .catch(function() {
@@ -748,6 +883,7 @@ document.getElementById('mev-sheet-delete').addEventListener('click', function()
         mobileCurrentEvId = null;
         renderMiniCal(calState.month, calState.year);
         renderMobileEventList(null, calState.month, calState.year);
+        if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
         closeMevSheet();
     });
 });
