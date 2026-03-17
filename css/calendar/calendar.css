@@ -779,6 +779,110 @@ body {
     transition: color 0.15s;
 }
 
+/* vista agenda */
+.agenda-wrap {
+    padding: 20px 24px;
+    max-width: 720px;
+}
+
+.agenda-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.1s;
+}
+
+.agenda-item:hover { background: var(--bg-tertiary); }
+.agenda-item:active { transform: scale(0.99); }
+
+.agenda-date {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.agenda-month-abbr {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.agenda-day-num {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.agenda-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.agenda-ev-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agenda-ev-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.agenda-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@keyframes agendaFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* agenda light mode */
+.light-mode .agenda-item { background: #f8fafc; border-color: #e2e8f0; }
+.light-mode .agenda-item:hover { background: #f1f5f9; }
+
+/* agenda responsive */
+@media screen and (max-width: 768px) {
+    .agenda-wrap { padding: 16px; }
+}
+
+@media screen and (max-width: 480px) {
+    .agenda-wrap { padding: 12px 16px 80px; }
+    .agenda-item { padding: 12px 14px; gap: 12px; }
+    .agenda-date { width: 42px; height: 42px; }
+    .agenda-day-num { font-size: 17px; }
+    .agenda-ev-title { font-size: 13px; }
+}
+
 /* toast */
 .cal-toast {
     position: fixed;
