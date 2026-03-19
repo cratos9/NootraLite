@@ -12,6 +12,16 @@ var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','
 
 var calState = { month: 2, year: 2026 };
 var currentView = 'month';
+var weekStart = null;
+
+function getMonday(date) {
+    var d = new Date(date);
+    var day = d.getDay();
+    var diff = (day === 0) ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
 
 function renderCalendar(month, year) {
     var firstDay = new Date(year, month, 1).getDay();
@@ -215,6 +225,11 @@ document.addEventListener('keydown', function(e) {
 
 document.querySelector('.btn-today').addEventListener('click', function() {
     var hoy = new Date();
+    if (currentView === 'week') {
+        weekStart = getMonday(hoy);
+        renderWeek(weekStart);
+        return;
+    }
     calState.month = hoy.getMonth();
     calState.year = hoy.getFullYear();
     renderCalendar(calState.month, calState.year);
@@ -235,6 +250,12 @@ overlay.addEventListener('click', function() {
 });
 
 document.getElementById('prev-month').addEventListener('click', function() {
+    if (currentView === 'week') {
+        if (!weekStart) weekStart = getMonday(new Date());
+        weekStart.setDate(weekStart.getDate() - 7);
+        renderWeek(weekStart);
+        return;
+    }
     calState.month--;
     if (calState.month < 0) {
         calState.month = 11;
@@ -245,6 +266,12 @@ document.getElementById('prev-month').addEventListener('click', function() {
 });
 
 document.getElementById('next-month').addEventListener('click', function() {
+    if (currentView === 'week') {
+        if (!weekStart) weekStart = getMonday(new Date());
+        weekStart.setDate(weekStart.getDate() + 7);
+        renderWeek(weekStart);
+        return;
+    }
     calState.month++;
     if (calState.month > 11) {
         calState.month = 0;
@@ -618,24 +645,155 @@ function renderAgenda(month, year) {
     }
 }
 
+var diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var mesesAbrev = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function renderWeek(startDate) {
+    var header = document.getElementById('week-header');
+    var grid = document.getElementById('week-grid');
+    if (!header || !grid) return;
+
+    header.innerHTML = '';
+    grid.innerHTML = '';
+
+    var hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    var endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+
+    // label del rango en el topbar
+    var label = document.getElementById('month-label');
+    if (label) {
+        var desde = startDate.getDate();
+        var hasta = endDate.getDate();
+        var mesDesde = mesesAbrev[startDate.getMonth()];
+        var mesHasta = mesesAbrev[endDate.getMonth()];
+        if (startDate.getMonth() === endDate.getMonth()) {
+            label.textContent = desde + ' - ' + hasta + ' ' + mesDesde + ' ' + startDate.getFullYear();
+        } else {
+            label.textContent = desde + ' ' + mesDesde + ' - ' + hasta + ' ' + mesHasta + ' ' + endDate.getFullYear();
+        }
+    }
+
+    // actualizar calState con el jueves de la semana (referencia ISO)
+    var jueves = new Date(startDate);
+    jueves.setDate(jueves.getDate() + 3);
+    calState.month = jueves.getMonth();
+    calState.year = jueves.getFullYear();
+
+    for (var d = 0; d < 7; d++) {
+        var curr = new Date(startDate);
+        curr.setDate(curr.getDate() + d);
+        var isToday = curr.getTime() === hoy.getTime();
+
+        // header cell
+        var hCell = document.createElement('div');
+        hCell.className = 'week-header-day' + (isToday ? ' today' : '');
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = diasSemana[(curr.getDay())];
+        var numSpan = document.createElement('span');
+        numSpan.className = 'week-day-num';
+        numSpan.textContent = curr.getDate();
+        hCell.appendChild(nameSpan);
+        hCell.appendChild(numSpan);
+        header.appendChild(hCell);
+
+        // columna del dia
+        var col = document.createElement('div');
+        col.className = 'week-day-col';
+
+        // label visible en mobile
+        var mLabel = document.createElement('span');
+        mLabel.className = 'week-day-label';
+        mLabel.textContent = diasSemana[curr.getDay()] + ' ' + curr.getDate();
+        col.appendChild(mLabel);
+
+        // filtrar eventos del dia
+        var dayEvents = events.filter(function(ev) {
+            return ev.day === curr.getDate() && ev.month === curr.getMonth() && ev.year === curr.getFullYear();
+        });
+
+        if (dayEvents.length === 0 && window.innerWidth <= 480) {
+            // en mobile mostrar algo si no hay eventos
+            var noEv = document.createElement('span');
+            noEv.style.cssText = 'font-size:11px;color:var(--text-muted)';
+            noEv.textContent = '—';
+            col.appendChild(noEv);
+        }
+
+        for (var e = 0; e < dayEvents.length; e++) {
+            (function(ev) {
+                var card = document.createElement('div');
+                card.className = 'week-event';
+                card.style.background = ev.color + '33';
+                card.style.borderLeft = '3px solid ' + ev.color;
+
+                var titleEl = document.createElement('span');
+                titleEl.textContent = ev.title;
+                card.appendChild(titleEl);
+
+                if (ev.time && !ev.all_day) {
+                    var timeEl = document.createElement('span');
+                    timeEl.className = 'week-event-time';
+                    timeEl.textContent = ev.time;
+                    card.appendChild(timeEl);
+                }
+
+                card.addEventListener('click', function() {
+                    if (window.innerWidth <= 480) {
+                        openMobileEventSheet(ev.id);
+                    } else {
+                        var rect = card.getBoundingClientRect();
+                        currentEventId = ev.id;
+                        var popup = document.getElementById('ev-popup');
+                        if (!popup) return;
+                        popup.querySelector('#pop-title').textContent = ev.title;
+                        popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
+                        popup.querySelector('#pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
+                        popup.style.display = 'block';
+                        var top = rect.bottom + window.scrollY + 8;
+                        var left = rect.left + window.scrollX;
+                        popup.style.top = top + 'px';
+                        popup.style.left = left + 'px';
+                    }
+                });
+
+                col.appendChild(card);
+            })(dayEvents[e]);
+        }
+
+        grid.appendChild(col);
+    }
+
+    lucide.createIcons();
+}
+
 function switchView(view) {
     currentView = view;
     var calWrap = document.querySelector('.calendar-wrap');
     var agendaWrap = document.getElementById('agenda-wrap');
+    var weekWrap = document.getElementById('week-wrap');
     var mobilePanel = document.querySelector('.mobile-cal-panel');
 
+    // esconder todo primero
+    calWrap.style.display = 'none';
+    agendaWrap.style.display = 'none';
+    if (weekWrap) weekWrap.style.display = 'none';
+    if (mobilePanel) mobilePanel.style.display = 'none';
+
     if (view === 'agenda') {
-        calWrap.style.display = 'none';
-        if (mobilePanel) mobilePanel.style.display = 'none';
         agendaWrap.style.display = '';
         agendaWrap.style.animation = 'none';
         void agendaWrap.offsetWidth;
         agendaWrap.style.animation = 'agendaFadeIn 0.18s ease both';
         renderAgenda(calState.month, calState.year);
+    } else if (view === 'week') {
+        if (weekWrap) weekWrap.style.display = '';
+        if (!weekStart) weekStart = getMonday(new Date());
+        renderWeek(weekStart);
     } else {
-        agendaWrap.style.display = 'none';
         if (window.innerWidth <= 480) {
-            calWrap.style.display = 'none';
             if (mobilePanel) mobilePanel.style.display = '';
         } else {
             calWrap.style.display = '';
@@ -647,7 +805,8 @@ document.querySelectorAll('.view-chip').forEach(function(chip) {
     chip.addEventListener('click', function() {
         document.querySelectorAll('.view-chip').forEach(function(c) { c.classList.remove('active'); });
         this.classList.add('active');
-        var view = this.textContent.trim() === 'Agenda' ? 'agenda' : 'month';
+        var txt = this.textContent.trim();
+        var view = txt === 'Agenda' ? 'agenda' : txt === 'Semana' ? 'week' : 'month';
         switchView(view);
     });
 });
@@ -656,7 +815,8 @@ document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(b) { b.classList.remove('active'); });
         this.classList.add('active');
-        var view = this.textContent.trim() === 'Agenda' ? 'agenda' : 'month';
+        var txt = this.textContent.trim();
+        var view = txt === 'Agenda' ? 'agenda' : txt === 'Semana' ? 'week' : 'month';
         switchView(view);
     });
 });
