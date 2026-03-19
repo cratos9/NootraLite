@@ -485,10 +485,11 @@ function renderMobileEventList(day, month, year) {
     });
 
     if (filtered.length === 0) {
-        var empty = document.createElement('p');
-        empty.style.cssText = 'color:var(--text-muted);font-size:12px;padding:12px 0;text-align:center';
-        empty.textContent = 'Sin eventos';
+        var empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<i data-lucide="calendar-x"></i><p>Sin eventos para hoy</p>';
         list.appendChild(empty);
+        lucide.createIcons();
         return;
     }
 
@@ -538,10 +539,11 @@ function renderAgenda(month, year) {
     filtered.sort(function(a, b) { return a.day - b.day; });
 
     if (filtered.length === 0) {
-        var empty = document.createElement('p');
-        empty.style.cssText = 'color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0';
-        empty.textContent = 'Sin eventos este mes';
+        var empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<i data-lucide="calendar-x"></i><p>No hay eventos este mes</p>';
         list.appendChild(empty);
+        lucide.createIcons();
         return;
     }
 
