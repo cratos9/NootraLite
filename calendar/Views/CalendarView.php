@@ -11,18 +11,7 @@
 <body>
 <script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light-mode');</script>
 
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<aside class="sidebar">
-    <div class="sidebar-logo">
-        <div class="logo-icon">N</div>
-        <span class="logo-text">NOOTRA</span>
-    </div>
-    <nav class="sidebar-nav">
-        <a class="nav-item" href="#"><i data-lucide="house"></i> Dashboard</a>
-        <a class="nav-item active" href="calendar.php"><i data-lucide="calendar-days"></i> Calendario</a>
-        <a class="nav-item" href="#"><i data-lucide="book-open"></i> Cuadernos</a>
-    </nav>
-</aside>
+<?php $activePage = 'calendar'; include $_SERVER['DOCUMENT_ROOT'] . '/includes/sidebar.php'; ?>
 
 <div class="main">
     <div class="topbar">
@@ -195,6 +184,11 @@
     <div class="agenda-wrap" id="agenda-wrap" style="display:none">
         <h3 class="agenda-title" id="agenda-title"></h3>
         <div id="agenda-list"></div>
+    </div>
+
+    <div class="week-wrap" id="week-wrap" style="display:none">
+        <div class="week-header" id="week-header"></div>
+        <div class="week-grid" id="week-grid"></div>
     </div>
 
     <div class="calendar-wrap">
