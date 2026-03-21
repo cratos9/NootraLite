@@ -1,0 +1,29 @@
+<?php
+require_once '../config/db.php';
+require_once '../Models/EventModel.php';
+
+$database = new Database();
+$pdo = $database->connect();
+
+// por ahora user_id fijo hasta que haya sesion
+$uid = 1;
+$model = new EventModel($pdo);
+$rows = $model->getAll($uid);
+
+$events = [];
+foreach ($rows as $r) {
+    $dt = new DateTime($r['start_datetime']);
+    $events[] = [
+        'id'    => (int)$r['id'],
+        'title' => $r['title'],
+        'color' => $r['color'] ?: '#7c3aed',
+        'day'   => (int)$dt->format('j'),
+        'month' => (int)$dt->format('n') - 1, // 0-indexed igual que JS
+        'year'  => (int)$dt->format('Y'),
+        'time'  => $r['all_day'] ? 'Todo el día' : $dt->format('H:i'),
+    ];
+}
+
+$weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+require_once 'Views/CalendarView.php';
