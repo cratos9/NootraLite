@@ -771,13 +771,13 @@ function renderWeek(startDate) {
 
 function switchView(view) {
     currentView = view;
-    var calWrap = document.querySelector('.calendar-wrap');
+    var calLayout = document.querySelector('.calendar-layout');
     var agendaWrap = document.getElementById('agenda-wrap');
     var weekWrap = document.getElementById('week-wrap');
     var mobilePanel = document.querySelector('.mobile-cal-panel');
 
     // esconder todo primero
-    calWrap.style.display = 'none';
+    if (calLayout) calLayout.style.display = 'none';
     agendaWrap.style.display = 'none';
     if (weekWrap) weekWrap.style.display = 'none';
     if (mobilePanel) mobilePanel.style.display = 'none';
@@ -796,7 +796,7 @@ function switchView(view) {
         if (window.innerWidth <= 480) {
             if (mobilePanel) mobilePanel.style.display = '';
         } else {
-            calWrap.style.display = '';
+            if (calLayout) calLayout.style.display = '';
         }
     }
 }

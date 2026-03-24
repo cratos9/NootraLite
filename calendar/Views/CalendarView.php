@@ -191,13 +191,21 @@
         <div class="week-grid" id="week-grid"></div>
     </div>
 
-    <div class="calendar-wrap">
-        <div class="cal-grid">
-            <?php foreach ($weekDays as $d): ?>
-            <div class="cal-header-day"><?= $d ?></div>
-            <?php endforeach; ?>
-            <!-- las celdas las genera JS -->
+    <div class="calendar-layout">
+        <div class="calendar-wrap">
+            <div class="cal-grid">
+                <?php foreach ($weekDays as $d): ?>
+                <div class="cal-header-day"><?= $d ?></div>
+                <?php endforeach; ?>
+                <!-- las celdas las genera JS -->
+            </div>
         </div>
+        <aside class="upcoming-panel" id="upcoming-panel">
+            <h3 class="upcoming-title">Próximos eventos</h3>
+            <div class="upcoming-sections" id="upcoming-sections">
+                <!-- JS va a popular esto en sesión 2 -->
+            </div>
+        </aside>
     </div>
 </div>
 
