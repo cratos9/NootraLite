@@ -6,6 +6,7 @@
     <title>Calendario — NOOTRA</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="../css/includes/sidebar.css">
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
