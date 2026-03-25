@@ -1,5 +1,8 @@
 <?php
 
+require_once '../config/encrypt.php';
+require_once '../config/db.php';
+
 class User{
     private $conn;
 
@@ -18,6 +21,7 @@ class User{
         }
 
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $fullname = encrypt_data($fullname);
 
         $sql = "INSERT INTO users (full_name, email, password_hash, username) VALUES (?, ?, ?, ?)";
 
