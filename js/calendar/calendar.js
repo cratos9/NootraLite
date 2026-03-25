@@ -196,6 +196,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
             if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+            renderUpcoming();
             showToast(msg);
             document.getElementById('ev-title').value = '';
             document.getElementById('ev-time').value = '';
@@ -234,6 +235,7 @@ document.querySelector('.btn-today').addEventListener('click', function() {
     calState.year = hoy.getFullYear();
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+    renderUpcoming();
 });
 
 var sidebar = document.querySelector('.sidebar');
@@ -263,6 +265,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
     }
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+    renderUpcoming();
 });
 
 document.getElementById('next-month').addEventListener('click', function() {
@@ -279,6 +282,7 @@ document.getElementById('next-month').addEventListener('click', function() {
     }
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+    renderUpcoming();
 });
 
 // popup de ver evento
@@ -363,6 +367,7 @@ document.getElementById('pop-delete').addEventListener('click', function() {
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
             if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+            renderUpcoming();
         });
         return;
     })
@@ -837,8 +842,80 @@ document.querySelector('.mini-next').addEventListener('click', function() {
     renderMobileEventList(null, calState.month, calState.year);
 });
 
+// panel de proximos eventos
+function renderUpcoming() {
+    var panel = document.getElementById('upcoming-sections');
+    if (!panel) return;
+
+    var hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    var manana = new Date(hoy); manana.setDate(hoy.getDate() + 1);
+    var finSemana = new Date(hoy); finSemana.setDate(hoy.getDate() + 7);
+
+    var proximos = events.filter(function(ev) {
+        return new Date(ev.year, ev.month, ev.day) >= hoy;
+    });
+    proximos.sort(function(a, b) {
+        return new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day);
+    });
+
+    var grupos = { hoy: [], manana: [], semana: [], resto: [] };
+    proximos.forEach(function(ev) {
+        var d = new Date(ev.year, ev.month, ev.day);
+        if (d.getTime() === hoy.getTime()) grupos.hoy.push(ev);
+        else if (d.getTime() === manana.getTime()) grupos.manana.push(ev);
+        else if (d < finSemana) grupos.semana.push(ev);
+        else grupos.resto.push(ev);
+    });
+
+    var labels = { hoy: 'Hoy', manana: 'Mañana', semana: 'Esta semana', resto: 'Próximo' };
+    var html = '';
+    ['hoy', 'manana', 'semana', 'resto'].forEach(function(k) {
+        if (!grupos[k].length) return;
+        html += '<div class="upcoming-section"><div class="upcoming-section-label">' + labels[k] + '</div>';
+        grupos[k].forEach(function(ev) {
+            html += '<div class="upcoming-event-card" data-id="' + ev.id + '">'
+                + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
+                + '<div class="upcoming-event-info">'
+                + '<div class="upcoming-event-title">' + ev.title + '</div>'
+                + '<div class="upcoming-event-time">' + (ev.time === 'Todo el dia' ? 'Todo el día' : ev.time) + '</div>'
+                + '</div></div>';
+        });
+        html += '</div>';
+    });
+
+    if (!proximos.length) {
+        html = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0">Sin eventos próximos</p>';
+    }
+
+    panel.innerHTML = html;
+
+    panel.querySelectorAll('.upcoming-event-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var id = parseInt(card.dataset.id);
+            var ev = events.find(function(e) { return e.id === id; });
+            if (!ev) return;
+            if (window.innerWidth <= 480) { openMobileEventSheet(id); return; }
+            document.getElementById('pop-dot').style.background = ev.color;
+            document.getElementById('pop-title').textContent = ev.title;
+            document.getElementById('pop-time').textContent = ev.time === 'Todo el dia' ? 'Todo el día' : ev.time;
+            document.getElementById('pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
+            var rect = card.getBoundingClientRect();
+            popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+            popup.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 288)) + 'px';
+            popup.classList.add('show');
+            currentEventId = id;
+            var delBtn = document.getElementById('pop-delete');
+            if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+            clearActiveCell();
+            lucide.createIcons();
+        });
+    });
+}
+
 renderCalendar(calState.month, calState.year);
 renderMiniCal(calState.month, calState.year);
+renderUpcoming();
 
 var _hoyInit = new Date();
 var _mismoMes = _hoyInit.getMonth() === calState.month && _hoyInit.getFullYear() === calState.year;
@@ -962,6 +1039,7 @@ document.getElementById('mfp-save').addEventListener('click', function() {
             renderMiniCal(calState.month, calState.year);
             renderMobileEventList(null, calState.month, calState.year);
             if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+            renderUpcoming();
             showToast(toastMsg);
         })
         .catch(function() {
@@ -1046,6 +1124,7 @@ document.getElementById('mev-sheet-delete').addEventListener('click', function()
         renderMiniCal(calState.month, calState.year);
         renderMobileEventList(null, calState.month, calState.year);
         if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
+        renderUpcoming();
         closeMevSheet();
     });
 });
