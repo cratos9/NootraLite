@@ -33,6 +33,12 @@
     background-clip: text;
 }
 
+.sidebar-nav-bottom {
+    margin-top: auto;
+    padding-top: 0;
+    padding-bottom: 20px;
+}
+
 .sidebar-nav { padding: 16px 12px; }
 
 .nav-item {

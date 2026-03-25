@@ -12,8 +12,6 @@
 <body>
 <script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light-mode');</script>
 
-<?php $activePage = 'calendar'; include $_SERVER['DOCUMENT_ROOT'] . '/includes/sidebar.php'; ?>
-
 <div class="main">
     <div class="topbar">
         <div class="topbar-left">
