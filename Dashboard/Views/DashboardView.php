@@ -6,6 +6,10 @@
     <title>Document</title>
 </head>
 <body>
-    dashboard
+    <p>Bienvenido al Dashboard, <?php echo decrypt_data($_SESSION['user']['full_name']); ?>!</p>
+    <p>Email: <?php echo $_SESSION['user']['email']; ?></p>
+    <p>Username: <?php echo $_SESSION['user']['username']; ?></p>
+    <p>ID: <?php echo $_SESSION['user']['id']; ?></p>
+    <p>Last Login: <?php echo $_SESSION['user']['last_login']; ?></p>
 </body>
 </html>
