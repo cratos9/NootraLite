@@ -238,18 +238,6 @@ document.querySelector('.btn-today').addEventListener('click', function() {
     renderUpcoming();
 });
 
-var sidebar = document.querySelector('.sidebar');
-var overlay = document.getElementById('sidebar-overlay');
-
-document.querySelector('.btn-hamburger').addEventListener('click', function() {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('show');
-});
-
-overlay.addEventListener('click', function() {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('show');
-});
 
 document.getElementById('prev-month').addEventListener('click', function() {
     if (currentView === 'week') {

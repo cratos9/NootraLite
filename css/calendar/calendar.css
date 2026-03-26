@@ -58,6 +58,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    margin-left: 60px;
 }
 
 .topbar {
@@ -435,6 +436,8 @@ body {
 @media screen and (max-width: 768px) {
     body { flex-direction: column; }
 
+    .main { margin-left: 0; }
+
     .topbar { padding: 0 16px; gap: 8px; }
     .topbar-right { gap: 8px; }
 
@@ -497,11 +500,39 @@ body {
     .mobile-ev-title { font-size: 13px; font-weight: 600; }
     .mobile-ev-time { font-size: 11px; color: var(--text-muted); }
 
-    .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: var(--bg-secondary); border-top: 1px solid var(--border); align-items: center; justify-content: space-around; z-index: 100; }
-    .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: var(--text-muted); font-size: 10px; font-weight: 500; padding: 6px 12px; transition: color 0.15s; }
-    .bottom-nav-item.active { color: #a78bfa; }
-    .bottom-nav-item:hover { color: var(--text-secondary); }
-    .bottom-nav-item i { width: 20px; height: 20px; }
+    .bottom-nav {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+        height: 64px; background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        align-items: center; justify-content: space-around;
+        z-index: 100; padding: 0 4px;
+    }
+    .bottom-nav-item {
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        text-decoration: none; color: var(--text-muted);
+        font-size: 10px; font-weight: 500;
+        padding: 6px 10px; border-radius: 12px;
+        transition: color 0.15s, transform 0.15s;
+        position: relative; flex: 1;
+    }
+    .bottom-nav-item svg { width: 20px; height: 20px; transition: transform 0.15s; }
+    .bottom-nav-item:active { transform: scale(0.92); }
+    .bottom-nav-item.active {
+        color: #a78bfa;
+    }
+    .bottom-nav-item.active span {
+        background: linear-gradient(135deg, #7c3aed, #ec4899);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; font-weight: 700;
+    }
+    .bottom-nav-item.active::after {
+        content: '';
+        position: absolute; bottom: 2px;
+        width: 4px; height: 4px; border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #ec4899);
+    }
+    .bottom-nav-item:not(.active):hover { color: var(--text-secondary); }
+    .light-mode .bottom-nav { background: #fff; border-top-color: #e2e8f0; }
 
     body { padding-bottom: 64px; }
 }
