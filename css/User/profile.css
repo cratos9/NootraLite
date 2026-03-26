@@ -1,0 +1,75 @@
+:root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary: #16213e;
+    --accent-purple: #7c3aed;
+    --accent-pink: #ec4899;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+    --border: #2d2d4e;
+}
+
+.light-mode {
+    --bg-primary: #f0f2f8;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8ecf4;
+    --text-primary: #1e2030;
+    --text-secondary: #526070;
+    --text-muted: #8090a8;
+    --border: #cdd5e8;
+}
+
+body{
+    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    margin: 0;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    display: flex;
+}
+
+main{
+    padding: 20px;
+}
+
+.principalInfo{
+    display: flex;
+}
+
+.image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: var(--accent-purple);
+}
+
+.user{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 20px;
+}
+
+.full-name{
+    font-size: 64px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.bio{
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.imageUser{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.imageUser p{
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
