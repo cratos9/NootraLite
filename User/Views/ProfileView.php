@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="../js/includes/lightMode.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/User/profile.css">
     <link rel="stylesheet" href="../css/includes/sidebar.css">
+    <link rel="stylesheet" href="../css/includes/lightMode.css">
     <title>Perfil</title>
 </head>
 <body>
@@ -17,13 +19,58 @@
                 <p>Cambiar foto de perfil</p>
             </div>
             <div class='user'>
-                <p class="full-name"><?php echo decrypt_data($_SESSION['user']['full_name']); ?> <i data-lucide="pencil"></i></p>
+                <p class="full-name"><?php echo $_SESSION['user']['username']; ?> <i data-lucide="pencil"></i></p>
                 <p class="bio"><?= !empty($_SESSION['user']['bio']) ? $_SESSION['user']['bio'] : "Sin biografía" ?> <i data-lucide="pencil"></i></p>
             </div>
         </section>
-        <section class="userInfo"><i data-lucide="user"></i></section>
-        <section class="schoolInfo"><i data-lucide="school"></i></section>
-        <section class="useInfo"><i data-lucide="boxes"></i></section>
+        <section class="userInfo">
+            <header class="title"><i data-lucide="user" class="icon-info"></i> Información del usuario<hr></header>
+            <section class="user-details">
+                <div class="info">
+                    <p class="label">Nombre:</p>
+                    <p class="data"><?php echo decrypt_data($_SESSION['user']['full_name']); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Correo:</p>
+                    <p class="data"><?php echo $_SESSION['user']['email']; ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Teléfono:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : "No proporcionado" ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">País:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['country']) ? $_SESSION['user']['country'] : "No proporcionado" ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Estado:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['city']) ? $_SESSION['user']['city'] : "No proporcionado" ?></p>
+                </div>
+            </section>
+        </section>
+        <section class="schoolInfo">
+            <header class="title"><i data-lucide="school" class="icon-info"></i> Información de la escuela<hr></header>
+            <section class="user-details">
+                <div class="info">
+                    <p class="label">Escuela:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['school']) ? $_SESSION['user']['institution'] : "No proporcionado" ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Carrera:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['grade']) ? $_SESSION['user']['carrer'] : "No proporcionado" ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">ID de estudiante:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['student_id']) ? $_SESSION['user']['student_id'] : "No proporcionado" ?></p>
+                </div>
+            </section>
+        </section>
+        <section class="useInfo">
+            <header class="title"><i data-lucide="boxes" class="icon-info"></i> Información de uso<hr></header>
+            <section class="user-details">
+                <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
+            </section>
+        </section>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
 </body>

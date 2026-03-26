@@ -1,0 +1,52 @@
+:root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary: #16213e;
+    --accent-purple: #7c3aed3c;
+    --accent-pink: #ec4899;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+    --border: #2d2d4e;
+}
+
+.light-mode {
+    --bg-primary: #f0f2f8;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8ecf4;
+    --text-primary: #1e2030;
+    --text-secondary: #526070;
+    --text-muted: #8090a8;
+    --border: #cdd5e8;
+}
+
+.icon{
+    width: 45px;
+    height: 45px;
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px;
+    background-color: #7c3aed;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+}
+
+.icon-purple{ color: rgb(255, 72, 255); }
+
+.icon-sun{
+    color: rgb(255, 72, 255);
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    nav-right: 20px;
+    transform: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.hidden{
+    display: none;
+}
