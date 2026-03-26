@@ -15,6 +15,7 @@
 <div class="main">
     <div class="topbar">
         <div class="topbar-left">
+            <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
             <div class="logo-icon tb-logo">N</div>
             <span class="logo-text tb-logotext">NOOTRA</span>
             <span class="topbar-title">Calendario Académico</span>
@@ -37,7 +38,6 @@
                 <span class="btn-label-short">Evento</span>
             </button>
             <button class="btn-theme" id="btn-theme-desk"><i data-lucide="sun" class="icon-sun"></i><i data-lucide="moon" class="icon-moon"></i></button>
-            <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
         </div>
     </div>
     <!-- solo mobile -->
@@ -68,10 +68,11 @@
     </div>
 
     <nav class="bottom-nav">
-        <a class="bottom-nav-item" href="#"><i data-lucide="house"></i><span>Inicio</span></a>
+        <a class="bottom-nav-item" href="/nootralite/dashboard/index.php"><i data-lucide="house"></i><span>Inicio</span></a>
         <a class="bottom-nav-item active" href="calendar.php"><i data-lucide="calendar-days"></i><span>Calendario</span></a>
         <a class="bottom-nav-item" href="#"><i data-lucide="check-square"></i><span>Tareas</span></a>
         <a class="bottom-nav-item" href="#"><i data-lucide="book-open"></i><span>Cuadernos</span></a>
+        <a class="bottom-nav-item" href="/nootralite/User/profile.php"><i data-lucide="user"></i><span>Perfil</span></a>
     </nav>
 
     <!-- modal nuevo evento -->
@@ -209,6 +210,7 @@
 </div>
 
 <script>var events = <?= json_encode(array_values($events)) ?>;</script>
+<script src="../js/includes/sidebar.js"></script>
 <script src="../js/calendar/calendar.js"></script>
 </body>
 </html>
