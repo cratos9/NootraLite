@@ -12,7 +12,7 @@
         <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="#"><i data-lucide="notepad-text"></i> Notas rápidas</a>
     </nav>
     <nav class="sidebar-nav sidebar-nav-bottom">
-        <a class="nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="#"><i data-lucide="user"></i> Perfil</a>
+        <a class="nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/nootralite/User/profile.php"><i data-lucide="user"></i> Perfil</a>
         <a class="nav-item <?= ($activePage ?? '') === 'settings' ? 'active' : '' ?>" href="#"><i data-lucide="settings"></i> Configuración</a>
     </nav>
 </aside>
