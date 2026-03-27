@@ -1,11 +1,12 @@
 <?php
+
 require_once '../config/db.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
+if (isset($_COOKIE['remember_me'])) {
     $database = new Database();
 
     try {
@@ -15,9 +16,9 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
         return;
     }
 
-    $token = trim((string) $_COOKIE['remember_me']);
+    $token = $_COOKIE['remember_me'];
 
-    if ($token === '') {
+    if (empty($token)) {
         setcookie('remember_me', '', time() - 3600, '/');
         return;
     }
@@ -32,5 +33,8 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
         $_SESSION['user'] = $usuario;
     } else {
         setcookie('remember_me', '', time() - 3600, '/');
+        header('Location: ../User/Login.php');
     }
 }
+
+?>
