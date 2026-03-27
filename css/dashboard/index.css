@@ -1,25 +1,3 @@
-:root {
-    --bg-primary: #0f0f1a;
-    --bg-secondary: #1a1a2e;
-    --bg-tertiary: #16213e;
-    --accent-purple: #7c3aed;
-    --accent-pink: #ec4899;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #475569;
-    --border: #2d2d4e;
-}
-
-.light-mode {
-    --bg-primary: #f0f2f8;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #e8ecf4;
-    --text-primary: #1e2030;
-    --text-secondary: #526070;
-    --text-muted: #8090a8;
-    --border: #cdd5e8;
-}
-
 body{
     font-family: 'Poppins', sans-serif;
     padding: 0;
