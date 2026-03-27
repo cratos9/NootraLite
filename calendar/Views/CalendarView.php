@@ -10,12 +10,9 @@
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
-<script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light-mode');</script>
-
 <div class="main">
     <div class="topbar">
         <div class="topbar-left">
-            <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
             <div class="logo-icon tb-logo">N</div>
             <span class="logo-text tb-logotext">NOOTRA</span>
             <span class="topbar-title">Calendario Académico</span>
@@ -66,14 +63,6 @@
         </div>
         <div class="mobile-event-list" id="mobile-event-list"></div>
     </div>
-
-    <nav class="bottom-nav">
-        <a class="bottom-nav-item" href="/nootralite/dashboard/index.php"><i data-lucide="house"></i><span>Inicio</span></a>
-        <a class="bottom-nav-item active" href="calendar.php"><i data-lucide="calendar-days"></i><span>Calendario</span></a>
-        <a class="bottom-nav-item" href="#"><i data-lucide="check-square"></i><span>Tareas</span></a>
-        <a class="bottom-nav-item" href="#"><i data-lucide="book-open"></i><span>Cuadernos</span></a>
-        <a class="bottom-nav-item" href="/nootralite/User/profile.php"><i data-lucide="user"></i><span>Perfil</span></a>
-    </nav>
 
     <!-- modal nuevo evento -->
     <div class="modal-overlay" id="modal-overlay">
