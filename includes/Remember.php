@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (isset($_COOKIE['remember_me'])) {
+if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
     $database = new Database();
 
     try {
@@ -35,6 +35,8 @@ if (isset($_COOKIE['remember_me'])) {
         setcookie('remember_me', '', time() - 3600, '/');
         header('Location: ../User/Login.php');
     }
+} elseif (!isset($_SESSION['user']) && !isset($_COOKIE['remember_me'])) {
+    header('Location: ../User/Login.php');
 }
 
 ?>
