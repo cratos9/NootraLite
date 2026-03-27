@@ -2,18 +2,45 @@
 
 require_once '../Models/UserModel.php';
 require_once '../config/db.php';
+require_once '../includes/Remember.php';
 
 $database = new Database();
-
 try {
     $conn = $database->connect();
 } catch (Exception $e) {
     die('Error en la conexión a la base de datos');
 }
-
 $user = new User($conn);
 
 $mensaje = "";
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (isset($_SESSION['user'])) {
+    header('Location: ../Dashboard/index.php');
+    exit();
+} elseif (isset($_COOKIE['remember_me'])) {
+    $token = $_COOKIE['remember_me'];
+
+    if (empty($token)) {
+        setcookie('remember_me', '', time() - 3600, '/');
+        return;
+    }
+
+    $sql = 'SELECT * FROM users WHERE remember_token = ? AND remember_expires > NOW()';
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([$token]);
+    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($usuario) {
+        session_regenerate_id(true);
+        $_SESSION['user'] = $usuario;
+    } else {
+        setcookie('remember_me', '', time() - 3600, '/');
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
