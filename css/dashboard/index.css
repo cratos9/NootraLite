@@ -6,3 +6,8 @@ body{
     color: var(--text-primary);
     display: flex;
 }
+
+main{
+    margin-left: 60px;
+    padding: 20px;
+}
