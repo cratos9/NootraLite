@@ -1,4 +1,4 @@
-<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light-mode')</script>
+<script>if(localStorage.getItem('theme')==='light')(document.body||document.documentElement).classList.add('light-mode')</script>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
     <div class="sidebar-logo">

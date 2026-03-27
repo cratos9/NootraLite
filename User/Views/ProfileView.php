@@ -12,7 +12,7 @@
     <title>Perfil</title>
 </head>
 <body>
-    <main>
+    <main class="main">
         <section class="principalInfo">
             <div class="imageUser">
                 <div class="image"></div>
@@ -73,5 +73,6 @@
         </section>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
+    <script src="../js/includes/sidebar.js"></script>
 </body>
 </html>
