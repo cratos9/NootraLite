@@ -10,7 +10,7 @@ document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-var calState = { month: 2, year: 2026 };
+var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
 
@@ -739,7 +739,6 @@ function renderWeek(startDate) {
                     } else {
                         var rect = card.getBoundingClientRect();
                         currentEventId = ev.id;
-                        var popup = document.getElementById('ev-popup');
                         if (!popup) return;
                         popup.querySelector('#pop-title').textContent = ev.title;
                         popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
@@ -791,6 +790,7 @@ function switchView(view) {
         } else {
             if (calLayout) calLayout.style.display = '';
         }
+        renderCalendar(calState.month, calState.year);
     }
 }
 
