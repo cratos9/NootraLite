@@ -170,6 +170,20 @@
         </div>
     </div>
 
+    <!-- overlay detalle del dia -->
+    <div class="day-detail-overlay" id="day-detail-overlay">
+        <div class="day-detail-box">
+            <div class="day-detail-header">
+                <span class="day-detail-title" id="day-detail-title"></span>
+                <button class="day-detail-close" id="day-detail-close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="day-detail-list" id="day-detail-list"></div>
+            <div class="day-detail-footer">
+                <button class="btn-add-from-detail" id="btn-add-from-detail"><i data-lucide="plus" style="width:14px;height:14px"></i> Agregar evento</button>
+            </div>
+        </div>
+    </div>
+
     <div class="agenda-wrap" id="agenda-wrap" style="display:none">
         <h3 class="agenda-title" id="agenda-title"></h3>
         <div id="agenda-list"></div>

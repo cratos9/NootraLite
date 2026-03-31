@@ -412,11 +412,18 @@ document.addEventListener('click', function(e) {
         var dayNum = cell.querySelector('.cal-day-num');
         if (dayNum) {
             var d = parseInt(dayNum.textContent);
-            var mm = String(calState.month + 1).padStart(2, '0');
-            var dd = String(d).padStart(2, '0');
-            openModal(calState.year + '-' + mm + '-' + dd);
+            var dayEvents = events.filter(function(ev) {
+                return ev.day === d && ev.month === calState.month && ev.year === calState.year;
+            });
+            if (dayEvents.length > 0) {
+                openDayDetail(d, dayEvents);
+            } else {
+                var mm = String(calState.month + 1).padStart(2, '0');
+                var dd = String(d).padStart(2, '0');
+                openModal(calState.year + '-' + mm + '-' + dd);
+            }
         }
-    } else if (!e.target.closest('.ev-popup')) {
+    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box')) {
         closePopup();
     }
 });
@@ -913,6 +920,57 @@ function renderUpcoming() {
         });
     });
 }
+
+function openDayDetail(day, dayEvents) {
+    var overlay = document.getElementById('day-detail-overlay');
+    var title   = document.getElementById('day-detail-title');
+    var list    = document.getElementById('day-detail-list');
+    var addBtn  = document.getElementById('btn-add-from-detail');
+
+    title.textContent = day + ' de ' + meses[calState.month] + ' ' + calState.year;
+    list.innerHTML = '';
+
+    dayEvents.forEach(function(ev) {
+        var card = document.createElement('div');
+        card.className = 'day-detail-card';
+        card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
+            + '<span class="day-detail-ev-title">' + ev.title + '</span>'
+            + '<span class="day-detail-ev-time">' + ev.time + '</span>';
+        card.addEventListener('click', function() {
+            closeDayDetail();
+            document.getElementById('pop-dot').style.background = ev.color;
+            document.getElementById('pop-title').textContent = ev.title;
+            document.getElementById('pop-time').textContent  = ev.time;
+            document.getElementById('pop-date').textContent  = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
+            popup.style.top  = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%,-50%)';
+            popup.classList.add('show');
+            currentEventId = ev.id;
+            var delBtn = document.getElementById('pop-delete');
+            if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+            lucide.createIcons();
+        });
+        list.appendChild(card);
+    });
+
+    var mm = String(calState.month + 1).padStart(2, '0');
+    var dd = String(day).padStart(2, '0');
+    var dateStr = calState.year + '-' + mm + '-' + dd;
+    addBtn.onclick = function() { closeDayDetail(); openModal(dateStr); };
+
+    overlay.classList.add('show');
+    lucide.createIcons();
+}
+
+function closeDayDetail() {
+    document.getElementById('day-detail-overlay').classList.remove('show');
+}
+
+document.getElementById('day-detail-close').addEventListener('click', closeDayDetail);
+document.getElementById('day-detail-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeDayDetail();
+});
 
 renderCalendar(calState.month, calState.year);
 renderMiniCal(calState.month, calState.year);
