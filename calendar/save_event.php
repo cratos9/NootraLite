@@ -44,6 +44,8 @@ try {
             'month' => (int)$dt->format('n') - 1,
             'year'  => (int)$dt->format('Y'),
             'time'  => $all_day ? 'Todo el día' : $dt->format('H:i'),
+            'start_datetime' => $start_dt,
+            'all_day' => (bool)$all_day,
         ]
     ]);
 } catch (Exception $e) {

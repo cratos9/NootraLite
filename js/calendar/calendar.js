@@ -99,11 +99,14 @@ function renderCalendar(month, year) {
 // modal
 var modalOverlay = document.getElementById('modal-overlay');
 
-function openModal() {
-    var hoy = new Date();
-    var mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    var dd = String(hoy.getDate()).padStart(2, '0');
-    document.getElementById('ev-date').value = hoy.getFullYear() + '-' + mm + '-' + dd;
+function openModal(dateStr) {
+    if (!dateStr) {
+        var hoy = new Date();
+        var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        var dd = String(hoy.getDate()).padStart(2, '0');
+        dateStr = hoy.getFullYear() + '-' + mm + '-' + dd;
+    }
+    document.getElementById('ev-date').value = dateStr;
     modalOverlay.classList.add('show');
     lucide.createIcons();
 }
@@ -403,6 +406,16 @@ document.addEventListener('click', function(e) {
         activeCell = el.closest('.cal-cell');
         if (activeCell) activeCell.classList.add('active-cell');
         lucide.createIcons();
+    } else if (e.target.closest('.cal-cell') && !e.target.closest('.ev-popup')) {
+        closePopup();
+        var cell = e.target.closest('.cal-cell');
+        var dayNum = cell.querySelector('.cal-day-num');
+        if (dayNum) {
+            var d = parseInt(dayNum.textContent);
+            var mm = String(calState.month + 1).padStart(2, '0');
+            var dd = String(d).padStart(2, '0');
+            openModal(calState.year + '-' + mm + '-' + dd);
+        }
     } else if (!e.target.closest('.ev-popup')) {
         closePopup();
     }

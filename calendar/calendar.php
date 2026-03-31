@@ -25,6 +25,8 @@ foreach ($rows as $r) {
         'month' => (int)$dt->format('n') - 1, // 0-indexed igual que JS
         'year'  => (int)$dt->format('Y'),
         'time'  => $r['all_day'] ? 'Todo el día' : $dt->format('H:i'),
+        'start_datetime' => $r['start_datetime'],
+        'all_day' => (bool)$r['all_day'],
     ];
 }
 
