@@ -1134,3 +1134,19 @@
     .day-detail-overlay { align-items: flex-end; }
     .day-detail-box { max-width: 100%; border-radius: 16px 16px 0 0; }
 }
+
+/* urgencia */
+.ev-urgency-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.ev-past .ev-urgency-dot  { background: #ef4444; }
+.ev-soon .ev-urgency-dot  { background: #f59e0b; }
+.ev-future .ev-urgency-dot { background: #10b981; }
+
+.ev-past { opacity: 0.55; }
+.ev-past:hover { opacity: 0.75; }

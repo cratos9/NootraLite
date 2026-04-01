@@ -10,6 +10,17 @@ document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+function getUrgency(ev) {
+    var now = new Date();
+    var evDate = ev.all_day
+        ? new Date(ev.year, ev.month, ev.day, 23, 59)
+        : new Date(ev.start_datetime);
+    var diff = evDate - now;
+    if (diff < 0) return 'past';
+    if (diff < 86400000) return 'soon';
+    return 'future';
+}
+
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
@@ -73,7 +84,7 @@ function renderCalendar(month, year) {
             var max = Math.min(evList.length, 2);
             for (var e = 0; e < max; e++) {
                 var evEl = document.createElement('div');
-                evEl.className = 'cal-event';
+                evEl.className = 'cal-event ev-' + getUrgency(evList[e]);
                 evEl.style.background = evList[e].color + '22';
                 evEl.style.color = evList[e].color;
                 evEl.dataset.id    = evList[e].id;
@@ -82,6 +93,9 @@ function renderCalendar(month, year) {
                 evEl.dataset.color = evList[e].color;
                 evEl.dataset.day   = d;
                 evEl.textContent = evList[e].title;
+                var urgDot = document.createElement('span');
+                urgDot.className = 'ev-urgency-dot';
+                evEl.appendChild(urgDot);
                 cell.appendChild(evEl);
             }
             if (evList.length > 2) {
@@ -536,7 +550,7 @@ function renderMobileEventList(day, month, year) {
     for (var i = 0; i < filtered.length; i++) {
         var ev = filtered[i];
         var card = document.createElement('div');
-        card.className = 'mobile-ev-card';
+        card.className = 'mobile-ev-card ev-' + getUrgency(ev);
 
         var bar = document.createElement('div');
         bar.className = 'mobile-ev-bar';
@@ -592,7 +606,7 @@ function renderAgenda(month, year) {
     for (var j = 0; j < filtered.length; j++) {
         var ev = filtered[j];
         var item = document.createElement('div');
-        item.className = 'agenda-item';
+        item.className = 'agenda-item ev-' + getUrgency(ev);
 
         var dateBlock = document.createElement('div');
         dateBlock.className = 'agenda-date';
@@ -738,7 +752,7 @@ function renderWeek(startDate) {
         for (var e = 0; e < dayEvents.length; e++) {
             (function(ev) {
                 var card = document.createElement('div');
-                card.className = 'week-event';
+                card.className = 'week-event ev-' + getUrgency(ev);
                 card.style.background = ev.color + '33';
                 card.style.borderLeft = '3px solid ' + ev.color;
 
@@ -882,7 +896,7 @@ function renderUpcoming() {
         if (!grupos[k].length) return;
         html += '<div class="upcoming-section"><div class="upcoming-section-label">' + labels[k] + '</div>';
         grupos[k].forEach(function(ev) {
-            html += '<div class="upcoming-event-card" data-id="' + ev.id + '">'
+            html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + '" data-id="' + ev.id + '">'
                 + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
                 + '<div class="upcoming-event-info">'
                 + '<div class="upcoming-event-title">' + ev.title + '</div>'
@@ -932,10 +946,11 @@ function openDayDetail(day, dayEvents) {
 
     dayEvents.forEach(function(ev) {
         var card = document.createElement('div');
-        card.className = 'day-detail-card';
+        card.className = 'day-detail-card ev-' + getUrgency(ev);
         card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
             + '<span class="day-detail-ev-title">' + ev.title + '</span>'
-            + '<span class="day-detail-ev-time">' + ev.time + '</span>';
+            + '<span class="day-detail-ev-time">' + ev.time + '</span>'
+            + '<span class="ev-urgency-dot"></span>';
         card.addEventListener('click', function() {
             closeDayDetail();
             document.getElementById('pop-dot').style.background = ev.color;
