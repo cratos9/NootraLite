@@ -728,7 +728,11 @@ function renderWeek(startDate) {
 
         // columna del dia
         var col = document.createElement('div');
-        col.className = 'week-day-col';
+        var colClass = 'week-day-col';
+        if (isToday) colClass += ' week-today';
+        var wd = curr.getDay();
+        if (wd === 0 || wd === 6) colClass += ' week-weekend';
+        col.className = colClass;
 
         // label visible en mobile
         var mLabel = document.createElement('span');
@@ -815,7 +819,12 @@ function switchView(view) {
         agendaWrap.style.animation = 'agendaFadeIn 0.18s ease both';
         renderAgenda(calState.month, calState.year);
     } else if (view === 'week') {
-        if (weekWrap) weekWrap.style.display = '';
+        if (weekWrap) {
+            weekWrap.style.display = '';
+            weekWrap.classList.remove('week-anim');
+            void weekWrap.offsetWidth;
+            weekWrap.classList.add('week-anim');
+        }
         if (!weekStart) weekStart = getMonday(new Date());
         renderWeek(weekStart);
     } else {
