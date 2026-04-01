@@ -10,7 +10,7 @@ document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-var calState = { month: 2, year: 2026 };
+var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
 
@@ -99,11 +99,14 @@ function renderCalendar(month, year) {
 // modal
 var modalOverlay = document.getElementById('modal-overlay');
 
-function openModal() {
-    var hoy = new Date();
-    var mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    var dd = String(hoy.getDate()).padStart(2, '0');
-    document.getElementById('ev-date').value = hoy.getFullYear() + '-' + mm + '-' + dd;
+function openModal(dateStr) {
+    if (!dateStr) {
+        var hoy = new Date();
+        var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        var dd = String(hoy.getDate()).padStart(2, '0');
+        dateStr = hoy.getFullYear() + '-' + mm + '-' + dd;
+    }
+    document.getElementById('ev-date').value = dateStr;
     modalOverlay.classList.add('show');
     lucide.createIcons();
 }
@@ -403,7 +406,24 @@ document.addEventListener('click', function(e) {
         activeCell = el.closest('.cal-cell');
         if (activeCell) activeCell.classList.add('active-cell');
         lucide.createIcons();
-    } else if (!e.target.closest('.ev-popup')) {
+    } else if (e.target.closest('.cal-cell') && !e.target.closest('.ev-popup')) {
+        closePopup();
+        var cell = e.target.closest('.cal-cell');
+        var dayNum = cell.querySelector('.cal-day-num');
+        if (dayNum) {
+            var d = parseInt(dayNum.textContent);
+            var dayEvents = events.filter(function(ev) {
+                return ev.day === d && ev.month === calState.month && ev.year === calState.year;
+            });
+            if (dayEvents.length > 0) {
+                openDayDetail(d, dayEvents);
+            } else {
+                var mm = String(calState.month + 1).padStart(2, '0');
+                var dd = String(d).padStart(2, '0');
+                openModal(calState.year + '-' + mm + '-' + dd);
+            }
+        }
+    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box')) {
         closePopup();
     }
 });
@@ -739,7 +759,6 @@ function renderWeek(startDate) {
                     } else {
                         var rect = card.getBoundingClientRect();
                         currentEventId = ev.id;
-                        var popup = document.getElementById('ev-popup');
                         if (!popup) return;
                         popup.querySelector('#pop-title').textContent = ev.title;
                         popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
@@ -791,6 +810,7 @@ function switchView(view) {
         } else {
             if (calLayout) calLayout.style.display = '';
         }
+        renderCalendar(calState.month, calState.year);
     }
 }
 
@@ -900,6 +920,57 @@ function renderUpcoming() {
         });
     });
 }
+
+function openDayDetail(day, dayEvents) {
+    var overlay = document.getElementById('day-detail-overlay');
+    var title   = document.getElementById('day-detail-title');
+    var list    = document.getElementById('day-detail-list');
+    var addBtn  = document.getElementById('btn-add-from-detail');
+
+    title.textContent = day + ' de ' + meses[calState.month] + ' ' + calState.year;
+    list.innerHTML = '';
+
+    dayEvents.forEach(function(ev) {
+        var card = document.createElement('div');
+        card.className = 'day-detail-card';
+        card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
+            + '<span class="day-detail-ev-title">' + ev.title + '</span>'
+            + '<span class="day-detail-ev-time">' + ev.time + '</span>';
+        card.addEventListener('click', function() {
+            closeDayDetail();
+            document.getElementById('pop-dot').style.background = ev.color;
+            document.getElementById('pop-title').textContent = ev.title;
+            document.getElementById('pop-time').textContent  = ev.time;
+            document.getElementById('pop-date').textContent  = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
+            popup.style.top  = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%,-50%)';
+            popup.classList.add('show');
+            currentEventId = ev.id;
+            var delBtn = document.getElementById('pop-delete');
+            if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+            lucide.createIcons();
+        });
+        list.appendChild(card);
+    });
+
+    var mm = String(calState.month + 1).padStart(2, '0');
+    var dd = String(day).padStart(2, '0');
+    var dateStr = calState.year + '-' + mm + '-' + dd;
+    addBtn.onclick = function() { closeDayDetail(); openModal(dateStr); };
+
+    overlay.classList.add('show');
+    lucide.createIcons();
+}
+
+function closeDayDetail() {
+    document.getElementById('day-detail-overlay').classList.remove('show');
+}
+
+document.getElementById('day-detail-close').addEventListener('click', closeDayDetail);
+document.getElementById('day-detail-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeDayDetail();
+});
 
 renderCalendar(calState.month, calState.year);
 renderMiniCal(calState.month, calState.year);
