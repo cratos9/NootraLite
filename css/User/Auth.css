@@ -305,6 +305,14 @@ input:focus{
     background-color: #9f9fe4;
 }
 
+.light-mode .password-toggle{
+    color: #4338ca;
+}
+
+.light-mode .password-toggle:hover{
+    color: #312e81;
+}
+
 #google.light-mode-google{
     background:
         linear-gradient(135deg, #45424b, #45424b) padding-box,
