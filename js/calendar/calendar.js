@@ -584,13 +584,16 @@ function renderAgenda(month, year) {
     if (!list) return;
     list.innerHTML = '';
 
-    document.getElementById('agenda-title').textContent = 'Próximos eventos — ' + meses[month] + ' ' + year;
-
     var filtered = [];
     for (var i = 0; i < events.length; i++) {
         if (events[i].month === month && events[i].year === year) filtered.push(events[i]);
     }
-    filtered.sort(function(a, b) { return a.day - b.day; });
+    filtered.sort(function(a, b) {
+        if (a.day !== b.day) return a.day - b.day;
+        return (a.time || '').localeCompare(b.time || '');
+    });
+
+    document.getElementById('agenda-title').textContent = 'Eventos — ' + meses[month] + ' ' + year + ' · ' + filtered.length + ' evento' + (filtered.length !== 1 ? 's' : '');
 
     if (filtered.length === 0) {
         var empty = document.createElement('div');
@@ -602,11 +605,24 @@ function renderAgenda(month, year) {
     }
 
     var mesAbrev = meses[month].substring(0, 3).toUpperCase();
+    var diasSem = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var lastDay = null;
 
     for (var j = 0; j < filtered.length; j++) {
         var ev = filtered[j];
+
+        if (ev.day !== lastDay) {
+            lastDay = ev.day;
+            var dayLabel = document.createElement('div');
+            dayLabel.className = 'agenda-day-label';
+            var dName = diasSem[new Date(year, month, ev.day).getDay()];
+            dayLabel.textContent = dName + ' ' + ev.day;
+            list.appendChild(dayLabel);
+        }
+
         var item = document.createElement('div');
         item.className = 'agenda-item ev-' + getUrgency(ev);
+        item.style.animationDelay = (j * 0.04) + 's';
 
         var dateBlock = document.createElement('div');
         dateBlock.className = 'agenda-date';
