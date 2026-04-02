@@ -2,7 +2,7 @@
 
 require_once '../Models/UserModel.php';
 require_once '../config/db.php';
-require_once '../includes/Remember.php';
+// require_once '../includes/Remember.php';
 
 $database = new Database();
 try {

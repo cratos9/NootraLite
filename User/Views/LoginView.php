@@ -33,9 +33,11 @@
                     <input type="email" id="email" name="email" required class="input">
                 </div>
                 
-                <div class="group-input" >
+                <div class="group-input password-group" >
                     <label for="password" class="label-input">Contraseña</label>
-                    <input type="password" id="password" name="password" required class="input">
+                    <input type="password" id="password" name="password" required class="input" autocomplete="current-password">
+                    <i data-lucide="eye" class="icon-links password-toggle" id="show-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></i>
+                    <i data-lucide="eye-off" class="icon-links password-toggle hidden" id="hide-password" aria-label="Ocultar contraseña" title="Ocultar contraseña"></i>
                 </div>
                     <div class="form-actions">
                         <label for="remember" class="reminder">Recuérdame<input type="checkbox" id="remember" name="remember"></label>
@@ -49,11 +51,11 @@
         </div>
 
         <div id="google">
-            <i data-lucide="chromium" class="icon-links"></i>
+            <i data-lucide="at-sign" class="icon-links"></i>
             <span>Google</span>
         </div>
         <div id="github">
-            <i data-lucide="github" class="icon-links"></i>
+            <i data-lucide="git-compare-arrows" class="icon-links"></i>
             <span>GitHub</span>
         </div>
 
