@@ -740,23 +740,25 @@ function renderWeek(startDate) {
         mLabel.textContent = diasSemana[curr.getDay()] + ' ' + curr.getDate();
         col.appendChild(mLabel);
 
-        // filtrar eventos del dia
+        // filtrar y ordenar eventos del dia
         var dayEvents = events.filter(function(ev) {
             return ev.day === curr.getDate() && ev.month === curr.getMonth() && ev.year === curr.getFullYear();
+        }).sort(function(a, b) {
+            return (a.time || '').localeCompare(b.time || '');
         });
 
-        if (dayEvents.length === 0 && window.innerWidth <= 480) {
-            // en mobile mostrar algo si no hay eventos
+        if (dayEvents.length === 0) {
             var noEv = document.createElement('span');
-            noEv.style.cssText = 'font-size:11px;color:var(--text-muted)';
-            noEv.textContent = '—';
+            noEv.className = window.innerWidth <= 480 ? 'week-empty-mobile' : 'week-empty-col';
+            noEv.textContent = window.innerWidth <= 480 ? '—' : 'Sin eventos';
             col.appendChild(noEv);
         }
 
         for (var e = 0; e < dayEvents.length; e++) {
-            (function(ev) {
+            (function(ev, idx) {
                 var card = document.createElement('div');
                 card.className = 'week-event ev-' + getUrgency(ev);
+                card.style.animationDelay = (idx * 0.04) + 's';
                 card.style.background = ev.color + '33';
                 card.style.borderLeft = '3px solid ' + ev.color;
 
@@ -790,7 +792,7 @@ function renderWeek(startDate) {
                 });
 
                 col.appendChild(card);
-            })(dayEvents[e]);
+            })(dayEvents[e], e);
         }
 
         grid.appendChild(col);

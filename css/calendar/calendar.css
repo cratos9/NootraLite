@@ -1155,6 +1155,26 @@
     .day-detail-box { max-width: 100%; border-radius: 16px 16px 0 0; }
 }
 
+/* week empty states */
+.week-empty-col {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    text-align: center;
+    padding: 12px 0;
+    opacity: 0.6;
+}
+.week-empty-mobile {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+@keyframes weekCardIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.week-event { animation: weekCardIn 0.15s ease both; }
+
 /* urgencia */
 .ev-urgency-dot {
     width: 5px;
