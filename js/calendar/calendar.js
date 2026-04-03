@@ -309,9 +309,9 @@ popup.innerHTML = '<div class="ev-popup-header">'
     + '</div>'
     + '<div class="ev-popup-meta"><i data-lucide="clock" style="width:12px;height:12px"></i><span id="pop-time"></span></div>'
     + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>'
-    + '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;gap:14px;align-items:center;justify-content:center">'
-    + '<button id="pop-edit" style="background:none;border:none;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;padding:0">Editar</button>'
-    + '<button id="pop-delete" style="background:none;border:none;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;padding:0">Eliminar</button>'
+    + '<div class="ev-popup-actions">'
+    + '<button id="pop-edit" class="ev-popup-action-btn edit">Editar</button>'
+    + '<button id="pop-delete" class="ev-popup-action-btn delete">Eliminar</button>'
     + '</div>';
 document.body.appendChild(popup);
 
@@ -377,6 +377,7 @@ document.getElementById('pop-delete').addEventListener('click', function() {
         var deletedId = currentEventId;
         events = events.filter(function(ev) { return ev.id !== deletedId; });
         currentEventId = null;
+        showToast('Evento eliminado', 'danger');
         closePopup(function() {
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
@@ -468,14 +469,20 @@ function showErr(el) {
     el.classList.add('form-error');
 }
 
-function showToast(msg) {
-    var t = document.createElement('div');
-    t.className = 'cal-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
+function showToast(msg, type) {
+    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
+    var t = type || 'success';
+    var existing = document.querySelectorAll('.cal-toast');
+    var offset = 24 + existing.length * 50;
+    var el = document.createElement('div');
+    el.className = 'cal-toast cal-toast-' + t;
+    el.style.bottom = offset + 'px';
+    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
+    document.body.appendChild(el);
+    lucide.createIcons();
     setTimeout(function() {
-        t.classList.add('hide');
-        t.addEventListener('animationend', function() { t.remove(); });
+        el.classList.add('hide');
+        el.addEventListener('animationend', function() { el.remove(); });
     }, 2500);
 }
 
