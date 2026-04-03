@@ -420,6 +420,16 @@ document.addEventListener('click', function(e) {
         activeCell = el.closest('.cal-cell');
         if (activeCell) activeCell.classList.add('active-cell');
         lucide.createIcons();
+    } else if (e.target.closest('.cal-more')) {
+        var moreCell = e.target.closest('.cal-cell');
+        var moreDayNum = moreCell ? moreCell.querySelector('.cal-day-num') : null;
+        if (moreDayNum) {
+            var md = parseInt(moreDayNum.textContent);
+            var moreEvs = events.filter(function(ev) {
+                return ev.day === md && ev.month === calState.month && ev.year === calState.year;
+            });
+            openDayDetail(md, moreEvs);
+        }
     } else if (e.target.closest('.cal-cell') && !e.target.closest('.ev-popup')) {
         closePopup();
         var cell = e.target.closest('.cal-cell');
@@ -519,7 +529,16 @@ function renderMiniCal(month, year) {
         cell.addEventListener('click', function() {
             document.querySelectorAll('.mini-day-num.selected').forEach(function(n) { n.classList.remove('selected'); });
             this.querySelector('.mini-day-num').classList.add('selected');
-            renderMobileEventList(parseInt(this.dataset.day), calState.month, calState.year);
+            var clickedDay = parseInt(this.dataset.day);
+            var hasEvs = events.some(function(ev) {
+                return ev.day === clickedDay && ev.month === calState.month && ev.year === calState.year;
+            });
+            renderMobileEventList(clickedDay, calState.month, calState.year);
+            if (!hasEvs) {
+                var mmd = String(calState.month + 1).padStart(2, '0');
+                var mdd = String(clickedDay).padStart(2, '0');
+                openMobileForm(null, calState.year + '-' + mmd + '-' + mdd);
+            }
         });
 
         grid.appendChild(cell);
@@ -1026,10 +1045,11 @@ renderMobileEventList(_mismoMes ? _hoyInit.getDate() : null, calState.month, cal
 var mobileFormPanel = document.getElementById('mobile-form-panel');
 var mobileEditingId = null;
 
-function openMobileForm(editId) {
+function openMobileForm(editId, dateStr) {
     var hoy = new Date();
     var mm = String(hoy.getMonth() + 1).padStart(2, '0');
     var dd = String(hoy.getDate()).padStart(2, '0');
+    var defaultDate = dateStr || (hoy.getFullYear() + '-' + mm + '-' + dd);
 
     if (editId) {
         var ev = events.find(function(e) { return e.id === editId; });
@@ -1051,7 +1071,7 @@ function openMobileForm(editId) {
     } else {
         document.getElementById('mfp-title').textContent = 'Nuevo evento';
         document.getElementById('mev-title').value = '';
-        document.getElementById('mev-date').value = hoy.getFullYear() + '-' + mm + '-' + dd;
+        document.getElementById('mev-date').value = defaultDate;
         document.getElementById('mev-time').value = '';
         document.getElementById('mev-allday').checked = false;
         document.getElementById('mev-time').disabled = false;
