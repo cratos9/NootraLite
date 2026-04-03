@@ -33,6 +33,11 @@
                 </div>
                 
                 <div class="group-input">
+                    <label for="username" class="label-input">Nombre de usuario</label>
+                    <input type="text" id="username" name="username" required class="input">
+                </div>
+                
+                <div class="group-input">
                     <label for="email" class="label-input">Correo</label>
                     <input type="email" id="email" name="email" required class="input">
                 </div>
@@ -43,9 +48,9 @@
                 </div>
 
                 <div class="group-input">
-                <label for="username" class="label-input">Nombre de usuario</label>
-                <input type="text" id="username" name="username" required class="input">
-            </div>
+                    <label for="confirm_password" class="label-input">Confirmar contraseña</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required class="input">
+                </div>
             
             <button type="submit" id="register-btn" >Registrarse</button>
         </form>
@@ -55,11 +60,11 @@
         </div>
 
         <div id="google">
-            <i data-lucide="chromium" class="icon-links"></i>
+            <i data-lucide="at-sign" class="icon-links"></i>
             <span>Google</span>
         </div>
         <div id="github">
-            <i data-lucide="github" class="icon-links"></i>
+            <i data-lucide="git-compare-arrows" class="icon-links"></i>
             <span>GitHub</span>
         </div>
 

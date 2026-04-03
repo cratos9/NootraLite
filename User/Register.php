@@ -19,9 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullname = $_POST['fullname'];
     $email = $_POST['email'];
     $password = $_POST['password'];
+    $password_confirm = $_POST['confirm_password'];
     $username = $_POST['username'];
 
-    if ($usuario->Register($fullname, $email, $password, $username)) {
+    if ($password !== $password_confirm) {
+        $mensaje = "Las contraseñas no coinciden";
+    } elseif ($usuario->Register($fullname, $email, $password, $username)) {
         header('Location: Login.php');
         exit();
     } else {
