@@ -457,7 +457,7 @@ document.addEventListener('click', function(e) {
                 openModal(calState.year + '-' + mm + '-' + dd);
             }
         }
-    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box')) {
+    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box') && !e.target.closest('.upcoming-event-card') && !e.target.closest('.agenda-item')) {
         closePopup();
     }
 });
@@ -473,7 +473,8 @@ function showToast(msg, type) {
     var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
     var t = type || 'success';
     var existing = document.querySelectorAll('.cal-toast');
-    var offset = 24 + existing.length * 50;
+    var base = window.innerWidth <= 480 ? 80 : 24;
+    var offset = base + existing.length * 50;
     var el = document.createElement('div');
     el.className = 'cal-toast cal-toast-' + t;
     el.style.bottom = offset + 'px';
@@ -958,21 +959,24 @@ function renderUpcoming() {
         if (!grupos[k].length) return;
         html += '<div class="upcoming-section"><div class="upcoming-section-label">' + labels[k] + '</div>';
         grupos[k].forEach(function(ev) {
+            var showDate = (k === 'semana' || k === 'resto');
+            var fechaStr = showDate ? new Date(ev.year, ev.month, ev.day).toLocaleDateString('es', { weekday: 'short', day: 'numeric' }) : '';
             html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + '" data-id="' + ev.id + '">'
                 + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
                 + '<div class="upcoming-event-info">'
                 + '<div class="upcoming-event-title">' + ev.title + '</div>'
-                + '<div class="upcoming-event-time">' + (ev.time === 'Todo el dia' ? 'Todo el día' : ev.time) + '</div>'
+                + '<div class="upcoming-event-time">' + (showDate ? fechaStr + ' · ' : '') + (ev.time === 'Todo el dia' ? 'Todo el día' : ev.time) + '</div>'
                 + '</div></div>';
         });
         html += '</div>';
     });
 
     if (!proximos.length) {
-        html = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0">Sin eventos próximos</p>';
+        html = '<div class="empty-state"><i data-lucide="calendar-x"></i><p>Sin eventos próximos</p></div>';
     }
 
     panel.innerHTML = html;
+    lucide.createIcons();
 
     panel.querySelectorAll('.upcoming-event-card').forEach(function(card) {
         card.addEventListener('click', function() {

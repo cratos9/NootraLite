@@ -1006,7 +1006,7 @@
 }
 
 @media screen and (max-width: 480px) {
-    .cal-toast { bottom: 80px; right: 16px; left: 16px; text-align: center; }
+    .cal-toast { right: 16px; left: 16px; text-align: center; }
 }
 
 /* panel lateral proximos eventos */
@@ -1064,10 +1064,14 @@
     background: var(--bg-tertiary);
     margin-bottom: 6px;
     cursor: pointer;
-    transition: background 0.12s;
+    transition: background 0.12s, transform 0.15s, box-shadow 0.15s;
 }
 
-.upcoming-event-card:hover { background: rgba(124,58,237,0.1); }
+.upcoming-event-card:hover {
+    background: rgba(124,58,237,0.1);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
 
 .upcoming-event-bar {
     width: 3px;
