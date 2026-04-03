@@ -338,6 +338,14 @@ input:focus{
     font-family: poppins, sans-serif;
 }
 
+.field-error{
+    display: block;
+    margin-top: 4px;
+    color: #fda4af;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
 
 
 @media screen and (max-width:750px){
