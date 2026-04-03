@@ -19,7 +19,7 @@ $oldInput = [
     'bio' => !empty($_SESSION['user']['bio']) ? decrypt_data($_SESSION['user']['bio']) : '',
     'full_name' => !empty($_SESSION['user']['full_name']) ? decrypt_data($_SESSION['user']['full_name']) : '',
     'email' => $_SESSION['user']['email'] ?? '',
-    'phone' => !empty($_SESSION['user']['phone']) ? decrypt_data($_SESSION['user']['phone']) : '',
+    'phone' => !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : '',
     'country' => !empty($_SESSION['user']['country']) ? decrypt_data($_SESSION['user']['country']) : '',
     'city' => !empty($_SESSION['user']['city']) ? decrypt_data($_SESSION['user']['city']) : '',
     'institution' => !empty($_SESSION['user']['institution']) ? decrypt_data($_SESSION['user']['institution']) : '',
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user']['email'] = $email;
             $_SESSION['user']['bio'] = encrypt_data($bio);
             $_SESSION['user']['full_name'] = encrypt_data($full_name);
-            $_SESSION['user']['phone'] = encrypt_data($phone);
+            $_SESSION['user']['phone'] = $phone;
             $_SESSION['user']['country'] = encrypt_data($country);
             $_SESSION['user']['city'] = encrypt_data($city);
             $_SESSION['user']['institution'] = encrypt_data($institution);

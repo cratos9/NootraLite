@@ -55,7 +55,6 @@ class User{
     public function UpdateProfile($userId, $username, $email, $bio, $full_name, $phone, $country, $city, $institution, $carrer, $student_id){
         $full_name = encrypt_data($full_name);
         $country = encrypt_data($country);
-        $phone = encrypt_data($phone);
         $city = encrypt_data($city);
         $institution = encrypt_data($institution);
         $carrer = encrypt_data($carrer);
@@ -72,6 +71,21 @@ class User{
         setcookie('remember_me', '', time() - 3600, "/");
         header('Location: Login.php');
         exit;
+    }
+
+    public function DeleteAccount($userId, $password){
+        $sql = "SELECT password_hash FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $sql = "DELETE FROM users WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            return $stmt->execute([$userId]);
+        } else {
+            return false;
+        }
     }
 }
 ?>

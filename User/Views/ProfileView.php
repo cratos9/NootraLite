@@ -40,7 +40,7 @@
                 </div>
                 <div class="info">
                     <p class="label">Teléfono:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? decrypt_data($_SESSION['user']['phone']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Estado:</p>
@@ -71,9 +71,11 @@
                 <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
             </section>
         </section>
-        <a href="Logout.php" class="btn-logout">Cerrar sesión</a>
-        <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
-        <br>
+        <section class="options">
+            <a href="Logout.php" class="btn-logout">Cerrar sesión</a>
+            <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
+            <a href="DeleteAccount.php" class="btn-delete_account">Eliminar cuenta</a>
+        </section>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>
