@@ -6,6 +6,7 @@ const inputs = document.querySelectorAll('.input');
 const googleIcon = document.getElementById('google');
 const regiterBtn = document.getElementById('register-btn');
 const errorMessage = document.querySelector('.error');
+const passwordInput = document.getElementById('password');
 
 const theme = localStorage.getItem('theme');
 
@@ -52,3 +53,30 @@ function toggleTheme() {
 
 sun.addEventListener('click', toggleTheme);
 moon.addEventListener('click', toggleTheme);
+
+function setPasswordVisibility(showPassword) {
+    if (!passwordInput) {
+        return;
+    }
+
+    const showPasswordIcon = document.getElementById('show-password');
+    const hidePasswordIcon = document.getElementById('hide-password');
+
+    passwordInput.type = showPassword ? 'text' : 'password';
+
+    if (showPasswordIcon && hidePasswordIcon) {
+        showPasswordIcon.classList.toggle('hidden', showPassword);
+        hidePasswordIcon.classList.toggle('hidden', !showPassword);
+    }
+}
+
+document.addEventListener('click', (event) => {
+    const toggleIcon = event.target.closest('#show-password, #hide-password');
+
+    if (!toggleIcon || !passwordInput) {
+        return;
+    }
+
+    event.preventDefault();
+    setPasswordVisibility(toggleIcon.id === 'show-password');
+});

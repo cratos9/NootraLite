@@ -19,8 +19,8 @@
                 <p>Cambiar foto de perfil</p>
             </div>
             <div class='user'>
-                <p class="full-name"><?php echo $_SESSION['user']['username']; ?> <i data-lucide="pencil"></i></p>
-                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? $_SESSION['user']['bio'] : "Sin biografía" ?> <i data-lucide="pencil"></i></p>
+                <p class="full-name"><?php echo $_SESSION['user']['username']; ?></p>
+                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? decrypt_data($_SESSION['user']['bio']) : "Sin biografía" ?></p>
             </div>
         </section>
         <section class="userInfo">
@@ -35,16 +35,16 @@
                     <p class="data"><?php echo $_SESSION['user']['email']; ?></p>
                 </div>
                 <div class="info">
+                    <p class="label">País:</p>
+                    <p class="data"><?= !empty($_SESSION['user']['country']) ? decrypt_data($_SESSION['user']['country']) : "No proporcionado" ?></p>
+                </div>
+                <div class="info">
                     <p class="label">Teléfono:</p>
                     <p class="data"><?= !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
-                    <p class="label">País:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['country']) ? $_SESSION['user']['country'] : "No proporcionado" ?></p>
-                </div>
-                <div class="info">
                     <p class="label">Estado:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['city']) ? $_SESSION['user']['city'] : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['city']) ? decrypt_data($_SESSION['user']['city']) : "No proporcionado" ?></p>
                 </div>
             </section>
         </section>
@@ -53,15 +53,15 @@
             <section class="user-details">
                 <div class="info">
                     <p class="label">Escuela:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['school']) ? $_SESSION['user']['institution'] : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['school']) ? decrypt_data($_SESSION['user']['institution']) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Carrera:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['grade']) ? $_SESSION['user']['carrer'] : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['grade']) ? decrypt_data($_SESSION['user']['carrer']) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">ID de estudiante:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['student_id']) ? $_SESSION['user']['student_id'] : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['student_id']) ? decrypt_data($_SESSION['user']['student_id']) : "No proporcionado" ?></p>
                 </div>
             </section>
         </section>
@@ -70,6 +70,11 @@
             <section class="user-details">
                 <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
             </section>
+        </section>
+        <section class="options">
+            <a href="Logout.php" class="btn-logout">Cerrar sesión</a>
+            <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
+            <a href="DeleteAccount.php" class="btn-delete_account">Eliminar cuenta</a>
         </section>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>

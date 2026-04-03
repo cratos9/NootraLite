@@ -1,24 +1,32 @@
-const sun = document.getElementById('icon-sun');
-const moon = document.getElementById('icon-moon');
-const theme = localStorage.getItem('theme');
+const savedTheme = (localStorage.getItem('theme') || 'dark').trim().toLowerCase();
 
-if (theme === 'light') {
-    document.body.classList.add('light-mode');
-    sun.classList.add('hidden');
-    moon.classList.remove('hidden');
+function updateThemeIcons(isLight) {
+    const sun = document.getElementById('icon-sun');
+    const moon = document.getElementById('icon-moon');
+
+    if (!sun || !moon) {
+        return;
+    }
+
+    sun.classList.toggle('hidden', isLight);
+    moon.classList.toggle('hidden', !isLight);
 }
 
-function toggleTheme() {
-
-    document.body.classList.toggle('light-mode');
-
-    sun.classList.toggle('hidden');
-    moon.classList.toggle('hidden');
-
-    const isLight = document.body.classList.contains('light-mode');
-
+function applyTheme(isLight) {
+    document.body.classList.toggle('light-mode', isLight);
+    updateThemeIcons(isLight);
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-sun.addEventListener('click', toggleTheme);
-moon.addEventListener('click', toggleTheme);
+applyTheme(savedTheme === 'light');
+
+document.addEventListener('click', (event) => {
+    const toggleIcon = event.target.closest('#icon-sun, #icon-moon');
+
+    if (!toggleIcon) {
+        return;
+    }
+
+    const isLight = !document.body.classList.contains('light-mode');
+    applyTheme(isLight);
+});

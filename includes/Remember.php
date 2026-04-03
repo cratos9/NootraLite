@@ -1,5 +1,4 @@
 <?php
-
 require_once '../config/db.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -16,9 +15,9 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
         return;
     }
 
-    $token = $_COOKIE['remember_me'];
+    $token = trim((string) $_COOKIE['remember_me']);
 
-    if (empty($token)) {
+    if ($token === '') {
         setcookie('remember_me', '', time() - 3600, '/');
         return;
     }
@@ -33,10 +32,11 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
         $_SESSION['user'] = $usuario;
     } else {
         setcookie('remember_me', '', time() - 3600, '/');
-        header('Location: ../User/Login.php');
     }
 } elseif (!isset($_SESSION['user']) && !isset($_COOKIE['remember_me'])) {
-    header('Location: ../User/Login.php');
+    $currentPage = basename($_SERVER['PHP_SELF'] ?? '');
+    if ($currentPage !== 'Login.php' && $currentPage !== 'Register.php') {
+        header('Location: ../User/Login.php');
+        exit();
+    }
 }
-
-?>
