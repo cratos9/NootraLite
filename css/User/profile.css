@@ -103,32 +103,41 @@ hr{
     margin-bottom: 20px;
 }
 
-.btn-edit_profile{
-    width: 150px;
-    background-color: var(--accent-purple);
-    color: var(--text-primary);
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-size: 14px;
-    margin: 20px 0;
+.options{
+    display: flex;
+    gap: 10px;
+    padding: 20px 0;
 }
 
-.btn-edit_profile:hover{
+.options .btn-logout, .options .btn-edit_profile{
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    background-color: var(--accent-purple);
+    transition: background-color 0.3s ease;
+}
+
+.options .btn-logout:hover{
     background-color: var(--accent-pink);
 }
 
-.btn-logout{
-    margin-top: 20px;
-    width: 150px;
-    background-color: var(--accent-purple);
-    color: var(--text-primary);
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-size: 14px;
+.options .btn-edit_profile:hover{
+    background-color: var(--accent-pink);
 }
 
-.btn-logout:hover{
-    background-color: var(--accent-pink);
+.options .btn-delete_account{
+    background-color: transparent;
+    color: var(--accent-pink);
+    border: 1px solid var(--accent-pink);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.options .btn-delete_account:hover{
+    color: red;
+    border-color: red;
 }
