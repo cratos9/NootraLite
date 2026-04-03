@@ -33,4 +33,10 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
     } else {
         setcookie('remember_me', '', time() - 3600, '/');
     }
+} elseif (!isset($_SESSION['user']) && !isset($_COOKIE['remember_me'])) {
+    $currentPage = basename($_SERVER['PHP_SELF'] ?? '');
+    if ($currentPage !== 'Login.php' && $currentPage !== 'Register.php') {
+        header('Location: ../User/Login.php');
+        exit();
+    }
 }
