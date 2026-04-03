@@ -10,6 +10,17 @@ document.getElementById('btn-theme-m').addEventListener('click', toggleTheme);
 
 var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+function getUrgency(ev) {
+    var now = new Date();
+    var evDate = ev.all_day
+        ? new Date(ev.year, ev.month, ev.day, 23, 59)
+        : new Date(ev.start_datetime);
+    var diff = evDate - now;
+    if (diff < 0) return 'past';
+    if (diff < 86400000) return 'soon';
+    return 'future';
+}
+
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
@@ -73,7 +84,7 @@ function renderCalendar(month, year) {
             var max = Math.min(evList.length, 2);
             for (var e = 0; e < max; e++) {
                 var evEl = document.createElement('div');
-                evEl.className = 'cal-event';
+                evEl.className = 'cal-event ev-' + getUrgency(evList[e]);
                 evEl.style.background = evList[e].color + '22';
                 evEl.style.color = evList[e].color;
                 evEl.dataset.id    = evList[e].id;
@@ -82,6 +93,9 @@ function renderCalendar(month, year) {
                 evEl.dataset.color = evList[e].color;
                 evEl.dataset.day   = d;
                 evEl.textContent = evList[e].title;
+                var urgDot = document.createElement('span');
+                urgDot.className = 'ev-urgency-dot';
+                evEl.appendChild(urgDot);
                 cell.appendChild(evEl);
             }
             if (evList.length > 2) {
@@ -406,6 +420,16 @@ document.addEventListener('click', function(e) {
         activeCell = el.closest('.cal-cell');
         if (activeCell) activeCell.classList.add('active-cell');
         lucide.createIcons();
+    } else if (e.target.closest('.cal-more')) {
+        var moreCell = e.target.closest('.cal-cell');
+        var moreDayNum = moreCell ? moreCell.querySelector('.cal-day-num') : null;
+        if (moreDayNum) {
+            var md = parseInt(moreDayNum.textContent);
+            var moreEvs = events.filter(function(ev) {
+                return ev.day === md && ev.month === calState.month && ev.year === calState.year;
+            });
+            openDayDetail(md, moreEvs);
+        }
     } else if (e.target.closest('.cal-cell') && !e.target.closest('.ev-popup')) {
         closePopup();
         var cell = e.target.closest('.cal-cell');
@@ -505,7 +529,16 @@ function renderMiniCal(month, year) {
         cell.addEventListener('click', function() {
             document.querySelectorAll('.mini-day-num.selected').forEach(function(n) { n.classList.remove('selected'); });
             this.querySelector('.mini-day-num').classList.add('selected');
-            renderMobileEventList(parseInt(this.dataset.day), calState.month, calState.year);
+            var clickedDay = parseInt(this.dataset.day);
+            var hasEvs = events.some(function(ev) {
+                return ev.day === clickedDay && ev.month === calState.month && ev.year === calState.year;
+            });
+            renderMobileEventList(clickedDay, calState.month, calState.year);
+            if (!hasEvs) {
+                var mmd = String(calState.month + 1).padStart(2, '0');
+                var mdd = String(clickedDay).padStart(2, '0');
+                openMobileForm(null, calState.year + '-' + mmd + '-' + mdd);
+            }
         });
 
         grid.appendChild(cell);
@@ -536,7 +569,7 @@ function renderMobileEventList(day, month, year) {
     for (var i = 0; i < filtered.length; i++) {
         var ev = filtered[i];
         var card = document.createElement('div');
-        card.className = 'mobile-ev-card';
+        card.className = 'mobile-ev-card ev-' + getUrgency(ev);
 
         var bar = document.createElement('div');
         bar.className = 'mobile-ev-bar';
@@ -570,13 +603,16 @@ function renderAgenda(month, year) {
     if (!list) return;
     list.innerHTML = '';
 
-    document.getElementById('agenda-title').textContent = 'Próximos eventos — ' + meses[month] + ' ' + year;
-
     var filtered = [];
     for (var i = 0; i < events.length; i++) {
         if (events[i].month === month && events[i].year === year) filtered.push(events[i]);
     }
-    filtered.sort(function(a, b) { return a.day - b.day; });
+    filtered.sort(function(a, b) {
+        if (a.day !== b.day) return a.day - b.day;
+        return (a.time || '').localeCompare(b.time || '');
+    });
+
+    document.getElementById('agenda-title').textContent = 'Eventos — ' + meses[month] + ' ' + year + ' · ' + filtered.length + ' evento' + (filtered.length !== 1 ? 's' : '');
 
     if (filtered.length === 0) {
         var empty = document.createElement('div');
@@ -588,11 +624,24 @@ function renderAgenda(month, year) {
     }
 
     var mesAbrev = meses[month].substring(0, 3).toUpperCase();
+    var diasSem = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var lastDay = null;
 
     for (var j = 0; j < filtered.length; j++) {
         var ev = filtered[j];
+
+        if (ev.day !== lastDay) {
+            lastDay = ev.day;
+            var dayLabel = document.createElement('div');
+            dayLabel.className = 'agenda-day-label';
+            var dName = diasSem[new Date(year, month, ev.day).getDay()];
+            dayLabel.textContent = dName + ' ' + ev.day;
+            list.appendChild(dayLabel);
+        }
+
         var item = document.createElement('div');
-        item.className = 'agenda-item';
+        item.className = 'agenda-item ev-' + getUrgency(ev);
+        item.style.animationDelay = (j * 0.04) + 's';
 
         var dateBlock = document.createElement('div');
         dateBlock.className = 'agenda-date';
@@ -714,7 +763,11 @@ function renderWeek(startDate) {
 
         // columna del dia
         var col = document.createElement('div');
-        col.className = 'week-day-col';
+        var colClass = 'week-day-col';
+        if (isToday) colClass += ' week-today';
+        var wd = curr.getDay();
+        if (wd === 0 || wd === 6) colClass += ' week-weekend';
+        col.className = colClass;
 
         // label visible en mobile
         var mLabel = document.createElement('span');
@@ -722,23 +775,25 @@ function renderWeek(startDate) {
         mLabel.textContent = diasSemana[curr.getDay()] + ' ' + curr.getDate();
         col.appendChild(mLabel);
 
-        // filtrar eventos del dia
+        // filtrar y ordenar eventos del dia
         var dayEvents = events.filter(function(ev) {
             return ev.day === curr.getDate() && ev.month === curr.getMonth() && ev.year === curr.getFullYear();
+        }).sort(function(a, b) {
+            return (a.time || '').localeCompare(b.time || '');
         });
 
-        if (dayEvents.length === 0 && window.innerWidth <= 480) {
-            // en mobile mostrar algo si no hay eventos
+        if (dayEvents.length === 0) {
             var noEv = document.createElement('span');
-            noEv.style.cssText = 'font-size:11px;color:var(--text-muted)';
-            noEv.textContent = '—';
+            noEv.className = window.innerWidth <= 480 ? 'week-empty-mobile' : 'week-empty-col';
+            noEv.textContent = window.innerWidth <= 480 ? '—' : 'Sin eventos';
             col.appendChild(noEv);
         }
 
         for (var e = 0; e < dayEvents.length; e++) {
-            (function(ev) {
+            (function(ev, idx) {
                 var card = document.createElement('div');
-                card.className = 'week-event';
+                card.className = 'week-event ev-' + getUrgency(ev);
+                card.style.animationDelay = (idx * 0.04) + 's';
                 card.style.background = ev.color + '33';
                 card.style.borderLeft = '3px solid ' + ev.color;
 
@@ -772,7 +827,7 @@ function renderWeek(startDate) {
                 });
 
                 col.appendChild(card);
-            })(dayEvents[e]);
+            })(dayEvents[e], e);
         }
 
         grid.appendChild(col);
@@ -801,7 +856,12 @@ function switchView(view) {
         agendaWrap.style.animation = 'agendaFadeIn 0.18s ease both';
         renderAgenda(calState.month, calState.year);
     } else if (view === 'week') {
-        if (weekWrap) weekWrap.style.display = '';
+        if (weekWrap) {
+            weekWrap.style.display = '';
+            weekWrap.classList.remove('week-anim');
+            void weekWrap.offsetWidth;
+            weekWrap.classList.add('week-anim');
+        }
         if (!weekStart) weekStart = getMonday(new Date());
         renderWeek(weekStart);
     } else {
@@ -882,7 +942,7 @@ function renderUpcoming() {
         if (!grupos[k].length) return;
         html += '<div class="upcoming-section"><div class="upcoming-section-label">' + labels[k] + '</div>';
         grupos[k].forEach(function(ev) {
-            html += '<div class="upcoming-event-card" data-id="' + ev.id + '">'
+            html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + '" data-id="' + ev.id + '">'
                 + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
                 + '<div class="upcoming-event-info">'
                 + '<div class="upcoming-event-title">' + ev.title + '</div>'
@@ -932,10 +992,11 @@ function openDayDetail(day, dayEvents) {
 
     dayEvents.forEach(function(ev) {
         var card = document.createElement('div');
-        card.className = 'day-detail-card';
+        card.className = 'day-detail-card ev-' + getUrgency(ev);
         card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
             + '<span class="day-detail-ev-title">' + ev.title + '</span>'
-            + '<span class="day-detail-ev-time">' + ev.time + '</span>';
+            + '<span class="day-detail-ev-time">' + ev.time + '</span>'
+            + '<span class="ev-urgency-dot"></span>';
         card.addEventListener('click', function() {
             closeDayDetail();
             document.getElementById('pop-dot').style.background = ev.color;
@@ -984,10 +1045,11 @@ renderMobileEventList(_mismoMes ? _hoyInit.getDate() : null, calState.month, cal
 var mobileFormPanel = document.getElementById('mobile-form-panel');
 var mobileEditingId = null;
 
-function openMobileForm(editId) {
+function openMobileForm(editId, dateStr) {
     var hoy = new Date();
     var mm = String(hoy.getMonth() + 1).padStart(2, '0');
     var dd = String(hoy.getDate()).padStart(2, '0');
+    var defaultDate = dateStr || (hoy.getFullYear() + '-' + mm + '-' + dd);
 
     if (editId) {
         var ev = events.find(function(e) { return e.id === editId; });
@@ -1009,7 +1071,7 @@ function openMobileForm(editId) {
     } else {
         document.getElementById('mfp-title').textContent = 'Nuevo evento';
         document.getElementById('mev-title').value = '';
-        document.getElementById('mev-date').value = hoy.getFullYear() + '-' + mm + '-' + dd;
+        document.getElementById('mev-date').value = defaultDate;
         document.getElementById('mev-time').value = '';
         document.getElementById('mev-allday').checked = false;
         document.getElementById('mev-time').disabled = false;
