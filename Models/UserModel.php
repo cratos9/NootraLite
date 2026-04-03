@@ -37,7 +37,7 @@ class User{
         $stmt->execute([$email]);
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+        echo "La contrasena es la misma: " . (password_verify($password, $user['password_hash'] ) ? "Sí" : "No");
         if ($user && password_verify($password, $user['password_hash'])) {
             $sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
@@ -50,6 +50,20 @@ class User{
         } else {
             return false;
         }
+    }
+
+    public function UpdateProfile($userId, $username, $email, $bio, $full_name, $phone, $country, $city, $institution, $carrer, $student_id){
+        $full_name = encrypt_data($full_name);
+        $country = encrypt_data($country);
+        $phone = encrypt_data($phone);
+        $city = encrypt_data($city);
+        $institution = encrypt_data($institution);
+        $carrer = encrypt_data($carrer);
+        $bio = encrypt_data($bio);
+        $student_id = encrypt_data($student_id);
+        $sql = "UPDATE users SET full_name = ?, phone = ?, country = ?, city = ?, institution = ?, career = ?, student_id = ?, bio = ?, username = ?, email = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$full_name, $phone, $country, $city, $institution, $carrer, $student_id, $bio, $username, $email, $userId]);
     }
 
     public function Logout(){
