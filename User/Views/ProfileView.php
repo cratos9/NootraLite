@@ -40,7 +40,7 @@
                 </div>
                 <div class="info">
                     <p class="label">Teléfono:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? decrypt_data($_SESSION['user']['phone']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Estado:</p>
