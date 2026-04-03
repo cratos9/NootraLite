@@ -19,8 +19,8 @@
                 <p>Cambiar foto de perfil</p>
             </div>
             <div class='user'>
-                <p class="full-name"><?php echo $_SESSION['user']['username']; ?> <i data-lucide="pencil"></i></p>
-                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? $_SESSION['user']['bio'] : "Sin biografía" ?> <i data-lucide="pencil"></i></p>
+                <p class="full-name"><?php echo $_SESSION['user']['username']; ?></p>
+                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? $_SESSION['user']['bio'] : "Sin biografía" ?></p>
             </div>
         </section>
         <section class="userInfo">
@@ -71,6 +71,8 @@
                 <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
             </section>
         </section>
+        <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
+        <br>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>
