@@ -126,10 +126,17 @@ function openModal(dateStr) {
     lucide.createIcons();
 }
 
-function closeModal() {
-    modalOverlay.classList.remove('show');
-    editingEventId = null;
-    document.querySelector('.modal-title').textContent = 'Nuevo evento';
+function closeModal(cb) {
+    var box = document.getElementById('modal-box');
+    box.classList.add('closing');
+    box.addEventListener('animationend', function handler() {
+        box.removeEventListener('animationend', handler);
+        modalOverlay.classList.remove('show');
+        box.classList.remove('closing');
+        editingEventId = null;
+        document.querySelector('.modal-title').textContent = 'Nuevo evento';
+        if (cb) cb();
+    });
 }
 
 document.querySelector('.btn-add').addEventListener('click', openModal);
@@ -186,7 +193,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
 
     var saveBtn = document.querySelector('.btn-save');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Guardando...';
+    saveBtn.innerHTML = '<span class="save-spinner"></span>Guardando...';
 
     fetch(url, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
@@ -210,19 +217,20 @@ document.querySelector('.btn-save').addEventListener('click', function() {
                 events.push(data.event);
             }
             var msg = editingEventId ? 'Evento actualizado' : 'Evento guardado';
-            closeModal();
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
             if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
             renderUpcoming();
             showToast(msg);
-            document.getElementById('ev-title').value = '';
-            document.getElementById('ev-time').value = '';
-            document.getElementById('ev-allday').checked = false;
-            document.getElementById('ev-time').disabled = false;
-            document.getElementById('ev-time').style.opacity = '1';
-            document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
-            document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+            closeModal(function() {
+                document.getElementById('ev-title').value = '';
+                document.getElementById('ev-time').value = '';
+                document.getElementById('ev-allday').checked = false;
+                document.getElementById('ev-time').disabled = false;
+                document.getElementById('ev-time').style.opacity = '1';
+                document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+                document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+            });
         })
         .catch(function() {
             saveBtn.disabled = false;
