@@ -6,5 +6,5 @@ require_once '../includes/lightMode.php';
 $activePage = 'profile';
 include '../includes/sidebar.php';
 
-include 'Views/ProfileView.php';
+include 'Views/EditProfileView.php';
 ?>

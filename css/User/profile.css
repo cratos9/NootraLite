@@ -102,3 +102,18 @@ hr{
 .userInfo, .schoolInfo{
     margin-bottom: 20px;
 }
+
+.btn-edit_profile{
+    width: 150px;
+    background-color: var(--accent-purple);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 20px 0;
+}
+
+.btn-edit_profile:hover{
+    background-color: var(--accent-pink);
+}
