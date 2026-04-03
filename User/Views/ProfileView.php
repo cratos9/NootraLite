@@ -71,6 +71,7 @@
                 <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
             </section>
         </section>
+        <a href="Logout.php" class="btn-logout">Cerrar sesión</a>
         <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
         <br>
     </main>
