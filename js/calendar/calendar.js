@@ -66,13 +66,14 @@ function renderCalendar(month, year) {
 
     for (var o = 0; o < offset; o++) {
         var empty = document.createElement('div');
-        empty.className = 'cal-cell';
+        empty.className = 'cal-cell offset-cell';
         grid.appendChild(empty);
     }
 
     for (var d = 1; d <= totalDays; d++) {
         var cell = document.createElement('div');
-        cell.className = 'cal-cell';
+        var isPast = esHoy && d < diaHoy;
+        cell.className = 'cal-cell' + (isPast ? ' past-day' : '');
 
         var numEl = document.createElement('div');
         numEl.className = 'cal-day-num' + (esHoy && d === diaHoy ? ' today' : '');

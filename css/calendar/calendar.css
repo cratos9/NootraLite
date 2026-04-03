@@ -127,10 +127,14 @@
     border-bottom: 1px solid var(--border);
     vertical-align: top;
     cursor: pointer;
+    transition: background 0.15s;
 }
 
 .cal-cell:hover { background: rgba(124,58,237,0.06); }
 .cal-cell.active-cell { background: rgba(124,58,237,0.1); }
+.cal-cell.past-day { opacity: 0.45; }
+.cal-cell.past-day:hover { opacity: 0.6; }
+.cal-cell.offset-cell { pointer-events: none; opacity: 0; }
 
 .cal-cell:nth-child(7n) { border-right: none; }
 
