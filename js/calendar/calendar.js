@@ -24,6 +24,18 @@ function getUrgency(ev) {
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
+var navDirection = 'next';
+
+function updateTodayBtn() {
+    var hoy = new Date();
+    var btn = document.querySelector('.btn-today');
+    if (!btn) return;
+    if (calState.month !== hoy.getMonth() || calState.year !== hoy.getFullYear()) {
+        btn.classList.add('away');
+    } else {
+        btn.classList.remove('away');
+    }
+}
 
 function getMonday(date) {
     var d = new Date(date);
@@ -51,9 +63,9 @@ function renderCalendar(month, year) {
     document.getElementById('month-label').textContent = meses[month] + ' ' + year;
 
     var grid = document.querySelector('.cal-grid');
-    grid.classList.remove('month-fade');
+    grid.classList.remove('month-fade-prev', 'month-fade-next');
     grid.offsetHeight;
-    grid.classList.add('month-fade');
+    grid.classList.add('month-fade-' + navDirection);
 
     var cells = grid.querySelectorAll('.cal-cell');
     for (var c = 0; c < cells.length; c++) {
@@ -272,6 +284,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
         renderWeek(weekStart);
         return;
     }
+    navDirection = 'prev';
     calState.month--;
     if (calState.month < 0) {
         calState.month = 11;
@@ -280,6 +293,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
     renderUpcoming();
+    updateTodayBtn();
 });
 
 document.getElementById('next-month').addEventListener('click', function() {
@@ -289,6 +303,7 @@ document.getElementById('next-month').addEventListener('click', function() {
         renderWeek(weekStart);
         return;
     }
+    navDirection = 'next';
     calState.month++;
     if (calState.month > 11) {
         calState.month = 0;
@@ -297,6 +312,7 @@ document.getElementById('next-month').addEventListener('click', function() {
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
     renderUpcoming();
+    updateTodayBtn();
 });
 
 // popup de ver evento

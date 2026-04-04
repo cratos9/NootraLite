@@ -39,6 +39,8 @@
 }
 
 .btn-today:hover { background: var(--bg-primary); color: var(--text-primary); }
+.btn-today.away { border-color: #7c3aed; color: #a78bfa; }
+.btn-today.away:hover { background: rgba(124,58,237,0.1); }
 
 .view-toggle {
     display: flex;
@@ -101,13 +103,16 @@
     overflow: hidden;
 }
 
-.cal-grid.month-fade {
-    animation: month-in 0.18s ease;
-}
+.cal-grid.month-fade-prev { animation: month-in-prev 0.2s ease; }
+.cal-grid.month-fade-next { animation: month-in-next 0.2s ease; }
 
-@keyframes month-in {
-    from { opacity: 0.3; }
-    to   { opacity: 1; }
+@keyframes month-in-prev {
+    from { opacity: 0.3; transform: translateX(-8px); }
+    to   { opacity: 1;   transform: translateX(0); }
+}
+@keyframes month-in-next {
+    from { opacity: 0.3; transform: translateX(8px); }
+    to   { opacity: 1;   transform: translateX(0); }
 }
 
 .cal-header-day {
@@ -152,6 +157,8 @@
     background: linear-gradient(135deg, #7c3aed, #ec4899);
     color: white;
 }
+.cal-day-num:not(.today):hover { background: rgba(255,255,255,0.08); }
+.light-mode .cal-day-num:not(.today):hover { background: rgba(0,0,0,0.06); }
 
 .cal-event {
     font-size: 10px;
