@@ -1,0 +1,48 @@
+<?php
+
+// IMPORTAR PHPMailer
+require '../PHPMailer-master/PHPMailer-master/src/Exception.php';
+require '../PHPMailer-master/PHPMailer-master/src/PHPMailer.php';
+require '../PHPMailer-master/PHPMailer-master/src/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+class Mail {
+
+    private $mail;
+
+    public function __construct(){
+        $this->mail = new PHPMailer(true);
+        $this->mail->SMTPDebug = 2;
+        $this->mail->isSMTP();
+        $this->mail->Host = 'Por definir';
+        $this->mail->SMTPAuth = true;
+        $this->mail->Username = 'Por definir';
+        $this->mail->Password = 'Por definir';
+        $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $this->mail->Port = 'Por definir';
+    }
+
+    public function send($to, $subject, $body){
+
+        try {
+
+            $this->mail->clearAddresses();
+            $this->mail->setFrom('Por definir', 'Nootra Lite');
+            $this->mail->addAddress($to);
+
+            $this->mail->isHTML(true);
+            $this->mail->Subject = $subject;
+            $this->mail->Body    = $body;
+            $this->mail->AltBody = strip_tags($body);
+            
+            $this->mail->send();
+
+            return true;
+
+        } catch (Exception $e) {
+            return "Error: {$this->mail->ErrorInfo}";
+        }
+    }
+}
