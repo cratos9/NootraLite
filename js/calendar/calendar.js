@@ -650,6 +650,14 @@ function renderAgenda(month, year) {
     if (!list) return;
     list.innerHTML = '';
 
+    var hoy = new Date();
+    var agWrap = document.getElementById('agenda-wrap');
+    if (agWrap) {
+        agWrap.style.animation = 'none';
+        void agWrap.offsetWidth;
+        agWrap.style.animation = 'agendaFadeIn 0.18s ease both';
+    }
+
     var filtered = [];
     for (var i = 0; i < events.length; i++) {
         if (events[i].month === month && events[i].year === year) filtered.push(events[i]);
@@ -683,11 +691,15 @@ function renderAgenda(month, year) {
             dayLabel.className = 'agenda-day-label';
             var dName = diasSem[new Date(year, month, ev.day).getDay()];
             dayLabel.textContent = dName + ' ' + ev.day;
+            if (new Date(year, month, ev.day) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()))
+                dayLabel.classList.add('agenda-day-past');
             list.appendChild(dayLabel);
         }
 
         var item = document.createElement('div');
         item.className = 'agenda-item ev-' + getUrgency(ev);
+        if (ev.day === hoy.getDate() && month === hoy.getMonth() && year === hoy.getFullYear())
+            item.classList.add('agenda-today');
         item.style.animationDelay = (j * 0.04) + 's';
 
         var dateBlock = document.createElement('div');
