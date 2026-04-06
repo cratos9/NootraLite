@@ -815,12 +815,22 @@ function renderWeek(startDate) {
         var wd = curr.getDay();
         if (wd === 0 || wd === 6) colClass += ' week-weekend';
         col.className = colClass;
+        col.style.animationDelay = (d * 0.035) + 's';
 
         // label visible en mobile
         var mLabel = document.createElement('span');
         mLabel.className = 'week-day-label';
         mLabel.textContent = diasSemana[curr.getDay()] + ' ' + curr.getDate();
         col.appendChild(mLabel);
+
+        if (isToday) {
+            var nowLine = document.createElement('div');
+            nowLine.className = 'week-now-line';
+            let ahora = new Date();
+            var hrs = ahora.getHours(), mins = ahora.getMinutes();
+            nowLine.innerHTML = '<span>' + (hrs<10?'0':'') + hrs + ':' + (mins<10?'0':'') + mins + '</span>';
+            col.appendChild(nowLine);
+        }
 
         // filtrar y ordenar eventos del dia
         var dayEvents = events.filter(function(ev) {
@@ -840,7 +850,7 @@ function renderWeek(startDate) {
             (function(ev, idx) {
                 var card = document.createElement('div');
                 card.className = 'week-event ev-' + getUrgency(ev);
-                card.style.animationDelay = (idx * 0.04) + 's';
+                card.style.animationDelay = (d * 0.03 + idx * 0.04) + 's';
                 card.style.background = ev.color + '33';
                 card.style.borderLeft = '3px solid ' + ev.color;
 
@@ -870,6 +880,22 @@ function renderWeek(startDate) {
                         popup.style.left = (rect.left + window.scrollX) + 'px';
                     }
                 });
+
+                card.onmouseenter = function() {
+                    var tip = document.getElementById('week-tip') || (function(){
+                        var t = document.createElement('div');
+                        t.id = 'week-tip'; t.className = 'week-tooltip';
+                        document.body.appendChild(t); return t;
+                    })();
+                    tip.textContent = ev.title + (ev.time ? ' · ' + ev.time : '');
+                    var r = card.getBoundingClientRect();
+                    tip.style.top = (r.top - 32) + 'px';
+                    tip.style.left = (r.left + r.width/2) + 'px';
+                    tip.style.opacity = '1';
+                };
+                card.onmouseleave = function() {
+                    var t = document.getElementById('week-tip'); if(t) t.style.opacity = '0';
+                };
 
                 col.appendChild(card);
             })(dayEvents[e], e);
