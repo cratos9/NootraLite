@@ -417,11 +417,25 @@ function clearActiveCell() {
     }
 }
 
+function posPopup(rect, gapPx) {
+    var ph = 160;
+    popup.classList.remove('above', 'below');
+    popup.style.transform = '';
+    if (rect.bottom + gapPx + ph > window.innerHeight) {
+        popup.style.top = (rect.top - ph - gapPx + window.scrollY) + 'px';
+        popup.classList.add('above');
+    } else {
+        popup.style.top = (rect.bottom + gapPx + window.scrollY) + 'px';
+        popup.classList.add('below');
+    }
+}
+
 function closePopup(callback) {
     if (!popup.classList.contains('show')) return;
     popup.classList.add('closing');
     popup.addEventListener('animationend', function handler() {
-        popup.classList.remove('show', 'closing');
+        popup.classList.remove('show', 'closing', 'above', 'below');
+        popup.style.transform = '';
         popup.removeEventListener('animationend', handler);
         clearActiveCell();
         if (callback) callback();
@@ -436,7 +450,7 @@ document.addEventListener('click', function(e) {
         document.getElementById('pop-time').textContent  = el.dataset.time;
         document.getElementById('pop-date').textContent  = el.dataset.day + ' de ' + meses[calState.month] + ' ' + calState.year;
         var rect = el.getBoundingClientRect();
-        popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+        posPopup(rect, 6);
         popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
         popup.classList.add('show');
         currentEventId = el.dataset.id ? parseInt(el.dataset.id) : null;
@@ -725,7 +739,7 @@ function renderAgenda(month, year) {
                     document.getElementById('pop-time').textContent = evData.time || 'Todo el día';
                     document.getElementById('pop-date').textContent = evData.day + ' de ' + meses[evData.month] + ' ' + evData.year;
                     var rect = itemEl.getBoundingClientRect();
-                    popup.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+                    posPopup(rect, 6);
                     popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
                     popup.classList.add('show');
                     currentEventId = evData.id;
@@ -852,10 +866,8 @@ function renderWeek(startDate) {
                         popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
                         popup.querySelector('#pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
                         popup.style.display = 'block';
-                        var top = rect.bottom + window.scrollY + 8;
-                        var left = rect.left + window.scrollX;
-                        popup.style.top = top + 'px';
-                        popup.style.left = left + 'px';
+                        posPopup(rect, 8);
+                        popup.style.left = (rect.left + window.scrollX) + 'px';
                     }
                 });
 
@@ -1005,7 +1017,7 @@ function renderUpcoming() {
             document.getElementById('pop-time').textContent = ev.time === 'Todo el dia' ? 'Todo el día' : ev.time;
             document.getElementById('pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
             var rect = card.getBoundingClientRect();
-            popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+            posPopup(rect, 6);
             popup.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 288)) + 'px';
             popup.classList.add('show');
             currentEventId = id;
