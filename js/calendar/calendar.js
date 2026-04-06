@@ -913,7 +913,12 @@ function switchView(view) {
         if (window.innerWidth <= 480) {
             if (mobilePanel) mobilePanel.style.display = '';
         } else {
-            if (calLayout) calLayout.style.display = '';
+            if (calLayout) {
+                calLayout.style.display = '';
+                calLayout.style.animation = 'none';
+                void calLayout.offsetWidth;
+                calLayout.style.animation = 'agendaFadeIn 0.18s ease both';
+            }
         }
         renderCalendar(calState.month, calState.year);
     }
@@ -929,10 +934,20 @@ document.querySelectorAll('.view-chip').forEach(function(chip) {
     });
 });
 
-document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn) {
+var vtDesk = document.getElementById('view-toggle-desk');
+var indicator = document.createElement('span');
+indicator.className = 'view-indicator';
+vtDesk.insertBefore(indicator, vtDesk.firstChild);
+
+function moveIndicator(idx) {
+    indicator.style.transform = 'translateX(' + (idx * 100) + '%)';
+}
+
+document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn, i) {
     btn.addEventListener('click', function() {
         document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(b) { b.classList.remove('active'); });
         this.classList.add('active');
+        moveIndicator(i);
         var txt = this.textContent.trim();
         var view = txt === 'Agenda' ? 'agenda' : txt === 'Semana' ? 'week' : 'month';
         switchView(view);
