@@ -1012,6 +1012,7 @@ document.querySelector('.mini-next').addEventListener('click', function() {
 function renderUpcoming() {
     var panel = document.getElementById('upcoming-sections');
     if (!panel) return;
+    var titleEl = document.querySelector('.upcoming-title');
 
     var hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -1024,6 +1025,7 @@ function renderUpcoming() {
     proximos.sort(function(a, b) {
         return new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day);
     });
+    if (titleEl) titleEl.textContent = proximos.length ? 'Próximos · ' + proximos.length : 'Próximos eventos';
 
     var grupos = { hoy: [], manana: [], semana: [], resto: [] };
     proximos.forEach(function(ev) {
@@ -1058,6 +1060,22 @@ function renderUpcoming() {
 
     panel.innerHTML = html;
     lucide.createIcons();
+
+    // staggered + limite
+    var allCards = panel.querySelectorAll('.upcoming-event-card');
+    allCards.forEach(function(card, i) { card.style.animationDelay = (i * 0.04) + 's'; });
+    var LIMIT = 15;
+    if (allCards.length > LIMIT) {
+        for (var i = LIMIT; i < allCards.length; i++) allCards[i].style.display = 'none';
+        var moreBtn = document.createElement('div');
+        moreBtn.className = 'upcoming-more';
+        moreBtn.textContent = '+ ' + (allCards.length - LIMIT) + ' más';
+        moreBtn.onclick = function() {
+            for (var i = LIMIT; i < allCards.length; i++) allCards[i].style.display = '';
+            moreBtn.remove();
+        };
+        allCards[LIMIT - 1].insertAdjacentElement('afterend', moreBtn);
+    }
 
     panel.querySelectorAll('.upcoming-event-card').forEach(function(card) {
         card.addEventListener('click', function() {

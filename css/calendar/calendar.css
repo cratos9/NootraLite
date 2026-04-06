@@ -1136,6 +1136,12 @@
     transform: translateX(3px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+@keyframes upcomingCardIn { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+.upcoming-event-card { animation: upcomingCardIn 0.15s ease both; }
+
+.upcoming-more { font-size:11px; color:#a78bfa; text-align:center; padding:6px 0; cursor:pointer; opacity:0.8; }
+.upcoming-more:hover { opacity:1; }
+.light-mode .upcoming-more { color:#7c3aed; }
 
 .upcoming-event-bar {
     width: 3px;
