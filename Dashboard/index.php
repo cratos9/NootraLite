@@ -5,11 +5,13 @@ require_once '../includes/lightMode.php';
 require_once '../core/IA.php';
 require_once '../includes/Mail.php';
 
+// $mail = new Mail();
 
-if (empty($_SESSION['user']) || !is_array($_SESSION['user'])) {
-    header('Location: ../User/Login.php');
-    exit();
-}
+// $resultado = $mail->send(
+//     "correo",
+//     "Asunto de prueba",
+//     "<h1>Contenido de prueba</h1>"
+// );
 
 $activePage = 'dashboard';
 include '../includes/sidebar.php';

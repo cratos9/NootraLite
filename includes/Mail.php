@@ -1,6 +1,4 @@
 <?php
-
-// IMPORTAR PHPMailer
 require '../PHPMailer-master/PHPMailer-master/src/Exception.php';
 require '../PHPMailer-master/PHPMailer-master/src/PHPMailer.php';
 require '../PHPMailer-master/PHPMailer-master/src/SMTP.php';
@@ -13,15 +11,17 @@ class Mail {
     private $mail;
 
     public function __construct(){
+
         $this->mail = new PHPMailer(true);
-        $this->mail->SMTPDebug = 2;
+        $this->mail->CharSet = 'UTF-8';
+
         $this->mail->isSMTP();
-        $this->mail->Host = 'Por definir';
+        $this->mail->Host = $_ENV['MAIL_HOST'];
         $this->mail->SMTPAuth = true;
-        $this->mail->Username = 'Por definir';
-        $this->mail->Password = 'Por definir';
+        $this->mail->Username = $_ENV['MAIL_USER'];
+        $this->mail->Password = $_ENV['MAIL_PASS'];
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $this->mail->Port = 'Por definir';
+        $this->mail->Port = $_ENV['MAIL_PORT'];
     }
 
     public function send($to, $subject, $body){
@@ -29,14 +29,19 @@ class Mail {
         try {
 
             $this->mail->clearAddresses();
-            $this->mail->setFrom('Por definir', 'Nootra Lite');
+
+            $this->mail->setFrom(
+                $_ENV['MAIL_USER'],
+                $_ENV['MAIL_FROM_NAME']
+            );
+
             $this->mail->addAddress($to);
 
             $this->mail->isHTML(true);
             $this->mail->Subject = $subject;
             $this->mail->Body    = $body;
             $this->mail->AltBody = strip_tags($body);
-            
+
             $this->mail->send();
 
             return true;
