@@ -24,6 +24,18 @@ function getUrgency(ev) {
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
+var navDirection = 'next';
+
+function updateTodayBtn() {
+    var hoy = new Date();
+    var btn = document.querySelector('.btn-today');
+    if (!btn) return;
+    if (calState.month !== hoy.getMonth() || calState.year !== hoy.getFullYear()) {
+        btn.classList.add('away');
+    } else {
+        btn.classList.remove('away');
+    }
+}
 
 function getMonday(date) {
     var d = new Date(date);
@@ -51,9 +63,9 @@ function renderCalendar(month, year) {
     document.getElementById('month-label').textContent = meses[month] + ' ' + year;
 
     var grid = document.querySelector('.cal-grid');
-    grid.classList.remove('month-fade');
+    grid.classList.remove('month-fade-prev', 'month-fade-next');
     grid.offsetHeight;
-    grid.classList.add('month-fade');
+    grid.classList.add('month-fade-' + navDirection);
 
     var cells = grid.querySelectorAll('.cal-cell');
     for (var c = 0; c < cells.length; c++) {
@@ -66,13 +78,14 @@ function renderCalendar(month, year) {
 
     for (var o = 0; o < offset; o++) {
         var empty = document.createElement('div');
-        empty.className = 'cal-cell';
+        empty.className = 'cal-cell offset-cell';
         grid.appendChild(empty);
     }
 
     for (var d = 1; d <= totalDays; d++) {
         var cell = document.createElement('div');
-        cell.className = 'cal-cell';
+        var isPast = esHoy && d < diaHoy;
+        cell.className = 'cal-cell' + (isPast ? ' past-day' : '');
 
         var numEl = document.createElement('div');
         numEl.className = 'cal-day-num' + (esHoy && d === diaHoy ? ' today' : '');
@@ -125,10 +138,17 @@ function openModal(dateStr) {
     lucide.createIcons();
 }
 
-function closeModal() {
-    modalOverlay.classList.remove('show');
-    editingEventId = null;
-    document.querySelector('.modal-title').textContent = 'Nuevo evento';
+function closeModal(cb) {
+    var box = document.getElementById('modal-box');
+    box.classList.add('closing');
+    box.addEventListener('animationend', function handler() {
+        box.removeEventListener('animationend', handler);
+        modalOverlay.classList.remove('show');
+        box.classList.remove('closing');
+        editingEventId = null;
+        document.querySelector('.modal-title').textContent = 'Nuevo evento';
+        if (cb) cb();
+    });
 }
 
 document.querySelector('.btn-add').addEventListener('click', openModal);
@@ -185,7 +205,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
 
     var saveBtn = document.querySelector('.btn-save');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Guardando...';
+    saveBtn.innerHTML = '<span class="save-spinner"></span>Guardando...';
 
     fetch(url, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
@@ -209,19 +229,20 @@ document.querySelector('.btn-save').addEventListener('click', function() {
                 events.push(data.event);
             }
             var msg = editingEventId ? 'Evento actualizado' : 'Evento guardado';
-            closeModal();
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
             if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
             renderUpcoming();
             showToast(msg);
-            document.getElementById('ev-title').value = '';
-            document.getElementById('ev-time').value = '';
-            document.getElementById('ev-allday').checked = false;
-            document.getElementById('ev-time').disabled = false;
-            document.getElementById('ev-time').style.opacity = '1';
-            document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
-            document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+            closeModal(function() {
+                document.getElementById('ev-title').value = '';
+                document.getElementById('ev-time').value = '';
+                document.getElementById('ev-allday').checked = false;
+                document.getElementById('ev-time').disabled = false;
+                document.getElementById('ev-time').style.opacity = '1';
+                document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+                document.querySelector('.swatch[data-color="#7c3aed"]').classList.add('active');
+            });
         })
         .catch(function() {
             saveBtn.disabled = false;
@@ -263,6 +284,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
         renderWeek(weekStart);
         return;
     }
+    navDirection = 'prev';
     calState.month--;
     if (calState.month < 0) {
         calState.month = 11;
@@ -271,6 +293,7 @@ document.getElementById('prev-month').addEventListener('click', function() {
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
     renderUpcoming();
+    updateTodayBtn();
 });
 
 document.getElementById('next-month').addEventListener('click', function() {
@@ -280,6 +303,7 @@ document.getElementById('next-month').addEventListener('click', function() {
         renderWeek(weekStart);
         return;
     }
+    navDirection = 'next';
     calState.month++;
     if (calState.month > 11) {
         calState.month = 0;
@@ -288,6 +312,7 @@ document.getElementById('next-month').addEventListener('click', function() {
     renderCalendar(calState.month, calState.year);
     if (currentView === 'agenda') renderAgenda(calState.month, calState.year);
     renderUpcoming();
+    updateTodayBtn();
 });
 
 // popup de ver evento
@@ -300,9 +325,9 @@ popup.innerHTML = '<div class="ev-popup-header">'
     + '</div>'
     + '<div class="ev-popup-meta"><i data-lucide="clock" style="width:12px;height:12px"></i><span id="pop-time"></span></div>'
     + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>'
-    + '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;display:flex;gap:14px;align-items:center;justify-content:center">'
-    + '<button id="pop-edit" style="background:none;border:none;color:#7c3aed;font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;padding:0">Editar</button>'
-    + '<button id="pop-delete" style="background:none;border:none;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;padding:0">Eliminar</button>'
+    + '<div class="ev-popup-actions">'
+    + '<button id="pop-edit" class="ev-popup-action-btn edit">Editar</button>'
+    + '<button id="pop-delete" class="ev-popup-action-btn delete">Eliminar</button>'
     + '</div>';
 document.body.appendChild(popup);
 
@@ -368,6 +393,7 @@ document.getElementById('pop-delete').addEventListener('click', function() {
         var deletedId = currentEventId;
         events = events.filter(function(ev) { return ev.id !== deletedId; });
         currentEventId = null;
+        showToast('Evento eliminado', 'danger');
         closePopup(function() {
             renderCalendar(calState.month, calState.year);
             renderMiniCal(calState.month, calState.year);
@@ -391,11 +417,25 @@ function clearActiveCell() {
     }
 }
 
+function posPopup(rect, gapPx) {
+    var ph = 160;
+    popup.classList.remove('above', 'below');
+    popup.style.transform = '';
+    if (rect.bottom + gapPx + ph > window.innerHeight) {
+        popup.style.top = (rect.top - ph - gapPx + window.scrollY) + 'px';
+        popup.classList.add('above');
+    } else {
+        popup.style.top = (rect.bottom + gapPx + window.scrollY) + 'px';
+        popup.classList.add('below');
+    }
+}
+
 function closePopup(callback) {
     if (!popup.classList.contains('show')) return;
     popup.classList.add('closing');
     popup.addEventListener('animationend', function handler() {
-        popup.classList.remove('show', 'closing');
+        popup.classList.remove('show', 'closing', 'above', 'below');
+        popup.style.transform = '';
         popup.removeEventListener('animationend', handler);
         clearActiveCell();
         if (callback) callback();
@@ -410,7 +450,7 @@ document.addEventListener('click', function(e) {
         document.getElementById('pop-time').textContent  = el.dataset.time;
         document.getElementById('pop-date').textContent  = el.dataset.day + ' de ' + meses[calState.month] + ' ' + calState.year;
         var rect = el.getBoundingClientRect();
-        popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+        posPopup(rect, 6);
         popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
         popup.classList.add('show');
         currentEventId = el.dataset.id ? parseInt(el.dataset.id) : null;
@@ -447,7 +487,7 @@ document.addEventListener('click', function(e) {
                 openModal(calState.year + '-' + mm + '-' + dd);
             }
         }
-    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box')) {
+    } else if (!e.target.closest('.ev-popup') && !e.target.closest('.day-detail-box') && !e.target.closest('.upcoming-event-card') && !e.target.closest('.agenda-item')) {
         closePopup();
     }
 });
@@ -459,14 +499,21 @@ function showErr(el) {
     el.classList.add('form-error');
 }
 
-function showToast(msg) {
-    var t = document.createElement('div');
-    t.className = 'cal-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
+function showToast(msg, type) {
+    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
+    var t = type || 'success';
+    var existing = document.querySelectorAll('.cal-toast');
+    var base = window.innerWidth <= 480 ? 80 : 24;
+    var offset = base + existing.length * 50;
+    var el = document.createElement('div');
+    el.className = 'cal-toast cal-toast-' + t;
+    el.style.bottom = offset + 'px';
+    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
+    document.body.appendChild(el);
+    lucide.createIcons();
     setTimeout(function() {
-        t.classList.add('hide');
-        t.addEventListener('animationend', function() { t.remove(); });
+        el.classList.add('hide');
+        el.addEventListener('animationend', function() { el.remove(); });
     }, 2500);
 }
 
@@ -588,9 +635,13 @@ function renderMobileEventList(day, month, year) {
         info.appendChild(titleSpan);
         info.appendChild(timeSpan);
 
+        var urgDot = document.createElement('span');
+        urgDot.className = 'ev-urgency-dot';
+
         card.dataset.evId = ev.id;
         card.appendChild(bar);
         card.appendChild(info);
+        card.appendChild(urgDot);
         card.addEventListener('click', function() {
             openMobileEventSheet(parseInt(this.dataset.evId));
         });
@@ -602,6 +653,14 @@ function renderAgenda(month, year) {
     var list = document.getElementById('agenda-list');
     if (!list) return;
     list.innerHTML = '';
+
+    var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    var agWrap = document.getElementById('agenda-wrap');
+    if (agWrap) {
+        agWrap.style.animation = 'none';
+        void agWrap.offsetWidth;
+        agWrap.style.animation = 'agendaFadeIn 0.18s ease both';
+    }
 
     var filtered = [];
     for (var i = 0; i < events.length; i++) {
@@ -636,11 +695,15 @@ function renderAgenda(month, year) {
             dayLabel.className = 'agenda-day-label';
             var dName = diasSem[new Date(year, month, ev.day).getDay()];
             dayLabel.textContent = dName + ' ' + ev.day;
+            if (new Date(year, month, ev.day) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()))
+                dayLabel.classList.add('agenda-day-past');
             list.appendChild(dayLabel);
         }
 
         var item = document.createElement('div');
         item.className = 'agenda-item ev-' + getUrgency(ev);
+        if (ev.day === hoy.getDate() && month === hoy.getMonth() && year === hoy.getFullYear())
+            item.classList.add('agenda-today');
         item.style.animationDelay = (j * 0.04) + 's';
 
         var dateBlock = document.createElement('div');
@@ -692,7 +755,7 @@ function renderAgenda(month, year) {
                     document.getElementById('pop-time').textContent = evData.time || 'Todo el día';
                     document.getElementById('pop-date').textContent = evData.day + ' de ' + meses[evData.month] + ' ' + evData.year;
                     var rect = itemEl.getBoundingClientRect();
-                    popup.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+                    posPopup(rect, 6);
                     popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
                     popup.classList.add('show');
                     currentEventId = evData.id;
@@ -768,12 +831,22 @@ function renderWeek(startDate) {
         var wd = curr.getDay();
         if (wd === 0 || wd === 6) colClass += ' week-weekend';
         col.className = colClass;
+        col.style.animationDelay = (d * 0.035) + 's';
 
         // label visible en mobile
         var mLabel = document.createElement('span');
         mLabel.className = 'week-day-label';
         mLabel.textContent = diasSemana[curr.getDay()] + ' ' + curr.getDate();
         col.appendChild(mLabel);
+
+        if (isToday) {
+            var nowLine = document.createElement('div');
+            nowLine.className = 'week-now-line';
+            let ahora = new Date();
+            var hrs = ahora.getHours(), mins = ahora.getMinutes();
+            nowLine.innerHTML = '<span>' + (hrs<10?'0':'') + hrs + ':' + (mins<10?'0':'') + mins + '</span>';
+            col.appendChild(nowLine);
+        }
 
         // filtrar y ordenar eventos del dia
         var dayEvents = events.filter(function(ev) {
@@ -793,7 +866,7 @@ function renderWeek(startDate) {
             (function(ev, idx) {
                 var card = document.createElement('div');
                 card.className = 'week-event ev-' + getUrgency(ev);
-                card.style.animationDelay = (idx * 0.04) + 's';
+                card.style.animationDelay = (d * 0.03 + idx * 0.04) + 's';
                 card.style.background = ev.color + '33';
                 card.style.borderLeft = '3px solid ' + ev.color;
 
@@ -809,22 +882,41 @@ function renderWeek(startDate) {
                 }
 
                 card.addEventListener('click', function() {
+                    var t = document.getElementById('week-tip'); if (t) t.style.opacity = '0';
                     if (window.innerWidth <= 480) {
                         openMobileEventSheet(ev.id);
                     } else {
                         var rect = card.getBoundingClientRect();
                         currentEventId = ev.id;
                         if (!popup) return;
+                        document.getElementById('pop-dot').style.background = ev.color;
                         popup.querySelector('#pop-title').textContent = ev.title;
                         popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
                         popup.querySelector('#pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
-                        popup.style.display = 'block';
-                        var top = rect.bottom + window.scrollY + 8;
-                        var left = rect.left + window.scrollX;
-                        popup.style.top = top + 'px';
-                        popup.style.left = left + 'px';
+                        var delBtn = document.getElementById('pop-delete');
+                        if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+                        posPopup(rect, 8);
+                        popup.style.left = Math.min(rect.left, window.innerWidth - 288) + 'px';
+                        popup.classList.add('show');
+                        lucide.createIcons();
                     }
                 });
+
+                card.onmouseenter = function() {
+                    var tip = document.getElementById('week-tip') || (function(){
+                        var t = document.createElement('div');
+                        t.id = 'week-tip'; t.className = 'week-tooltip';
+                        document.body.appendChild(t); return t;
+                    })();
+                    tip.textContent = ev.title + (ev.time ? ' · ' + ev.time : '');
+                    var r = card.getBoundingClientRect();
+                    tip.style.top = (r.top - 32) + 'px';
+                    tip.style.left = (r.left + r.width/2) + 'px';
+                    tip.style.opacity = '1';
+                };
+                card.onmouseleave = function() {
+                    var t = document.getElementById('week-tip'); if(t) t.style.opacity = '0';
+                };
 
                 col.appendChild(card);
             })(dayEvents[e], e);
@@ -838,6 +930,7 @@ function renderWeek(startDate) {
 
 function switchView(view) {
     currentView = view;
+    var tip = document.getElementById('week-tip'); if (tip) tip.style.opacity = '0';
     var calLayout = document.querySelector('.calendar-layout');
     var agendaWrap = document.getElementById('agenda-wrap');
     var weekWrap = document.getElementById('week-wrap');
@@ -868,7 +961,12 @@ function switchView(view) {
         if (window.innerWidth <= 480) {
             if (mobilePanel) mobilePanel.style.display = '';
         } else {
-            if (calLayout) calLayout.style.display = '';
+            if (calLayout) {
+                calLayout.style.display = '';
+                calLayout.style.animation = 'none';
+                void calLayout.offsetWidth;
+                calLayout.style.animation = 'agendaFadeIn 0.18s ease both';
+            }
         }
         renderCalendar(calState.month, calState.year);
     }
@@ -884,10 +982,20 @@ document.querySelectorAll('.view-chip').forEach(function(chip) {
     });
 });
 
-document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn) {
+var vtDesk = document.getElementById('view-toggle-desk');
+var indicator = document.createElement('span');
+indicator.className = 'view-indicator';
+vtDesk.insertBefore(indicator, vtDesk.firstChild);
+
+function moveIndicator(idx) {
+    indicator.style.transform = 'translateX(' + (idx * 100) + '%)';
+}
+
+document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn, i) {
     btn.addEventListener('click', function() {
         document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(b) { b.classList.remove('active'); });
         this.classList.add('active');
+        moveIndicator(i);
         var txt = this.textContent.trim();
         var view = txt === 'Agenda' ? 'agenda' : txt === 'Semana' ? 'week' : 'month';
         switchView(view);
@@ -914,6 +1022,7 @@ document.querySelector('.mini-next').addEventListener('click', function() {
 function renderUpcoming() {
     var panel = document.getElementById('upcoming-sections');
     if (!panel) return;
+    var titleEl = document.querySelector('.upcoming-title');
 
     var hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -926,6 +1035,7 @@ function renderUpcoming() {
     proximos.sort(function(a, b) {
         return new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day);
     });
+    if (titleEl) titleEl.textContent = proximos.length ? 'Próximos · ' + proximos.length : 'Próximos eventos';
 
     var grupos = { hoy: [], manana: [], semana: [], resto: [] };
     proximos.forEach(function(ev) {
@@ -942,21 +1052,40 @@ function renderUpcoming() {
         if (!grupos[k].length) return;
         html += '<div class="upcoming-section"><div class="upcoming-section-label">' + labels[k] + '</div>';
         grupos[k].forEach(function(ev) {
+            var showDate = (k === 'semana' || k === 'resto');
+            var fechaStr = showDate ? new Date(ev.year, ev.month, ev.day).toLocaleDateString('es', { weekday: 'short', day: 'numeric' }) : '';
             html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + '" data-id="' + ev.id + '">'
                 + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
                 + '<div class="upcoming-event-info">'
                 + '<div class="upcoming-event-title">' + ev.title + '</div>'
-                + '<div class="upcoming-event-time">' + (ev.time === 'Todo el dia' ? 'Todo el día' : ev.time) + '</div>'
+                + '<div class="upcoming-event-time">' + (showDate ? fechaStr + ' · ' : '') + (ev.time === 'Todo el dia' ? 'Todo el día' : ev.time) + '</div>'
                 + '</div></div>';
         });
         html += '</div>';
     });
 
     if (!proximos.length) {
-        html = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0">Sin eventos próximos</p>';
+        html = '<div class="empty-state"><i data-lucide="calendar-x"></i><p>Sin eventos próximos</p></div>';
     }
 
     panel.innerHTML = html;
+    lucide.createIcons();
+
+    // staggered + limite
+    var allCards = panel.querySelectorAll('.upcoming-event-card');
+    allCards.forEach(function(card, i) { card.style.animationDelay = (i * 0.04) + 's'; });
+    var LIMIT = 15;
+    if (allCards.length > LIMIT) {
+        for (var i = LIMIT; i < allCards.length; i++) allCards[i].style.display = 'none';
+        var moreBtn = document.createElement('div');
+        moreBtn.className = 'upcoming-more';
+        moreBtn.textContent = '+ ' + (allCards.length - LIMIT) + ' más';
+        moreBtn.onclick = function() {
+            for (var i = LIMIT; i < allCards.length; i++) allCards[i].style.display = '';
+            moreBtn.remove();
+        };
+        allCards[LIMIT - 1].insertAdjacentElement('afterend', moreBtn);
+    }
 
     panel.querySelectorAll('.upcoming-event-card').forEach(function(card) {
         card.addEventListener('click', function() {
@@ -969,7 +1098,7 @@ function renderUpcoming() {
             document.getElementById('pop-time').textContent = ev.time === 'Todo el dia' ? 'Todo el día' : ev.time;
             document.getElementById('pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
             var rect = card.getBoundingClientRect();
-            popup.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+            posPopup(rect, 6);
             popup.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 288)) + 'px';
             popup.classList.add('show');
             currentEventId = id;
