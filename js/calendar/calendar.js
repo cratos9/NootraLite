@@ -635,9 +635,13 @@ function renderMobileEventList(day, month, year) {
         info.appendChild(titleSpan);
         info.appendChild(timeSpan);
 
+        var urgDot = document.createElement('span');
+        urgDot.className = 'ev-urgency-dot';
+
         card.dataset.evId = ev.id;
         card.appendChild(bar);
         card.appendChild(info);
+        card.appendChild(urgDot);
         card.addEventListener('click', function() {
             openMobileEventSheet(parseInt(this.dataset.evId));
         });
@@ -650,7 +654,7 @@ function renderAgenda(month, year) {
     if (!list) return;
     list.innerHTML = '';
 
-    var hoy = new Date();
+    var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
     var agWrap = document.getElementById('agenda-wrap');
     if (agWrap) {
         agWrap.style.animation = 'none';
@@ -878,18 +882,23 @@ function renderWeek(startDate) {
                 }
 
                 card.addEventListener('click', function() {
+                    var t = document.getElementById('week-tip'); if (t) t.style.opacity = '0';
                     if (window.innerWidth <= 480) {
                         openMobileEventSheet(ev.id);
                     } else {
                         var rect = card.getBoundingClientRect();
                         currentEventId = ev.id;
                         if (!popup) return;
+                        document.getElementById('pop-dot').style.background = ev.color;
                         popup.querySelector('#pop-title').textContent = ev.title;
                         popup.querySelector('#pop-time').textContent = ev.all_day ? 'Todo el día' : (ev.time || '');
                         popup.querySelector('#pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
-                        popup.style.display = 'block';
+                        var delBtn = document.getElementById('pop-delete');
+                        if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
                         posPopup(rect, 8);
-                        popup.style.left = (rect.left + window.scrollX) + 'px';
+                        popup.style.left = Math.min(rect.left, window.innerWidth - 288) + 'px';
+                        popup.classList.add('show');
+                        lucide.createIcons();
                     }
                 });
 
@@ -921,6 +930,7 @@ function renderWeek(startDate) {
 
 function switchView(view) {
     currentView = view;
+    var tip = document.getElementById('week-tip'); if (tip) tip.style.opacity = '0';
     var calLayout = document.querySelector('.calendar-layout');
     var agendaWrap = document.getElementById('agenda-wrap');
     var weekWrap = document.getElementById('week-wrap');

@@ -178,13 +178,14 @@
 .cal-event {
     font-size: 10px;
     font-weight: 500;
-    padding: 2px 6px;
+    padding: 2px 14px 2px 6px;
     border-radius: 4px;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: default;
+    position: relative;
 }
 
 .cal-more {
@@ -494,7 +495,7 @@
 
     .cal-cell { min-height: 70px; padding: 4px; }
 
-    .cal-event { font-size: 9px; padding: 2px 4px; }
+    .cal-event { font-size: 9px; padding: 2px 12px 2px 4px; }
 }
 
 @media screen and (max-width: 480px) {
@@ -528,7 +529,8 @@
     .mini-dot { width: 4px; height: 4px; border-radius: 50%; }
 
     .mobile-event-list { padding: 0 16px 80px; }
-    .mobile-ev-card { display: flex; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .mobile-ev-card { display: flex; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; position: relative; }
+    .mobile-ev-card .ev-urgency-dot { right: 10px; width: 7px; height: 7px; }
     .mobile-ev-bar { width: 4px; flex-shrink: 0; }
     .mobile-ev-info { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
     .mobile-ev-title { font-size: 13px; font-weight: 600; }
@@ -785,7 +787,7 @@
 }
 .agenda-item:hover .agenda-date { transform: scale(1.05); }
 .agenda-item:active { transform: scale(0.98); }
-.agenda-today { border-left: 3px solid; border-image: linear-gradient(180deg, #7c3aed, #ec4899) 1; }
+.agenda-today { box-shadow: inset 3px 0 0 0 #7c3aed; }
 
 .agenda-date { transition: transform 0.12s; }
 
@@ -853,6 +855,8 @@
 .light-mode .agenda-item { background: #f8fafc; border-color: #e2e8f0; }
 .light-mode .agenda-item:hover { background: #f1f5f9; }
 .light-mode .agenda-day-label { color: #64748b; }
+.light-mode .agenda-day-past { opacity: 0.55; }
+.light-mode .agenda-today { box-shadow: inset 3px 0 0 0 #7c3aed; }
 
 /* agenda responsive */
 @media screen and (max-width: 768px) {
@@ -985,7 +989,7 @@
 .week-now-line span { position:absolute; right:0; top:-8px; font-size:9px; color:#a78bfa; font-weight:600; }
 .light-mode .week-now-line span { color: #7c3aed; }
 
-.week-tooltip { position:fixed; background:#1e1b2e; color:#e2e0f0; font-size:11px; padding:4px 10px; border-radius:6px; pointer-events:none; transform:translateX(-50%); transition:opacity 0.12s; opacity:0; z-index:9999; white-space:nowrap; }
+.week-tooltip { position:fixed; background:#1e1b2e; color:#e2e0f0; font-size:11px; padding:4px 10px; border-radius:6px; pointer-events:none; transform:translateX(-50%); transition:opacity 0.12s; opacity:0; z-index:990; white-space:nowrap; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
 .light-mode .week-tooltip { background:#334155; color:#f8fafc; }
 
 @media screen and (max-width: 768px) {
@@ -1329,16 +1333,22 @@
 
 /* urgencia */
 .ev-urgency-dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0;
-    margin-left: auto;
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: box-shadow 0.2s;
 }
-.ev-past .ev-urgency-dot  { background: #ef4444; }
-.ev-soon .ev-urgency-dot  { background: #f59e0b; }
-.ev-future .ev-urgency-dot { background: #10b981; }
+.ev-past .ev-urgency-dot  { background: #ef4444; box-shadow: 0 0 4px rgba(239,68,68,0.4); }
+.ev-soon .ev-urgency-dot  { background: #f59e0b; box-shadow: 0 0 4px rgba(245,158,11,0.4); }
+.ev-future .ev-urgency-dot { background: #10b981; box-shadow: 0 0 4px rgba(16,185,129,0.4); }
+.cal-event:hover .ev-urgency-dot { box-shadow: 0 0 6px 1px currentColor; }
+.light-mode .ev-past .ev-urgency-dot  { box-shadow: 0 0 3px rgba(239,68,68,0.3); }
+.light-mode .ev-soon .ev-urgency-dot  { box-shadow: 0 0 3px rgba(245,158,11,0.3); }
+.light-mode .ev-future .ev-urgency-dot { box-shadow: 0 0 3px rgba(16,185,129,0.3); }
 
 .ev-past { opacity: 0.55; }
 .ev-past:hover { opacity: 0.75; }
