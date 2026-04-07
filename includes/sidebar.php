@@ -19,6 +19,9 @@
         <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#" data-tooltip="Tareas">
             <i data-lucide="check-square"></i> <span>Tareas</span>
         </a>
+        <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/nootralite/messages/messages.php" data-tooltip="Mensajes">
+            <i data-lucide="message-circle"></i> <span>Mensajes</span>
+        </a>
         <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="#" data-tooltip="Notas rápidas">
             <i data-lucide="notepad-text"></i> <span>Notas rápidas</span>
         </a>
@@ -45,8 +48,8 @@
     <a class="bottom-nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#">
         <i data-lucide="check-square"></i><span>Tareas</span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'notebooks' ? 'active' : '' ?>" href="#">
-        <i data-lucide="book-open"></i><span>Cuadernos</span>
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/nootralite/messages/messages.php">
+        <i data-lucide="message-circle"></i><span>Mensajes</span>
     </a>
     <a class="bottom-nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/nootralite/User/profile.php">
         <i data-lucide="user"></i><span>Perfil</span>
