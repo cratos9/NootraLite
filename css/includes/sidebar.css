@@ -92,7 +92,10 @@ body {
     display: flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: 16px; color: white;
     flex-shrink: 0;
+    transition: transform 0.2s;
 }
+.sidebar:hover .logo-icon { transform: scale(1.08) rotate(3deg); }
+.sidebar-close { display: none; }
 
 .logo-text {
     font-size: 18px; font-weight: 800;
@@ -192,6 +195,8 @@ body {
 .light-mode .sidebar { box-shadow: 2px 0 12px rgba(0,0,0,0.06); }
 .light-mode .sidebar:hover { box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
 .light-mode .nav-item:hover { background: rgba(0,0,0,0.05); }
+.light-mode .nav-item.active { background: rgba(124,58,237,0.1); color: #7c3aed; }
+.light-mode .nav-item.active:hover { background: rgba(124,58,237,0.16); }
 
 .sidebar-overlay {
     position: fixed;
@@ -218,6 +223,9 @@ body {
     .sidebar.open { transform: translateX(0); }
     .sidebar.open .nav-item span,
     .sidebar.open .logo-text { opacity: 1; }
+    .sidebar-close { display:flex; align-items:center; justify-content:center; background:none; border:none; color:var(--text-muted); cursor:pointer; margin-left:auto; padding:4px; border-radius:6px; }
+    .sidebar-close:hover { color:var(--text-primary); background:rgba(255,255,255,0.08); }
+    .sidebar-close svg { width:18px; height:18px; }
 }
 
 /* hamburger flotante — solo tablet */
@@ -274,11 +282,7 @@ body {
     .bottom-nav-item:active { transform: scale(0.92); }
     .bottom-nav-item.active { color: #a78bfa; }
     .bottom-nav-item.active svg { transform: scale(1.08); }
-    .bottom-nav-item.active span {
-        background: linear-gradient(135deg, #7c3aed, #ec4899);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text; font-weight: 700;
-    }
+    .bottom-nav-item.active span { color: #a78bfa; font-weight: 700; }
     /* barra indicadora animada */
     .bottom-nav-item::after {
         content: '';
@@ -299,10 +303,6 @@ body {
     .light-mode .bottom-nav-item { color: #8090a8; }
     .light-mode .bottom-nav-item:not(.active):hover { color: #526070; background: rgba(0,0,0,0.03); }
     .light-mode .bottom-nav-item.active { color: #7c3aed; }
-    .light-mode .bottom-nav-item.active span {
-        background: linear-gradient(135deg, #7c3aed, #ec4899);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+    .light-mode .bottom-nav-item.active span { color: #7c3aed; font-weight: 700; }
     body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
 }

@@ -4,6 +4,7 @@
     <div class="sidebar-logo">
         <div class="logo-icon">N</div>
         <span class="logo-text">NOOTRA</span>
+        <button class="sidebar-close" aria-label="Cerrar"><i data-lucide="x"></i></button>
     </div>
     <nav class="sidebar-nav">
         <a class="nav-item <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>" href="/nootralite/dashboard/index.php" data-tooltip="Dashboard">
