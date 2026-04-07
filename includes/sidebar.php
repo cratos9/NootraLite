@@ -7,10 +7,10 @@
         <button class="sidebar-close" aria-label="Cerrar"><i data-lucide="x"></i></button>
     </div>
     <nav class="sidebar-nav">
-        <a class="nav-item <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>" href="/nootralite/dashboard/index.php" data-tooltip="Dashboard">
+        <a class="nav-item <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>" href="/dashboard/index.php" data-tooltip="Dashboard">
             <i data-lucide="house"></i> <span>Dashboard</span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'calendar' ? 'active' : '' ?>" href="/nootralite/calendar/calendar.php" data-tooltip="Calendario">
+        <a class="nav-item <?= ($activePage ?? '') === 'calendar' ? 'active' : '' ?>" href="/calendar/calendar.php" data-tooltip="Calendario">
             <i data-lucide="calendar-days"></i> <span>Calendario</span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'notebooks' ? 'active' : '' ?>" href="#" data-tooltip="Cuadernos">
@@ -19,7 +19,7 @@
         <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#" data-tooltip="Tareas">
             <i data-lucide="check-square"></i> <span>Tareas</span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/nootralite/messages/messages.php" data-tooltip="Mensajes">
+        <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php" data-tooltip="Mensajes">
             <i data-lucide="message-circle"></i> <span>Mensajes</span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="#" data-tooltip="Notas rápidas">
@@ -27,7 +27,7 @@
         </a>
     </nav>
     <nav class="sidebar-nav sidebar-nav-bottom">
-        <a class="nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/nootralite/User/profile.php" data-tooltip="Perfil">
+        <a class="nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/User/profile.php" data-tooltip="Perfil">
             <i data-lucide="user"></i> <span>Perfil</span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'settings' ? 'active' : '' ?>" href="#" data-tooltip="Configuración">
@@ -39,19 +39,19 @@
 <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
 
 <nav class="bottom-nav">
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>" href="/nootralite/dashboard/index.php">
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'dashboard' ? 'active' : '' ?>" href="/dashboard/index.php">
         <i data-lucide="house"></i><span>Inicio</span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'calendar' ? 'active' : '' ?>" href="/nootralite/calendar/calendar.php">
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'calendar' ? 'active' : '' ?>" href="/calendar/calendar.php">
         <i data-lucide="calendar-days"></i><span>Calendario</span>
     </a>
     <a class="bottom-nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#">
         <i data-lucide="check-square"></i><span>Tareas</span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/nootralite/messages/messages.php">
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php">
         <i data-lucide="message-circle"></i><span>Mensajes</span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/nootralite/User/profile.php">
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/User/profile.php">
         <i data-lucide="user"></i><span>Perfil</span>
     </a>
 </nav>
