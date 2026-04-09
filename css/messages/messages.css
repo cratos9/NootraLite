@@ -193,6 +193,7 @@
 .chat-input-bar {
     display: flex; align-items: center; gap: 8px;
     padding: 12px 16px;
+    min-height: 64px;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border);
     flex-shrink: 0;
@@ -356,6 +357,74 @@
 }
 .msgs-empty i { width: 36px; height: 36px; opacity: 0.3; }
 .msgs-empty p { font-size: 12px; }
+
+/* header info chat */
+.chat-header-info {
+    display: flex; flex-direction: column;
+    gap: 1px; flex: 1; min-width: 0;
+}
+.chat-header-info .chat-name {
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-status {
+    font-size: 11px;
+    color: #10b981;
+}
+.chat-status.offline { color: var(--text-muted); }
+
+.chat-header-actions {
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+}
+.btn-chat-action {
+    width: 32px; height: 32px;
+    background: var(--bg-tertiary);
+    border: none; border-radius: 8px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: color 0.15s;
+}
+.btn-chat-action:hover { color: var(--text-primary); }
+.btn-chat-action i { width: 15px; height: 15px; }
+
+/* avatar con dot de estado */
+.conv-avatar-wrap {
+    position: relative; flex-shrink: 0;
+}
+.status-dot {
+    position: absolute; bottom: 1px; right: 1px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--text-muted);
+    border: 2px solid var(--bg-secondary);
+}
+.status-dot.online { background: #10b981; }
+
+/* card adjunto en burbuja */
+.msg-attachment {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(124,58,237,0.1);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 180px; max-width: 240px;
+}
+.att-icon {
+    width: 32px; height: 32px;
+    background: rgba(124,58,237,0.2);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: #a78bfa;
+}
+.att-icon i { width: 16px; height: 16px; }
+.att-info { flex: 1; min-width: 0; }
+.att-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.att-size { font-size: 10px; color: var(--text-muted); }
 
 /* btn volver mobile */
 .btn-back-mobile {
