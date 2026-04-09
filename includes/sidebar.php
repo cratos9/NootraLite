@@ -19,8 +19,9 @@
         <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#" data-tooltip="Tareas">
             <i data-lucide="check-square"></i> <span>Tareas</span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php" data-tooltip="Mensajes">
+        <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php" data-tooltip="Mensajes" style="position:relative;">
             <i data-lucide="message-circle"></i> <span>Mensajes</span>
+            <span class="nav-msg-badge" id="navMsgBadge" style="display:none"></span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="#" data-tooltip="Notas rápidas">
             <i data-lucide="notepad-text"></i> <span>Notas rápidas</span>
@@ -48,8 +49,9 @@
     <a class="bottom-nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#">
         <i data-lucide="check-square"></i><span>Tareas</span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php">
+    <a class="bottom-nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="/messages/messages.php" style="position:relative;">
         <i data-lucide="message-circle"></i><span>Mensajes</span>
+        <span class="bottom-msg-badge" id="bottomMsgBadge" style="display:none"></span>
     </a>
     <a class="bottom-nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="/User/profile.php">
         <i data-lucide="user"></i><span>Perfil</span>
