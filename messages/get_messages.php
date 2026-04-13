@@ -16,7 +16,8 @@ try {
     // marcar como leidos al abrir
     $model->markRead($conv_id, 1);
     $msgs = $model->getMessages($conv_id);
-    echo json_encode(['ok' => true, 'messages' => $msgs]);
+    $is_online = $model->getOtherUserStatus($conv_id, 1);
+    echo json_encode(['ok' => true, 'messages' => $msgs, 'is_online' => $is_online]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false, 'error' => 'error al obtener mensajes']);
 }

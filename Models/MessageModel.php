@@ -12,6 +12,7 @@ class MessageModel {
         $sql = "SELECT c.id, c.user1_id, c.user2_id,
                        m.body AS last_msg, m.created_at AS last_time,
                        u.name AS other_name,
+                       IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
                         WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread
                 FROM conversations c
@@ -60,6 +61,24 @@ class MessageModel {
         );
         $stmt->execute([$uid, $uid, $uid]);
         return (int)$stmt->fetchColumn();
+    }
+
+    public function updateLastSeen($uid) {
+        $stmt = $this->db->prepare('UPDATE users SET last_seen = NOW() WHERE id = ?');
+        $stmt->execute([$uid]);
+    }
+
+    // retorna is_online (1/0) del otro usuario en una conv
+    public function getOtherUserStatus($conv_id, $uid) {
+        $stmt = $this->db->prepare(
+            'SELECT IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online
+             FROM conversations c
+             JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
+             WHERE c.id = ?'
+        );
+        $stmt->execute([$uid, $conv_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? (int)$row['is_online'] : 0;
     }
 
     public function createConversation($uid1, $uid2) {
