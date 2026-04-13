@@ -18,6 +18,9 @@ var btnCloseModal = document.getElementById('btnCloseModal');
 var userSearch    = document.getElementById('userSearch');
 var userResults   = document.getElementById('userResults');
 
+var pollInterval = null;
+var lastMsgId = 0;
+
 // --- utilidades ---
 
 function avatarColor(name) {
@@ -106,30 +109,46 @@ function renderConvList(filter) {
 // --- abrir conversacion ---
 
 function openConversation(convId, name) {
+    // limpiar polling anterior
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    lastMsgId = 0;
     activeConvId = convId;
 
-    // marcar activo en lista
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.classList.toggle('active', parseInt(el.getAttribute('data-id')) === convId);
     });
 
-    // limpiar badge unread en data
+    // limpiar badge unread en data local
     for (var i = 0; i < conversations.length; i++) {
         if (conversations[i].id == convId) conversations[i].unread = 0;
     }
 
-    // header
+    // marcar leidos en backend
+    var mrFd = new FormData();
+    mrFd.append('conv_id', convId);
+    fetch('../messages/mark_read.php', { method: 'POST', body: mrFd });
+
+    // header con nueva estructura
     var color = avatarColor(name);
     var ini = initials(name);
     chatHeader.innerHTML =
-        '<div class="conv-avatar" style="background:' + color + ';width:34px;height:34px;font-size:12px;">' + ini + '</div>' +
-        '<span style="font-size:14px;font-weight:600;color:var(--text-primary);">' + name + '</span>';
+        '<div class="conv-avatar-wrap">' +
+          '<div class="conv-avatar" style="background:' + color + ';width:36px;height:36px;font-size:12px;">' + ini + '</div>' +
+          '<span class="status-dot"></span>' +
+        '</div>' +
+        '<div class="chat-header-info">' +
+          '<span class="chat-name">' + escapeHtml(name) + '</span>' +
+          '<span class="chat-status">En línea</span>' +
+        '</div>' +
+        '<div class="chat-header-actions">' +
+          '<button class="btn-chat-action" aria-label="Llamar"><i data-lucide="phone"></i></button>' +
+          '<button class="btn-chat-action" aria-label="Video"><i data-lucide="video"></i></button>' +
+        '</div>';
 
     // mobile: esconder lista, mostrar chat
     if (window.innerWidth <= 480) {
         document.querySelector('.conv-panel').classList.add('hidden');
         document.querySelector('.chat-panel').classList.add('mobile-active');
-        // agregar btn volver si no existe
         if (!document.getElementById('btnBack')) {
             var btn = document.createElement('button');
             btn.id = 'btnBack';
@@ -138,13 +157,11 @@ function openConversation(convId, name) {
             btn.innerHTML = '<i data-lucide="arrow-left"></i>';
             btn.addEventListener('click', closeMobileChat);
             chatHeader.insertBefore(btn, chatHeader.firstChild);
-            lucide.createIcons();
         }
     }
 
     chatEmpty.style.display = 'none';
     chatActive.style.display = 'flex';
-
     chatMessages.innerHTML = '<div class="msgs-loading"><span></span><span></span><span></span></div>';
 
     fetch('../messages/get_messages.php?conv_id=' + convId)
@@ -153,6 +170,10 @@ function openConversation(convId, name) {
             if (!res.ok) { chatMessages.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-size:12px;">Error al cargar</p>'; return; }
             renderMessages(res.messages);
             scrollToBottom();
+            // guardar ultimo id y arrancar polling
+            if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
+            pollInterval = setInterval(pollMessages, 5000);
+            lucide.createIcons();
         })
         .catch(function() {
             chatMessages.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-size:12px;">Error de conexión</p>';
@@ -160,13 +181,38 @@ function openConversation(convId, name) {
 }
 
 function closeMobileChat() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     document.querySelector('.conv-panel').classList.remove('hidden');
     document.querySelector('.chat-panel').classList.remove('mobile-active');
     chatActive.style.display = 'none';
     chatEmpty.style.display = '';
     activeConvId = null;
+    lastMsgId = 0;
     var btn = document.getElementById('btnBack');
     if (btn) btn.remove();
+}
+
+// polling para mensajes nuevos en el chat activo
+function pollMessages() {
+    if (!activeConvId) return;
+    fetch('../messages/get_messages.php?conv_id=' + activeConvId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok || !res.messages || !res.messages.length) return;
+            var msgs = res.messages;
+            var newestId = parseInt(msgs[msgs.length - 1].id);
+            if (newestId <= lastMsgId) return;
+            // hay mensajes nuevos
+            lastMsgId = newestId;
+            var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
+            renderMessages(msgs);
+            if (wasAtBottom) scrollToBottom();
+            // marcar leidos automatico
+            var fd = new FormData();
+            fd.append('conv_id', activeConvId);
+            fetch('../messages/mark_read.php', { method: 'POST', body: fd });
+        })
+        .catch(function() {});
 }
 
 // --- render mensajes ---
