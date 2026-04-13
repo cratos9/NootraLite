@@ -61,6 +61,22 @@ function formatMsgTime(dt) {
     return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
 
+// actualiza el dot y texto de status en el header del chat
+function updateStatusUI(isOnline) {
+    var dot = chatHeader.querySelector('.status-dot');
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!dot || !statusEl) return;
+    if (isOnline) {
+        dot.classList.add('online');
+        statusEl.classList.add('online');
+        statusEl.textContent = 'En línea';
+    } else {
+        dot.classList.remove('online');
+        statusEl.classList.remove('online');
+        statusEl.textContent = 'Desconectado';
+    }
+}
+
 // --- render lista conversaciones ---
 
 function renderConvList(filter) {
@@ -138,12 +154,20 @@ function openConversation(convId, name) {
         '</div>' +
         '<div class="chat-header-info">' +
           '<span class="chat-name">' + escapeHtml(name) + '</span>' +
-          '<span class="chat-status">En línea</span>' +
+          '<span class="chat-status">Desconectado</span>' +
         '</div>' +
         '<div class="chat-header-actions">' +
           '<button class="btn-chat-action" aria-label="Llamar"><i data-lucide="phone"></i></button>' +
           '<button class="btn-chat-action" aria-label="Video"><i data-lucide="video"></i></button>' +
         '</div>';
+
+    // status inicial desde convData (puede estar un poco desactualizado, el poll lo refresca)
+    for (var ci = 0; ci < conversations.length; ci++) {
+        if (conversations[ci].id == convId) {
+            updateStatusUI(parseInt(conversations[ci].is_online));
+            break;
+        }
+    }
 
     // mobile: esconder lista, mostrar chat
     if (window.innerWidth <= 480) {
@@ -170,6 +194,7 @@ function openConversation(convId, name) {
             if (!res.ok) { chatMessages.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-size:12px;">Error al cargar</p>'; return; }
             renderMessages(res.messages);
             scrollToBottom();
+            updateStatusUI(res.is_online);
             // guardar ultimo id y arrancar polling
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
             pollInterval = setInterval(pollMessages, 5000);
@@ -198,7 +223,9 @@ function pollMessages() {
     fetch('../messages/get_messages.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            if (!res.ok || !res.messages || !res.messages.length) return;
+            if (!res.ok) return;
+            if (res.is_online !== undefined) updateStatusUI(res.is_online);
+            if (!res.messages || !res.messages.length) return;
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
             if (newestId <= lastMsgId) return;
@@ -380,6 +407,13 @@ function startConversation(userId) {
             openConversation(conv.id, conv.other_name);
         });
 }
+
+// --- heartbeat last_seen ---
+
+fetch('../messages/update_last_seen.php', { method: 'POST' });
+setInterval(function() {
+    fetch('../messages/update_last_seen.php', { method: 'POST' });
+}, 30000);
 
 // --- init ---
 

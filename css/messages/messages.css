@@ -370,9 +370,9 @@
 }
 .chat-status {
     font-size: 11px;
-    color: #10b981;
+    color: var(--text-muted);
 }
-.chat-status.offline { color: var(--text-muted); }
+.chat-status.online { color: #10b981; }
 
 .chat-header-actions {
     display: flex; align-items: center; gap: 6px;
