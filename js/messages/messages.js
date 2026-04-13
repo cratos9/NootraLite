@@ -77,6 +77,78 @@ function updateStatusUI(isOnline) {
     }
 }
 
+// --- sistema de dropdown ---
+
+var msgDropdown = document.createElement('div');
+msgDropdown.className = 'msg-dropdown';
+document.body.appendChild(msgDropdown);
+
+function posDropdown(anchor) {
+    var rect = anchor.getBoundingClientRect();
+    msgDropdown.style.visibility = 'hidden';
+    msgDropdown.style.display = 'block';
+    var ddH = msgDropdown.offsetHeight;
+    var ddW = msgDropdown.offsetWidth;
+    msgDropdown.style.display = '';
+    msgDropdown.style.visibility = '';
+    var top = rect.bottom + 4;
+    var left = rect.right - ddW;
+    if (top + ddH > window.innerHeight - 8) top = rect.top - ddH - 4;
+    if (left < 8) left = rect.left;
+    if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+    msgDropdown.style.top = top + 'px';
+    msgDropdown.style.left = left + 'px';
+}
+
+function openDropdown(anchor, items) {
+    var actions = [];
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        if (item.divider) { html += '<div class="msg-dropdown-divider"></div>'; continue; }
+        var cls = item.cls ? ' ' + item.cls : '';
+        html += '<div class="msg-dropdown-item' + cls + '" data-action="' + actions.length + '">';
+        if (item.icon) html += '<i data-lucide="' + item.icon + '"></i>';
+        html += item.label + '</div>';
+        actions.push(item.action || null);
+    }
+    msgDropdown.innerHTML = html;
+    posDropdown(anchor);
+    msgDropdown.classList.add('show');
+    lucide.createIcons({ nodes: [msgDropdown] });
+    msgDropdown.querySelectorAll('.msg-dropdown-item').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(el.getAttribute('data-action'));
+            closeDropdown(actions[idx] || null);
+        });
+    });
+}
+
+function closeDropdown(cb) {
+    if (!msgDropdown.classList.contains('show')) { if (cb) cb(); return; }
+    msgDropdown.classList.remove('show');
+    msgDropdown.classList.add('closing');
+    msgDropdown.addEventListener('animationend', function handler() {
+        msgDropdown.removeEventListener('animationend', handler);
+        msgDropdown.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
+    if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
+    if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); }
+});
+
+document.addEventListener('click', function(e) {
+    if (msgDropdown.classList.contains('show') && !e.target.closest('.msg-dropdown')) {
+        closeDropdown();
+    }
+});
+
 // --- render lista conversaciones ---
 
 function renderConvList(filter) {
@@ -354,7 +426,14 @@ newConvBackdrop.addEventListener('click', function(e) {
 });
 
 function closeModal() {
-    newConvBackdrop.classList.remove('open');
+    var box = newConvBackdrop.querySelector('.modal-box');
+    if (!box) { newConvBackdrop.classList.remove('open'); return; }
+    box.classList.add('closing');
+    box.addEventListener('animationend', function handler() {
+        box.removeEventListener('animationend', handler);
+        box.classList.remove('closing');
+        newConvBackdrop.classList.remove('open');
+    });
 }
 
 var searchTimer = null;
