@@ -14,7 +14,7 @@ try {
     $db = new Database();
     $pdo = $db->connect();
     $stmt = $pdo->prepare(
-        "SELECT id, name FROM users WHERE name LIKE ? AND id != ? LIMIT 10"
+        "SELECT id, username AS name FROM users WHERE username LIKE ? AND id != ? LIMIT 10"
     );
     $stmt->execute(['%' . $q . '%', $uid]);
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);

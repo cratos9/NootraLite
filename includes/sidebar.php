@@ -2,7 +2,7 @@
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-icon">N</div>
+        <img src="/assets/icon.png" alt="Nootra" class="logo-icon" width="36" height="36">
         <span class="logo-text">NOOTRA</span>
         <button class="sidebar-close" aria-label="Cerrar"><i data-lucide="x"></i></button>
     </div>

@@ -11,6 +11,9 @@ var chatMessages = document.getElementById('chatMessages');
 var msgInput     = document.getElementById('msgInput');
 var btnSend      = document.getElementById('btnSend');
 var convSearch   = document.getElementById('convSearch');
+var activeFilter = 'all';
+var attachPopup  = document.getElementById('attachPopup');
+var fileInput    = document.getElementById('fileInput');
 
 var btnNewConv    = document.getElementById('btnNewConv');
 var newConvBackdrop = document.getElementById('newConvBackdrop');
@@ -61,6 +64,212 @@ function formatMsgTime(dt) {
     return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
 
+// actualiza el dot y texto de status en el header del chat
+function updateStatusUI(isOnline) {
+    var dot = chatHeader.querySelector('.status-dot');
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!dot || !statusEl) return;
+    if (isOnline) {
+        dot.classList.add('online');
+        statusEl.classList.add('online');
+        statusEl.textContent = 'En línea';
+    } else {
+        dot.classList.remove('online');
+        statusEl.classList.remove('online');
+        statusEl.textContent = 'Desconectado';
+    }
+}
+
+// --- sistema de dropdown ---
+
+var msgDropdown = document.createElement('div');
+msgDropdown.className = 'msg-dropdown';
+document.body.appendChild(msgDropdown);
+
+function posDropdown(anchor) {
+    var rect = anchor.getBoundingClientRect();
+    msgDropdown.style.visibility = 'hidden';
+    msgDropdown.style.display = 'block';
+    var ddH = msgDropdown.offsetHeight;
+    var ddW = msgDropdown.offsetWidth;
+    msgDropdown.style.display = '';
+    msgDropdown.style.visibility = '';
+    var top = rect.bottom + 4;
+    var left = rect.right - ddW;
+    if (top + ddH > window.innerHeight - 8) top = rect.top - ddH - 4;
+    if (left < 8) left = rect.left;
+    if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+    msgDropdown.style.top = top + 'px';
+    msgDropdown.style.left = left + 'px';
+}
+
+function posDropdownAt(x, y) {
+    msgDropdown.style.visibility = 'hidden';
+    msgDropdown.style.display = 'block';
+    var ddH = msgDropdown.offsetHeight;
+    var ddW = msgDropdown.offsetWidth;
+    msgDropdown.style.display = '';
+    msgDropdown.style.visibility = '';
+    var top = y, left = x;
+    if (top + ddH > window.innerHeight - 8) top = y - ddH;
+    if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+    if (left < 8) left = 8;
+    msgDropdown.style.top = top + 'px';
+    msgDropdown.style.left = left + 'px';
+}
+
+function openDropdown(anchor, items) {
+    var actions = [];
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        if (item.divider) { html += '<div class="msg-dropdown-divider"></div>'; continue; }
+        var cls = item.cls ? ' ' + item.cls : '';
+        html += '<div class="msg-dropdown-item' + cls + '" data-action="' + actions.length + '">';
+        if (item.icon) html += '<i data-lucide="' + item.icon + '"></i>';
+        html += item.label + '</div>';
+        actions.push(item.action || null);
+    }
+    msgDropdown.innerHTML = html;
+    posDropdown(anchor);
+    msgDropdown.classList.add('show');
+    lucide.createIcons({ nodes: [msgDropdown] });
+    msgDropdown.querySelectorAll('.msg-dropdown-item').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var idx = parseInt(el.getAttribute('data-action'));
+            closeDropdown(actions[idx] || null);
+        });
+    });
+}
+
+function closeDropdown(cb) {
+    if (!msgDropdown.classList.contains('show')) { if (cb) cb(); return; }
+    msgDropdown.classList.remove('show');
+    msgDropdown.classList.add('closing');
+    msgDropdown.addEventListener('animationend', function handler() {
+        msgDropdown.removeEventListener('animationend', handler);
+        msgDropdown.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
+function openAttachPopup() {
+    attachPopup.classList.remove('closing');
+    attachPopup.classList.add('show');
+    lucide.createIcons({ nodes: [attachPopup] });
+}
+
+function closeAttachPopup(cb) {
+    if (!attachPopup.classList.contains('show')) { if (cb) cb(); return; }
+    attachPopup.classList.remove('show');
+    attachPopup.classList.add('closing');
+    attachPopup.addEventListener('animationend', function handler() {
+        attachPopup.removeEventListener('animationend', handler);
+        attachPopup.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
+    if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
+    if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
+    if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); return; }
+    if (activeConvId) { closeChatPanel(); }
+});
+
+document.addEventListener('click', function(e) {
+    if (msgDropdown.classList.contains('show') && !e.target.closest('.msg-dropdown')) {
+        closeDropdown();
+    }
+    if (attachPopup.classList.contains('show') && !e.target.closest('.attach-popup') && !e.target.closest('#btnAttach')) {
+        closeAttachPopup();
+    }
+});
+
+function showToast(msg, type) {
+    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
+    var t = type || 'success';
+    var existing = document.querySelectorAll('.msg-toast');
+    var base = window.innerWidth <= 480 ? 80 : 24;
+    var offset = base + existing.length * 50;
+    var el = document.createElement('div');
+    el.className = 'msg-toast msg-toast-' + t;
+    el.style.bottom = offset + 'px';
+    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
+    document.body.appendChild(el);
+    lucide.createIcons();
+    setTimeout(function() {
+        el.classList.add('hide');
+        el.addEventListener('animationend', function() { el.remove(); });
+    }, 2500);
+}
+
+function getConvMenuItems(convId) {
+    return [
+        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
+        { icon: 'mail', label: 'Marcar no leído', action: function() { showToast('Próximamente'); } },
+        { icon: 'star', label: 'Favorito', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } }
+    ];
+}
+
+function getHeaderMenuItems() {
+    return [
+        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { showToast('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { showToast('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
+        { icon: 'user', label: 'Info contacto', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
+        { icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { showToast('Próximamente'); } }
+    ];
+}
+
+function getMsgMenuItems(isMine, text) {
+    var copy = { icon: 'copy', label: 'Copiar', action: function() {
+        navigator.clipboard.writeText(text).then(function() { showToast('Copiado'); });
+    }};
+    var base = [
+        { icon: 'reply', label: 'Responder', action: function() { showToast('Próximamente'); } },
+        copy,
+        { icon: 'forward', label: 'Reenviar', action: function() { showToast('Próximamente'); } },
+        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
+        { icon: 'bookmark', label: 'Destacar', action: function() { showToast('Próximamente'); } },
+        { divider: true }
+    ];
+    if (isMine) {
+        base.push({ icon: 'info', label: 'Info', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+    } else {
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } });
+    }
+    base.push({ divider: true });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } });
+    return base;
+}
+
+function closeChatPanel() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    activeConvId = null;
+    chatActive.style.display = 'none';
+    chatEmpty.style.display = '';
+    convList.querySelectorAll('.conv-item').forEach(function(el) {
+        el.classList.remove('active');
+    });
+}
+
 // --- render lista conversaciones ---
 
 function renderConvList(filter) {
@@ -69,8 +278,15 @@ function renderConvList(filter) {
         return !filter || (c.other_name && c.other_name.toLowerCase().indexOf(filter) >= 0);
     });
 
+    if (activeFilter === 'unread') {
+        filtered = filtered.filter(function(c) { return parseInt(c.unread) > 0; });
+    } else if (activeFilter === 'favorites') {
+        filtered = filtered.filter(function(c) { return c.is_favorite == 1; });
+    }
+
     if (filtered.length === 0) {
-        convList.innerHTML = '<div class="conv-empty">Sin conversaciones</div>';
+        var emptyMsg = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
+        convList.innerHTML = '<div class="conv-empty">' + emptyMsg + '</div>';
         return;
     }
 
@@ -88,23 +304,67 @@ function renderConvList(filter) {
         html += '<div class="conv-item' + isActive + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '">';
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
-        html += '<div class="conv-name">' + name + '</div>';
-        html += '<div class="conv-last">' + lastMsg + '</div>';
+        html += '<div class="conv-name">' + escapeHtml(name) + '</div>';
+        html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
         html += '</div>';
         html += '<div class="conv-meta">';
         if (time) html += '<span class="conv-time">' + time + '</span>';
         if (unread > 0) html += '<span class="conv-badge">' + unread + '</span>';
         html += '</div>';
+        html += '<button class="conv-actions-trigger" aria-label="Acciones"><i data-lucide="chevron-down"></i></button>';
         html += '</div>';
     }
     convList.innerHTML = html;
 
     convList.querySelectorAll('.conv-item').forEach(function(el) {
-        el.addEventListener('click', function() {
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('.conv-actions-trigger')) return;
             openConversation(parseInt(el.getAttribute('data-id')), decodeURIComponent(el.getAttribute('data-name')));
         });
     });
+
+    lucide.createIcons({ nodes: [convList] });
 }
+
+// acciones en conversaciones
+convList.addEventListener('click', function(e) {
+    var trigger = e.target.closest('.conv-actions-trigger');
+    if (!trigger) return;
+    e.stopPropagation();
+    var convItem = trigger.closest('.conv-item');
+    var convId = parseInt(convItem.getAttribute('data-id'));
+    openDropdown(trigger, getConvMenuItems(convId));
+});
+
+convList.addEventListener('contextmenu', function(e) {
+    var convItem = e.target.closest('.conv-item');
+    if (!convItem) return;
+    e.preventDefault();
+    var convId = parseInt(convItem.getAttribute('data-id'));
+    openDropdown(convItem, getConvMenuItems(convId));
+    posDropdownAt(e.clientX, e.clientY);
+});
+
+// menu header del chat
+chatHeader.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-chat-more');
+    if (!btn) return;
+    e.stopPropagation();
+    openDropdown(btn, getHeaderMenuItems());
+});
+
+// click derecho en burbujas
+chatMessages.addEventListener('contextmenu', function(e) {
+    var bubble = e.target.closest('.msg-bubble');
+    if (!bubble) return;
+    e.preventDefault();
+    var row = bubble.closest('.msg-row');
+    var isMine = row.classList.contains('mine');
+    var textEl = bubble.querySelector('.msg-text');
+    var text = textEl ? textEl.textContent : '';
+    openDropdown(bubble, getMsgMenuItems(isMine, text));
+    posDropdownAt(e.clientX, e.clientY);
+});
 
 // --- abrir conversacion ---
 
@@ -138,12 +398,21 @@ function openConversation(convId, name) {
         '</div>' +
         '<div class="chat-header-info">' +
           '<span class="chat-name">' + escapeHtml(name) + '</span>' +
-          '<span class="chat-status">En línea</span>' +
+          '<span class="chat-status">Desconectado</span>' +
         '</div>' +
         '<div class="chat-header-actions">' +
           '<button class="btn-chat-action" aria-label="Llamar"><i data-lucide="phone"></i></button>' +
           '<button class="btn-chat-action" aria-label="Video"><i data-lucide="video"></i></button>' +
+          '<button class="btn-chat-action btn-chat-more" aria-label="Más opciones"><i data-lucide="more-vertical"></i></button>' +
         '</div>';
+
+    // status inicial desde convData (puede estar un poco desactualizado, el poll lo refresca)
+    for (var ci = 0; ci < conversations.length; ci++) {
+        if (conversations[ci].id == convId) {
+            updateStatusUI(parseInt(conversations[ci].is_online));
+            break;
+        }
+    }
 
     // mobile: esconder lista, mostrar chat
     if (window.innerWidth <= 480) {
@@ -170,6 +439,7 @@ function openConversation(convId, name) {
             if (!res.ok) { chatMessages.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-size:12px;">Error al cargar</p>'; return; }
             renderMessages(res.messages);
             scrollToBottom();
+            updateStatusUI(res.is_online);
             // guardar ultimo id y arrancar polling
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
             pollInterval = setInterval(pollMessages, 5000);
@@ -198,7 +468,9 @@ function pollMessages() {
     fetch('../messages/get_messages.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            if (!res.ok || !res.messages || !res.messages.length) return;
+            if (!res.ok) return;
+            if (res.is_online !== undefined) updateStatusUI(res.is_online);
+            if (!res.messages || !res.messages.length) return;
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
             if (newestId <= lastMsgId) return;
@@ -239,7 +511,7 @@ function renderMessages(msgs) {
         }
 
         var cls = isMine ? 'msg-row mine' : 'msg-row theirs';
-        html += '<div class="' + cls + '">';
+        html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
         html += '<div class="msg-bubble">';
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
@@ -306,10 +578,49 @@ convSearch.addEventListener('input', function() {
     renderConvList(this.value);
 });
 
+document.querySelectorAll('.filter-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        renderConvList(convSearch.value);
+    });
+});
+
 // --- adjuntar archivo ---
 
-document.getElementById('btnAttach').addEventListener('click', function() {
-    document.getElementById('fileInput').click();
+document.getElementById('btnAttach').addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (attachPopup.classList.contains('show')) {
+        closeAttachPopup();
+    } else {
+        closeDropdown(function() { openAttachPopup(); });
+    }
+});
+
+document.querySelectorAll('.attach-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+        var action = this.dataset.action;
+        closeAttachPopup(function() {
+            if (action === 'photos') {
+                fileInput.accept = 'image/*';
+                fileInput.click();
+                fileInput.addEventListener('change', function reset() {
+                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+                    fileInput.removeEventListener('change', reset);
+                });
+            } else if (action === 'document') {
+                fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
+                fileInput.click();
+                fileInput.addEventListener('change', function reset() {
+                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+                    fileInput.removeEventListener('change', reset);
+                });
+            } else {
+                showToast('Próximamente', 'warning');
+            }
+        });
+    });
 });
 
 // --- modal nueva conversacion ---
@@ -327,7 +638,14 @@ newConvBackdrop.addEventListener('click', function(e) {
 });
 
 function closeModal() {
-    newConvBackdrop.classList.remove('open');
+    var box = newConvBackdrop.querySelector('.modal-box');
+    if (!box) { newConvBackdrop.classList.remove('open'); return; }
+    box.classList.add('closing');
+    box.addEventListener('animationend', function handler() {
+        box.removeEventListener('animationend', handler);
+        box.classList.remove('closing');
+        newConvBackdrop.classList.remove('open');
+    });
 }
 
 var searchTimer = null;
@@ -346,7 +664,7 @@ userSearch.addEventListener('input', function() {
                 var html = '';
                 for (var i = 0; i < res.users.length; i++) {
                     var u = res.users[i];
-                    html += '<div class="user-result-item" data-uid="' + u.id + '">' + u.name + '</div>';
+                    html += '<div class="user-result-item" data-uid="' + u.id + '">' + escapeHtml(u.name) + '</div>';
                 }
                 userResults.innerHTML = html;
                 userResults.querySelectorAll('.user-result-item').forEach(function(el) {
@@ -380,6 +698,13 @@ function startConversation(userId) {
             openConversation(conv.id, conv.other_name);
         });
 }
+
+// --- heartbeat last_seen ---
+
+fetch('../messages/update_last_seen.php', { method: 'POST' });
+setInterval(function() {
+    fetch('../messages/update_last_seen.php', { method: 'POST' });
+}, 30000);
 
 // --- init ---
 

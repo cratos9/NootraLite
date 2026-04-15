@@ -23,7 +23,7 @@ try {
     $conv_id = $model->createConversation($uid, $other_id);
 
     // datos del otro usuario
-    $stmt = $pdo->prepare('SELECT id, name FROM users WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, username, IF(TIMESTAMPDIFF(SECOND, last_seen, NOW()) < 120, 1, 0) AS is_online FROM users WHERE id = ?');
     $stmt->execute([$other_id]);
     $other = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -35,7 +35,8 @@ try {
             'user2_id' => max($uid, $other_id),
             'last_msg' => null,
             'last_time' => null,
-            'other_name' => $other['name'],
+            'other_name' => $other['username'],
+            'is_online' => (int)$other['is_online'],
             'unread' => 0,
         ]
     ]);

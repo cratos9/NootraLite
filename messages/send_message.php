@@ -20,6 +20,12 @@ if (!$conv_id || $body === '') {
 try {
     $db = new Database();
     $pdo = $db->connect();
+    $check = $pdo->prepare('SELECT id FROM conversations WHERE id = ? AND (user1_id = ? OR user2_id = ?)');
+    $check->execute([$conv_id, $uid, $uid]);
+    if (!$check->fetch()) {
+        echo json_encode(['ok' => false, 'error' => 'sin acceso']);
+        exit;
+    }
     $model = new MessageModel($pdo);
     $id = $model->send($conv_id, $uid, $body);
     echo json_encode([

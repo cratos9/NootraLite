@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>document.documentElement.style.visibility='hidden';document.documentElement.style.background='#0f0f1a'</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
     <title>Mensajes — NootraLite</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -26,6 +28,10 @@
                 <i data-lucide="search"></i>
                 <input type="text" id="convSearch" placeholder="Buscar conversaciones..." autocomplete="off">
             </div>
+            <div class="conv-filters">
+                <button class="filter-chip active" data-filter="all">Todos</button>
+                <button class="filter-chip" data-filter="unread">No leídos</button>
+            </div>
             <div class="conv-list" id="convList">
                 <!-- se llena con JS -->
             </div>
@@ -46,6 +52,32 @@
                         <i data-lucide="paperclip"></i>
                     </button>
                     <input type="file" id="fileInput" style="display:none" accept="image/*,.pdf,.doc,.docx,.zip">
+                    <div class="attach-popup" id="attachPopup">
+                        <div class="attach-option" data-action="photos">
+                            <span class="attach-icon" style="background:#2563eb"><i data-lucide="image"></i></span>
+                            <span class="attach-label">Fotos</span>
+                        </div>
+                        <div class="attach-option" data-action="document">
+                            <span class="attach-icon" style="background:#7c3aed"><i data-lucide="file-text"></i></span>
+                            <span class="attach-label">Documento</span>
+                        </div>
+                        <div class="attach-option" data-action="camera">
+                            <span class="attach-icon" style="background:#059669"><i data-lucide="camera"></i></span>
+                            <span class="attach-label">Cámara</span>
+                        </div>
+                        <div class="attach-option" data-action="contact">
+                            <span class="attach-icon" style="background:#d97706"><i data-lucide="user"></i></span>
+                            <span class="attach-label">Contacto</span>
+                        </div>
+                        <div class="attach-option" data-action="location">
+                            <span class="attach-icon" style="background:#dc2626"><i data-lucide="map-pin"></i></span>
+                            <span class="attach-label">Ubicación</span>
+                        </div>
+                        <div class="attach-option" data-action="audio">
+                            <span class="attach-icon" style="background:#ec4899"><i data-lucide="mic"></i></span>
+                            <span class="attach-label">Audio</span>
+                        </div>
+                    </div>
                     <input type="text" id="msgInput" class="msg-input" placeholder="Escribe un mensaje..." autocomplete="off">
                     <button class="btn-send" id="btnSend" aria-label="Enviar">
                         <i data-lucide="send"></i>
@@ -79,6 +111,6 @@ var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/messages/messages.js"></script>
-<script>lucide.createIcons();</script>
+<script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
 </html>
