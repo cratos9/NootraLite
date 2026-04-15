@@ -141,3 +141,56 @@ hr{
     color: red;
     border-color: red;
 }
+
+.tablet{
+    display: none;
+}
+
+@media screen  and (max-width: 768px) {
+    .principalInfo{
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bio{
+        text-align: center;
+    }
+
+    .data{
+        width: 90%;
+    }
+    
+    .tablet{
+        display: block;
+    }
+
+    .icon-info{
+        display: none;
+    }
+
+}
+
+@media  screen and (max-width: 480px) {
+    .principalInfo{
+        flex-direction: column;
+        align-items: center;
+    }   
+
+
+    .bio{
+        text-align: center;
+    }
+
+    .data{
+        width: 90%;
+    }
+
+    .info{
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .user-details{
+        display: block;
+    }
+}

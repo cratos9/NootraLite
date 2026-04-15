@@ -16,7 +16,6 @@
         <section class="principalInfo">
             <div class="imageUser">
                 <div class="image"></div>
-                <p>Cambiar foto de perfil</p>
             </div>
             <div class='user'>
                 <p class="full-name"><?php echo $_SESSION['user']['username']; ?></p>
@@ -24,7 +23,7 @@
             </div>
         </section>
         <section class="userInfo">
-            <header class="title"><i data-lucide="user" class="icon-info"></i> Información del usuario<hr></header>
+            <header class="title"><hr class="tablet"><i data-lucide="user" class="icon-info"></i> Información del usuario<hr></header>
             <section class="user-details">
                 <div class="info">
                     <p class="label">Nombre:</p>
@@ -49,7 +48,7 @@
             </section>
         </section>
         <section class="schoolInfo">
-            <header class="title"><i data-lucide="school" class="icon-info"></i> Información de la escuela<hr></header>
+            <header class="title"><hr class="tablet"><i data-lucide="school" class="icon-info"></i> Información de la escuela<hr></header>
             <section class="user-details">
                 <div class="info">
                     <p class="label">Escuela:</p>
@@ -66,7 +65,7 @@
             </section>
         </section>
         <section class="useInfo">
-            <header class="title"><i data-lucide="boxes" class="icon-info"></i> Información de uso<hr></header>
+            <header class="title"><hr class="tablet"><i data-lucide="boxes" class="icon-info"></i> Información de uso<hr></header>
             <section class="user-details">
                 <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
             </section>

@@ -37,7 +37,6 @@ class User{
         $stmt->execute([$email]);
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo "La contrasena es la misma: " . (password_verify($password, $user['password_hash'] ) ? "Sí" : "No");
         if ($user && password_verify($password, $user['password_hash'])) {
             $sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
