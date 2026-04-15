@@ -100,6 +100,21 @@ function posDropdown(anchor) {
     msgDropdown.style.left = left + 'px';
 }
 
+function posDropdownAt(x, y) {
+    msgDropdown.style.visibility = 'hidden';
+    msgDropdown.style.display = 'block';
+    var ddH = msgDropdown.offsetHeight;
+    var ddW = msgDropdown.offsetWidth;
+    msgDropdown.style.display = '';
+    msgDropdown.style.visibility = '';
+    var top = y, left = x;
+    if (top + ddH > window.innerHeight - 8) top = y - ddH;
+    if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+    if (left < 8) left = 8;
+    msgDropdown.style.top = top + 'px';
+    msgDropdown.style.left = left + 'px';
+}
+
 function openDropdown(anchor, items) {
     var actions = [];
     var html = '';
@@ -149,6 +164,37 @@ document.addEventListener('click', function(e) {
     }
 });
 
+function showToast(msg, type) {
+    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
+    var t = type || 'success';
+    var existing = document.querySelectorAll('.msg-toast');
+    var base = window.innerWidth <= 480 ? 80 : 24;
+    var offset = base + existing.length * 50;
+    var el = document.createElement('div');
+    el.className = 'msg-toast msg-toast-' + t;
+    el.style.bottom = offset + 'px';
+    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
+    document.body.appendChild(el);
+    lucide.createIcons();
+    setTimeout(function() {
+        el.classList.add('hide');
+        el.addEventListener('animationend', function() { el.remove(); });
+    }, 2500);
+}
+
+function getConvMenuItems(convId) {
+    return [
+        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
+        { icon: 'mail', label: 'Marcar no leído', action: function() { showToast('Próximamente'); } },
+        { icon: 'star', label: 'Favorito', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'x', label: 'Cerrar chat', action: function() { showToast('Próximamente'); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } }
+    ];
+}
+
 // --- render lista conversaciones ---
 
 function renderConvList(filter) {
@@ -183,16 +229,39 @@ function renderConvList(filter) {
         if (time) html += '<span class="conv-time">' + time + '</span>';
         if (unread > 0) html += '<span class="conv-badge">' + unread + '</span>';
         html += '</div>';
+        html += '<button class="conv-actions-trigger" aria-label="Acciones"><i data-lucide="chevron-down"></i></button>';
         html += '</div>';
     }
     convList.innerHTML = html;
 
     convList.querySelectorAll('.conv-item').forEach(function(el) {
-        el.addEventListener('click', function() {
+        el.addEventListener('click', function(e) {
+            if (e.target.closest('.conv-actions-trigger')) return;
             openConversation(parseInt(el.getAttribute('data-id')), decodeURIComponent(el.getAttribute('data-name')));
         });
     });
+
+    lucide.createIcons({ nodes: [convList] });
 }
+
+// acciones en conversaciones
+convList.addEventListener('click', function(e) {
+    var trigger = e.target.closest('.conv-actions-trigger');
+    if (!trigger) return;
+    e.stopPropagation();
+    var convItem = trigger.closest('.conv-item');
+    var convId = parseInt(convItem.getAttribute('data-id'));
+    openDropdown(trigger, getConvMenuItems(convId));
+});
+
+convList.addEventListener('contextmenu', function(e) {
+    var convItem = e.target.closest('.conv-item');
+    if (!convItem) return;
+    e.preventDefault();
+    var convId = parseInt(convItem.getAttribute('data-id'));
+    openDropdown(convItem, getConvMenuItems(convId));
+    posDropdownAt(e.clientX, e.clientY);
+});
 
 // --- abrir conversacion ---
 
