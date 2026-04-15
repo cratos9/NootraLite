@@ -155,7 +155,8 @@ document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
     if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
-    if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); }
+    if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); return; }
+    if (activeConvId) { closeChatPanel(); }
 });
 
 document.addEventListener('click', function(e) {
@@ -189,10 +190,60 @@ function getConvMenuItems(convId) {
         { icon: 'mail', label: 'Marcar no leído', action: function() { showToast('Próximamente'); } },
         { icon: 'star', label: 'Favorito', action: function() { showToast('Próximamente'); } },
         { divider: true },
-        { icon: 'x', label: 'Cerrar chat', action: function() { showToast('Próximamente'); } },
+        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
         { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
         { icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } }
     ];
+}
+
+function getHeaderMenuItems() {
+    return [
+        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { showToast('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { showToast('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
+        { icon: 'user', label: 'Info contacto', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
+        { icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { divider: true },
+        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { showToast('Próximamente'); } }
+    ];
+}
+
+function getMsgMenuItems(isMine, text) {
+    var copy = { icon: 'copy', label: 'Copiar', action: function() {
+        navigator.clipboard.writeText(text).then(function() { showToast('Copiado'); });
+    }};
+    var base = [
+        { icon: 'reply', label: 'Responder', action: function() { showToast('Próximamente'); } },
+        copy,
+        { icon: 'forward', label: 'Reenviar', action: function() { showToast('Próximamente'); } },
+        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
+        { icon: 'bookmark', label: 'Destacar', action: function() { showToast('Próximamente'); } },
+        { divider: true }
+    ];
+    if (isMine) {
+        base.push({ icon: 'info', label: 'Info', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+    } else {
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } });
+    }
+    base.push({ divider: true });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } });
+    return base;
+}
+
+function closeChatPanel() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    activeConvId = null;
+    chatActive.style.display = 'none';
+    chatEmpty.style.display = '';
+    convList.querySelectorAll('.conv-item').forEach(function(el) {
+        el.classList.remove('active');
+    });
 }
 
 // --- render lista conversaciones ---
@@ -263,6 +314,27 @@ convList.addEventListener('contextmenu', function(e) {
     posDropdownAt(e.clientX, e.clientY);
 });
 
+// menu header del chat
+chatHeader.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-chat-more');
+    if (!btn) return;
+    e.stopPropagation();
+    openDropdown(btn, getHeaderMenuItems());
+});
+
+// click derecho en burbujas
+chatMessages.addEventListener('contextmenu', function(e) {
+    var bubble = e.target.closest('.msg-bubble');
+    if (!bubble) return;
+    e.preventDefault();
+    var row = bubble.closest('.msg-row');
+    var isMine = row.classList.contains('mine');
+    var textEl = bubble.querySelector('.msg-text');
+    var text = textEl ? textEl.textContent : '';
+    openDropdown(bubble, getMsgMenuItems(isMine, text));
+    posDropdownAt(e.clientX, e.clientY);
+});
+
 // --- abrir conversacion ---
 
 function openConversation(convId, name) {
@@ -300,6 +372,7 @@ function openConversation(convId, name) {
         '<div class="chat-header-actions">' +
           '<button class="btn-chat-action" aria-label="Llamar"><i data-lucide="phone"></i></button>' +
           '<button class="btn-chat-action" aria-label="Video"><i data-lucide="video"></i></button>' +
+          '<button class="btn-chat-action btn-chat-more" aria-label="Más opciones"><i data-lucide="more-vertical"></i></button>' +
         '</div>';
 
     // status inicial desde convData (puede estar un poco desactualizado, el poll lo refresca)
@@ -407,7 +480,7 @@ function renderMessages(msgs) {
         }
 
         var cls = isMine ? 'msg-row mine' : 'msg-row theirs';
-        html += '<div class="' + cls + '">';
+        html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
         html += '<div class="msg-bubble">';
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';

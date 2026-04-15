@@ -316,7 +316,11 @@
     border-radius: 14px;
     display: flex; flex-direction: column; gap: 3px;
     position: relative;
+    cursor: context-menu;
+    transition: filter 0.1s;
 }
+.msg-row.mine .msg-bubble:hover { filter: brightness(1.08); }
+.msg-row.theirs .msg-bubble:hover { background: #1e2a42; }
 .msg-row.mine .msg-bubble {
     background: linear-gradient(135deg, #7c3aed, #ec4899);
     border-bottom-right-radius: 4px;
