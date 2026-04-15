@@ -11,7 +11,7 @@ body{
 
 main{
     padding: 20px;
-    width: 33%;
+    width: 40%;
     margin-left: 60px;
     border: 1px solid var(--border);
     display: flex;
@@ -91,4 +91,22 @@ label{
 #password:hover{
     border-color: var(--accent-purple);
     box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+@media screen and (max-width:768px) {
+    main{
+        width: 50%;
+    }
+
+    h1{
+        font-size: 20px;
+    }
+}
+
+@media  screen and (max-width: 480px){
+    main{
+        width: 100%;
+        margin-left: 0;
+        border-radius: 0;
+    }
 }
