@@ -193,4 +193,21 @@ hr{
     .user-details{
         display: block;
     }
+
+    .tablet{
+        display: none;
+    }
+    
+    hr{
+        display: none;
+    }
+
+    .options{
+        flex-direction: column;
+    }
+
+    .btn-logout, .btn-edit_profile, .btn-delete_account{
+        width: 100%;
+        text-align: center;
+    }
 }
