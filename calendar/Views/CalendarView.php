@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es-mx">
 <head>
+    <script>document.documentElement.style.visibility='hidden';document.documentElement.style.background='#0f0f1a'</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/assets/favicon.png">
@@ -216,5 +217,6 @@
 <script>var events = <?= json_encode(array_values($events)) ?>;</script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/calendar/calendar.js"></script>
+<script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
 </html>
