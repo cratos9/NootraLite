@@ -11,6 +11,9 @@ var chatMessages = document.getElementById('chatMessages');
 var msgInput     = document.getElementById('msgInput');
 var btnSend      = document.getElementById('btnSend');
 var convSearch   = document.getElementById('convSearch');
+var activeFilter = 'all';
+var attachPopup  = document.getElementById('attachPopup');
+var fileInput    = document.getElementById('fileInput');
 
 var btnNewConv    = document.getElementById('btnNewConv');
 var newConvBackdrop = document.getElementById('newConvBackdrop');
@@ -151,8 +154,26 @@ function closeDropdown(cb) {
     });
 }
 
+function openAttachPopup() {
+    attachPopup.classList.remove('closing');
+    attachPopup.classList.add('show');
+    lucide.createIcons({ nodes: [attachPopup] });
+}
+
+function closeAttachPopup(cb) {
+    if (!attachPopup.classList.contains('show')) { if (cb) cb(); return; }
+    attachPopup.classList.remove('show');
+    attachPopup.classList.add('closing');
+    attachPopup.addEventListener('animationend', function handler() {
+        attachPopup.removeEventListener('animationend', handler);
+        attachPopup.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
     if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
     if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
     if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); return; }
@@ -162,6 +183,9 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('click', function(e) {
     if (msgDropdown.classList.contains('show') && !e.target.closest('.msg-dropdown')) {
         closeDropdown();
+    }
+    if (attachPopup.classList.contains('show') && !e.target.closest('.attach-popup') && !e.target.closest('#btnAttach')) {
+        closeAttachPopup();
     }
 });
 
@@ -254,8 +278,15 @@ function renderConvList(filter) {
         return !filter || (c.other_name && c.other_name.toLowerCase().indexOf(filter) >= 0);
     });
 
+    if (activeFilter === 'unread') {
+        filtered = filtered.filter(function(c) { return parseInt(c.unread) > 0; });
+    } else if (activeFilter === 'favorites') {
+        filtered = filtered.filter(function(c) { return c.is_favorite == 1; });
+    }
+
     if (filtered.length === 0) {
-        convList.innerHTML = '<div class="conv-empty">Sin conversaciones</div>';
+        var emptyMsg = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
+        convList.innerHTML = '<div class="conv-empty">' + emptyMsg + '</div>';
         return;
     }
 
@@ -547,10 +578,49 @@ convSearch.addEventListener('input', function() {
     renderConvList(this.value);
 });
 
+document.querySelectorAll('.filter-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        renderConvList(convSearch.value);
+    });
+});
+
 // --- adjuntar archivo ---
 
-document.getElementById('btnAttach').addEventListener('click', function() {
-    document.getElementById('fileInput').click();
+document.getElementById('btnAttach').addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (attachPopup.classList.contains('show')) {
+        closeAttachPopup();
+    } else {
+        closeDropdown(function() { openAttachPopup(); });
+    }
+});
+
+document.querySelectorAll('.attach-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+        var action = this.dataset.action;
+        closeAttachPopup(function() {
+            if (action === 'photos') {
+                fileInput.accept = 'image/*';
+                fileInput.click();
+                fileInput.addEventListener('change', function reset() {
+                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+                    fileInput.removeEventListener('change', reset);
+                });
+            } else if (action === 'document') {
+                fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
+                fileInput.click();
+                fileInput.addEventListener('change', function reset() {
+                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+                    fileInput.removeEventListener('change', reset);
+                });
+            } else {
+                showToast('Próximamente', 'warning');
+            }
+        });
+    });
 });
 
 // --- modal nueva conversacion ---
