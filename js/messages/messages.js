@@ -304,8 +304,8 @@ function renderConvList(filter) {
         html += '<div class="conv-item' + isActive + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '">';
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
-        html += '<div class="conv-name">' + name + '</div>';
-        html += '<div class="conv-last">' + lastMsg + '</div>';
+        html += '<div class="conv-name">' + escapeHtml(name) + '</div>';
+        html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
         html += '</div>';
         html += '<div class="conv-meta">';
         if (time) html += '<span class="conv-time">' + time + '</span>';
@@ -664,7 +664,7 @@ userSearch.addEventListener('input', function() {
                 var html = '';
                 for (var i = 0; i < res.users.length; i++) {
                     var u = res.users[i];
-                    html += '<div class="user-result-item" data-uid="' + u.id + '">' + u.name + '</div>';
+                    html += '<div class="user-result-item" data-uid="' + u.id + '">' + escapeHtml(u.name) + '</div>';
                 }
                 userResults.innerHTML = html;
                 userResults.querySelectorAll('.user-result-item').forEach(function(el) {

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
     <title>Mensajes — NootraLite</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -29,7 +30,6 @@
             <div class="conv-filters">
                 <button class="filter-chip active" data-filter="all">Todos</button>
                 <button class="filter-chip" data-filter="unread">No leídos</button>
-                <button class="filter-chip" data-filter="favorites">Favoritos</button>
             </div>
             <div class="conv-list" id="convList">
                 <!-- se llena con JS -->

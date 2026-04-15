@@ -19,6 +19,12 @@ if (!$conv_id) {
 try {
     $db = new Database();
     $pdo = $db->connect();
+    $check = $pdo->prepare('SELECT id FROM conversations WHERE id = ? AND (user1_id = ? OR user2_id = ?)');
+    $check->execute([$conv_id, $uid, $uid]);
+    if (!$check->fetch()) {
+        echo json_encode(['ok' => false]);
+        exit;
+    }
     $model = new MessageModel($pdo);
     $model->markRead($conv_id, $uid);
     echo json_encode(['ok' => true]);
