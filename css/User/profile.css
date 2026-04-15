@@ -22,6 +22,8 @@ main{
     height: 125px;
     border-radius: 50%;
     background-color: var(--accent-purple);
+    object-fit: cover;
+    display: block;
 }
 
 .user{

@@ -8,7 +8,7 @@ $value = static function (string $key, string $default = '') use ($oldInput): st
 };
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +30,7 @@ $value = static function (string $key, string $default = '') use ($oldInput): st
         <form method="POST" class="edit-profile-form">
             <section class="userInfo">
                 <header class="title"><hr class="tablet"><i data-lucide="user" class="icon-info"></i> Información del usuario<hr></header>
-                <a href="#" class="btn-edit_profilePicture">Modificar foto de perfil</a>
+                <a href="EditProfilePhoto.php" class="btn-edit_profilePicture">Modificar foto de perfil</a>
                 <div class="form-group">
                     <label for="username">Nombre de usuario:</label>
                     <input type="text" id="username" name="username" value="<?= $value('username') ?>" class="input-field" pattern="[a-zA-Z0-9._]{3,30}" minlength="3" maxlength="30" required>

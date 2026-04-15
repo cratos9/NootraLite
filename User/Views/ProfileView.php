@@ -12,10 +12,11 @@
     <title>Perfil</title>
 </head>
 <body>
+    <?php $avatar = $_SESSION['user']['avatar_url'] ?? 'default.png'; ?>
     <main class="main">
         <section class="principalInfo">
             <div class="imageUser">
-                <div class="image"></div>
+                <img src="../files/images/<?php echo htmlspecialchars(!empty($avatar) ? $avatar : 'default.png'); ?>" alt="Foto de perfil" class="image">
             </div>
             <div class='user'>
                 <p class="full-name"><?php echo $_SESSION['user']['username']; ?></p>

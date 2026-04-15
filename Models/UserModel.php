@@ -72,6 +72,12 @@ class User{
         exit;
     }
 
+    public function UpdateProfilePhoto($userId, $photoPath){
+        $sql = "UPDATE users SET avatar_url = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$photoPath, $userId]);
+    }
+
     public function DeleteAccount($userId, $password){
         $sql = "SELECT password_hash FROM users WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
