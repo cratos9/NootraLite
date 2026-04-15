@@ -87,14 +87,14 @@ body {
 
 .logo-icon {
     width: 36px; height: 36px;
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 16px; color: white;
+    object-fit: contain;
     flex-shrink: 0;
+    transform: scale(3.0);
     transition: transform 0.2s;
+    display: block;
 }
-.sidebar:hover .logo-icon { transform: scale(1.08) rotate(3deg); }
+.sidebar-logo { overflow: hidden; }
+.sidebar:hover .logo-icon { transform: scale(3.2) rotate(3deg); }
 .sidebar-close { display: none; }
 
 .logo-text {
@@ -104,12 +104,14 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     opacity: 0;
+    max-width: 0;
+    overflow: hidden;
     white-space: nowrap;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s, max-width 0.15s;
 }
-
 .sidebar:hover .logo-text {
     opacity: 1;
+    max-width: 200px;
     transition-delay: 0.08s;
 }
 
