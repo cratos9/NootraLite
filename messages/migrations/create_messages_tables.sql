@@ -20,3 +20,12 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 );
+
+# Agregar columnas de metadatos por usuario (favoritos, fijados, silenciados), 16/04/2026
+ALTER TABLE conversations
+  ADD COLUMN is_pinned_u1   TINYINT(1) DEFAULT 0,
+  ADD COLUMN is_pinned_u2   TINYINT(1) DEFAULT 0,
+  ADD COLUMN is_favorite_u1 TINYINT(1) DEFAULT 0,
+  ADD COLUMN is_favorite_u2 TINYINT(1) DEFAULT 0,
+  ADD COLUMN is_muted_u1    TINYINT(1) DEFAULT 0,
+  ADD COLUMN is_muted_u2    TINYINT(1) DEFAULT 0;
