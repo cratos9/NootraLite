@@ -556,6 +556,14 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .att-size { font-size: 10px; color: var(--text-muted); }
+.att-size a { color: var(--text-muted); text-decoration: none; }
+.att-size a:hover { color: var(--accent-purple); }
+
+.msg-img {
+    max-width: 220px; max-height: 180px;
+    border-radius: 8px; display: block;
+    margin-top: 4px; cursor: pointer;
+}
 
 /* btn volver mobile */
 .btn-back-mobile {

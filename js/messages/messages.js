@@ -15,6 +15,11 @@ var activeFilter = 'all';
 var attachPopup  = document.getElementById('attachPopup');
 var fileInput    = document.getElementById('fileInput');
 
+var pendingAttUrl  = null;
+var pendingAttType = null;
+var pendingAttName = null;
+var pendingAttSize = 0;
+
 var btnNewConv    = document.getElementById('btnNewConv');
 var newConvBackdrop = document.getElementById('newConvBackdrop');
 var btnCloseModal = document.getElementById('btnCloseModal');
@@ -514,6 +519,18 @@ function renderMessages(msgs) {
         html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
         html += '<div class="msg-bubble">';
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
+        if (m.attachment_url) {
+            if (m.attachment_type === 'image') {
+                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy">';
+            } else {
+                var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
+                html += '<div class="msg-attachment">';
+                html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+                html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
+                html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
+                html += '</div></div>';
+            }
+        }
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
         html += '</div>';
         html += '</div>';
@@ -526,6 +543,12 @@ function escapeHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -534,32 +557,52 @@ function scrollToBottom() {
 
 function sendMessage() {
     var body = msgInput.value.trim();
-    if (!body || !activeConvId) return;
+    if ((!body && !pendingAttUrl) || !activeConvId) return;
 
     msgInput.value = '';
     msgInput.focus();
 
+    var snapAttUrl  = pendingAttUrl;
+    var snapAttType = pendingAttType;
+    var snapAttName = pendingAttName;
+    var snapAttSize = pendingAttSize;
+    pendingAttUrl = pendingAttType = pendingAttName = null;
+    pendingAttSize = 0;
+
     // render optimista
-    var html = '<div class="msg-row mine">';
-    html += '<div class="msg-bubble">';
-    html += '<span class="msg-text">' + escapeHtml(body) + '</span>';
+    var html = '<div class="msg-row mine"><div class="msg-bubble">';
+    if (body) html += '<span class="msg-text">' + escapeHtml(body) + '</span>';
+    if (snapAttName) {
+        if (snapAttType === 'image') {
+            html += '<img class="msg-img" src="' + snapAttUrl + '" alt="imagen" loading="lazy">';
+        } else {
+            html += '<div class="msg-attachment">';
+            html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+            html += '<div class="att-info"><div class="att-name">' + escapeHtml(snapAttName) + '</div>';
+            html += '<div class="att-size">' + formatFileSize(snapAttSize) + '</div></div></div>';
+        }
+    }
     html += '<span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span>';
     html += '</div></div>';
     chatMessages.insertAdjacentHTML('beforeend', html);
+    lucide.createIcons({ nodes: [chatMessages.lastElementChild] });
     scrollToBottom();
 
     var fd = new FormData();
     fd.append('conv_id', activeConvId);
     fd.append('body', body);
+    if (snapAttUrl) {
+        fd.append('attachment_url', snapAttUrl);
+        fd.append('attachment_type', snapAttType);
+    }
 
     fetch('../messages/send_message.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
-            // actualizar last_msg en data local
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
-                    conversations[i].last_msg = body;
+                    conversations[i].last_msg = body || '📎 Adjunto';
                     conversations[i].last_time = res.message.created_at;
                 }
             }
@@ -605,22 +648,39 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
             if (action === 'photos') {
                 fileInput.accept = 'image/*';
                 fileInput.click();
-                fileInput.addEventListener('change', function reset() {
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
-                    fileInput.removeEventListener('change', reset);
-                });
             } else if (action === 'document') {
                 fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
                 fileInput.click();
-                fileInput.addEventListener('change', function reset() {
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
-                    fileInput.removeEventListener('change', reset);
-                });
             } else {
                 showToast('Próximamente', 'warning');
             }
         });
     });
+});
+
+fileInput.addEventListener('change', function() {
+    var f = fileInput.files[0];
+    fileInput.value = '';
+    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+    if (!f || !activeConvId) return;
+
+    var fd = new FormData();
+    fd.append('file', f);
+    showToast('Subiendo archivo...', 'info');
+    btnSend.disabled = true;
+
+    fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            btnSend.disabled = false;
+            if (!res.ok) { showToast(res.error || 'Error al subir', 'error'); return; }
+            pendingAttUrl  = res.url;
+            pendingAttType = res.type;
+            pendingAttName = res.name;
+            pendingAttSize = res.size;
+            sendMessage();
+        })
+        .catch(function() { btnSend.disabled = false; showToast('Error de red', 'error'); });
 });
 
 // --- modal nueva conversacion ---
