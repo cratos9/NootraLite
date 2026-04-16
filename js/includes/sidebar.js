@@ -63,7 +63,7 @@ function checkMsgNotifs() {
 
 function showMsgToast(msg) {
     var el = document.createElement('div');
-    el.className = 'msg-toast';
+    el.className = 'sidebar-notif-toast';
     el.innerHTML = '<i data-lucide="message-circle" style="width:14px;height:14px;flex-shrink:0;color:#a78bfa"></i>' + msg;
     document.body.appendChild(el);
     if (typeof lucide !== 'undefined') lucide.createIcons();
