@@ -108,6 +108,48 @@ class User{
             return false;
         }
     }
+
+    public function GetTokenForgotPassword($email){
+        $sql = "SELECT id, reset_token FROM users WHERE email = ? AND reset_token IS NOT NULL AND reset_token_expiry IS NOT NULL AND reset_token_expiry > NOW()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            return ['token' => $user['reset_token'], 'user_id' => $user['id']];
+        }
+
+        $sql = "SELECT id FROM users WHERE email = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $token = bin2hex(random_bytes(3));
+            $sql = "UPDATE users SET reset_token = ?, reset_token_expiry = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            if ($stmt->execute([$token, $user['id']])) {
+                return ['token' => $token, 'user_id' => $user['id']];
+            }
+        }
+        return false;
+    }
+
+    public function ResetPassword($userId, $token, $newPassword){
+        $sql = "SELECT id FROM users WHERE id = ? AND reset_token = ? AND reset_token_expiry IS NOT NULL AND reset_token_expiry > NOW()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$userId, $token]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $new_password_hash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $sql = "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            return $stmt->execute([$new_password_hash, $userId]);
+        } else {
+            return false;
+        }
+}
 }
 
 ?>
