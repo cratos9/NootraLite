@@ -211,23 +211,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function showToast(msg, type) {
-    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
-    var t = type || 'success';
-    var existing = document.querySelectorAll('.msg-toast');
-    var base = window.innerWidth <= 480 ? 80 : 24;
-    var offset = base + existing.length * 50;
-    var el = document.createElement('div');
-    el.className = 'msg-toast msg-toast-' + t;
-    el.style.bottom = offset + 'px';
-    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
-    document.body.appendChild(el);
-    lucide.createIcons();
-    setTimeout(function() {
-        el.classList.add('hide');
-        el.addEventListener('animationend', function() { el.remove(); });
-    }, 2500);
-}
+
 
 function toggleConvMeta(convId, meta) {
     var fd = new FormData();
@@ -243,7 +227,7 @@ function toggleConvMeta(convId, meta) {
                 favorite: [on ? 'Añadido a favoritos'       : 'Eliminado de favoritos'],
                 muted:    [on ? 'Conversación silenciada'   : 'Notificaciones activadas'],
             };
-            showToast(msgs[meta][0], 'success');
+            message.success(msgs[meta][0]);
             loadConversations();
         });
 }
@@ -259,52 +243,52 @@ function getConvMenuItems(convId) {
     return [
         { icon: 'pin',      label: pinned ? 'Quitar fijado'   : 'Fijar',    action: function() { toggleConvMeta(convId, 'pinned'); } },
         { icon: 'bell-off', label: muted  ? 'Activar sonido'  : 'Silenciar',action: function() { toggleConvMeta(convId, 'muted'); } },
-        { icon: 'mail',     label: 'Marcar no leído',                        action: function() { showToast('Próximamente'); } },
+        { icon: 'mail',     label: 'Marcar no leído',                        action: function() { message.tip('Próximamente'); } },
         { icon: 'star',     label: fav    ? 'Quitar favorito' : 'Favorito', action: function() { toggleConvMeta(convId, 'favorite'); } },
         { divider: true },
         { icon: 'x',        label: 'Cerrar chat',                            action: function() { closeChatPanel(); } },
-        { icon: 'shield',   label: 'Bloquear',   cls: 'danger',             action: function() { showToast('Próximamente'); } },
-        { icon: 'trash-2',  label: 'Eliminar',   cls: 'danger',             action: function() { showToast('Próximamente'); } }
+        { icon: 'shield',   label: 'Bloquear',   cls: 'danger',             action: function() { message.tip('Próximamente'); } },
+        { icon: 'trash-2',  label: 'Eliminar',   cls: 'danger',             action: function() { message.tip('Próximamente'); } }
     ];
 }
 
 function getHeaderMenuItems() {
     return [
-        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { showToast('Próximamente'); } },
-        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { showToast('Próximamente'); } },
-        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
-        { icon: 'user', label: 'Info contacto', action: function() { showToast('Próximamente'); } },
+        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { message.tip('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'user', label: 'Info contacto', action: function() { message.tip('Próximamente'); } },
         { divider: true },
         { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
-        { icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } },
-        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'flag', label: 'Reportar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { message.tip('Próximamente'); } },
         { divider: true },
-        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { showToast('Próximamente'); } },
-        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { showToast('Próximamente'); } }
+        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { message.tip('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { message.tip('Próximamente'); } }
     ];
 }
 
 function getMsgMenuItems(isMine, text) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
-        navigator.clipboard.writeText(text).then(function() { showToast('Copiado'); });
+        navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
     var base = [
-        { icon: 'reply', label: 'Responder', action: function() { showToast('Próximamente'); } },
+        { icon: 'reply', label: 'Responder', action: function() { message.tip('Próximamente'); } },
         copy,
-        { icon: 'forward', label: 'Reenviar', action: function() { showToast('Próximamente'); } },
-        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
-        { icon: 'bookmark', label: 'Destacar', action: function() { showToast('Próximamente'); } },
+        { icon: 'forward', label: 'Reenviar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'pin', label: 'Fijar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'bookmark', label: 'Destacar', action: function() { message.tip('Próximamente'); } },
         { divider: true }
     ];
     if (isMine) {
-        base.push({ icon: 'info', label: 'Info', action: function() { showToast('Próximamente'); } });
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'info', label: 'Info', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
     } else {
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
-        base.push({ icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'flag', label: 'Reportar', action: function() { message.tip('Próximamente'); } });
     }
     base.push({ divider: true });
-    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { message.tip('Próximamente'); } });
     return base;
 }
 
@@ -725,7 +709,7 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                 fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
                 fileInput.click();
             } else {
-                showToast('Próximamente', 'warning');
+                message.warning('Próximamente');
             }
         });
     });
@@ -739,21 +723,21 @@ fileInput.addEventListener('change', function() {
 
     var fd = new FormData();
     fd.append('file', f);
-    showToast('Subiendo archivo...', 'info');
+    message.tip('Subiendo archivo...');
     btnSend.disabled = true;
 
     fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             btnSend.disabled = false;
-            if (!res.ok) { showToast(res.error || 'Error al subir', 'error'); return; }
+            if (!res.ok) { message.error(res.error || 'Error al subir'); return; }
             pendingAttUrl  = res.url;
             pendingAttType = res.type;
             pendingAttName = res.name;
             pendingAttSize = res.size;
             sendMessage();
         })
-        .catch(function() { btnSend.disabled = false; showToast('Error de red', 'error'); });
+        .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
 });
 
 // --- panel nueva conversacion ---

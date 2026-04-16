@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="../css/includes/sidebar.css">
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/messages/messages.css">
 </head>
 <body>
@@ -131,6 +132,7 @@ var convData = <?= json_encode($conversations) ?>;
 var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
+<script src="../js/includes/toast.js"></script>
 <script src="../js/messages/messages.js"></script>
 <script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
