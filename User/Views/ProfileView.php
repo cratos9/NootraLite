@@ -74,6 +74,7 @@
         <section class="options">
             <a href="Logout.php" class="btn-logout">Cerrar sesión</a>
             <a href="EditProfile.php" class="btn-edit_profile">Modificar perfil</a>
+            <a href="EditPassword.php" class="btn-edit_password">Modificar contraseña</a>
             <a href="DeleteAccount.php" class="btn-delete_account">Eliminar cuenta</a>
         </section>
     </main>

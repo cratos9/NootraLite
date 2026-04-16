@@ -111,7 +111,7 @@ hr{
     padding: 20px 0;
 }
 
-.options .btn-logout, .options .btn-edit_profile{
+.options .btn-logout, .options .btn-edit_profile, .options .btn-edit_password{
     padding: 10px 15px;
     border-radius: 5px;
     text-decoration: none;
@@ -121,11 +121,7 @@ hr{
     transition: background-color 0.3s ease;
 }
 
-.options .btn-logout:hover{
-    background-color: var(--accent-pink);
-}
-
-.options .btn-edit_profile:hover{
+.options .btn-logout:hover, .options .btn-edit_profile:hover, .options .btn-edit_password:hover{
     background-color: var(--accent-pink);
 }
 
@@ -208,7 +204,7 @@ hr{
         flex-direction: column;
     }
 
-    .btn-logout, .btn-edit_profile, .btn-delete_account{
+    .btn-logout, .btn-edit_profile, .btn-edit_password, .btn-delete_account{
         width: 100%;
         text-align: center;
     }

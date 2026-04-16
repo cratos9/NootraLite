@@ -92,5 +92,22 @@ class User{
             return false;
         }
     }
+
+    public function UpdatePassword($userId, $currentPassword, $newPassword){
+        $sql = "SELECT password_hash FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($currentPassword, $user['password_hash'])) {
+            $new_password_hash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $sql = "UPDATE users SET password_hash = ? WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            return $stmt->execute([$new_password_hash, $userId]);
+        } else {
+            return false;
+        }
+    }
 }
+
 ?>
