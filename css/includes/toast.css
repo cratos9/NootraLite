@@ -1,0 +1,113 @@
+.nootra-toast {
+    position: fixed;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 12px 16px;
+    border-radius: 12px;
+    z-index: 10000;
+    cursor: pointer;
+    max-width: 360px;
+    word-break: break-word;
+    overflow: hidden;
+    background: var(--bg-secondary, #1a1a2e);
+    color: var(--text-primary, #f1f5f9);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 12px 36px rgba(0,0,0,0.12);
+    animation: nootra-toast-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+    transition: bottom 0.3s cubic-bezier(0.33, 1, 0.68, 1), top 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.nootra-toast span { flex: 1; }
+
+.nootra-toast-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.nootra-toast-icon svg { width: 18px; height: 18px; }
+
+.nootra-toast-success { background: #1a2e28; border-color: rgba(16,185,129,0.15); }
+.nootra-toast-error   { background: #2e1a1e; border-color: rgba(239,68,68,0.15); }
+.nootra-toast-warning { background: #2e2617; border-color: rgba(245,158,11,0.15); }
+.nootra-toast-tip     { background: #1a2236; border-color: rgba(59,130,246,0.15); }
+
+.nootra-toast-success .nootra-toast-icon { background: rgba(16,185,129,0.15); color: #34d399; }
+.nootra-toast-error .nootra-toast-icon   { background: rgba(239,68,68,0.15); color: #f87171; }
+.nootra-toast-warning .nootra-toast-icon { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.nootra-toast-tip .nootra-toast-icon     { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+.nootra-toast-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 3px;
+    border-radius: 0 0 12px 12px;
+    animation: nootra-bar 2.6s linear 0.4s forwards;
+    width: 100%;
+}
+.nootra-toast-success .nootra-toast-bar { background: rgba(16,185,129,0.5); }
+.nootra-toast-error .nootra-toast-bar   { background: rgba(239,68,68,0.5); }
+.nootra-toast-warning .nootra-toast-bar { background: rgba(245,158,11,0.5); }
+.nootra-toast-tip .nootra-toast-bar     { background: rgba(59,130,246,0.5); }
+
+.nootra-toast.hide {
+    animation: nootra-toast-out 0.3s ease forwards;
+}
+
+@keyframes nootra-toast-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes nootra-toast-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(8px) scale(0.96); }
+}
+@keyframes nootra-bar {
+    from { width: 100%; }
+    to   { width: 0; }
+}
+
+.light-mode .nootra-toast {
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07), 0 16px 48px rgba(0,0,0,0.05);
+}
+.light-mode .nootra-toast-success { background: #f0fdf8; border-color: rgba(16,185,129,0.18); }
+.light-mode .nootra-toast-error   { background: #fef2f2; border-color: rgba(239,68,68,0.18); }
+.light-mode .nootra-toast-warning { background: #fffbeb; border-color: rgba(245,158,11,0.18); }
+.light-mode .nootra-toast-tip     { background: #eff6ff; border-color: rgba(59,130,246,0.18); }
+.light-mode .nootra-toast-success .nootra-toast-icon { background: rgba(16,185,129,0.12); color: #059669; }
+.light-mode .nootra-toast-error .nootra-toast-icon   { background: rgba(239,68,68,0.12); color: #dc2626; }
+.light-mode .nootra-toast-warning .nootra-toast-icon { background: rgba(245,158,11,0.12); color: #d97706; }
+.light-mode .nootra-toast-tip .nootra-toast-icon     { background: rgba(59,130,246,0.12); color: #2563eb; }
+.light-mode .nootra-toast-bar { opacity: 0.7; }
+
+@media (max-width: 750px) {
+    .nootra-toast { right: 16px; max-width: 300px; font-size: 12px; padding: 10px 14px; gap: 10px; }
+    .nootra-toast-icon { width: 28px; height: 28px; border-radius: 7px; }
+    .nootra-toast-icon svg { width: 15px; height: 15px; }
+}
+@media (max-width: 400px) {
+    .nootra-toast {
+        right: 12px; left: 12px; max-width: none;
+        bottom: auto;
+        animation-name: nootra-toast-in-top;
+    }
+    .nootra-toast.hide { animation-name: nootra-toast-out-top; }
+}
+
+@keyframes nootra-toast-in-top {
+    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes nootra-toast-out-top {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
