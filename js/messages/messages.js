@@ -24,6 +24,13 @@ var btnNewConv    = document.getElementById('btnNewConv');
 var newConvBackdrop = document.getElementById('newConvBackdrop');
 var btnCloseModal = document.getElementById('btnCloseModal');
 var userSearch    = document.getElementById('userSearch');
+
+var newConvPanel  = document.getElementById('newConvPanel');
+var ncpBack       = document.getElementById('ncpBack');
+var ncpScreen1    = document.getElementById('ncpScreen1');
+var ncpScreen2    = document.getElementById('ncpScreen2');
+var ncpUserSearch = document.getElementById('ncpUserSearch');
+var ncpResults    = document.getElementById('ncpResults');
 var userResults   = document.getElementById('userResults');
 
 var pollInterval = null;
@@ -178,6 +185,16 @@ function closeAttachPopup(cb) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (newConvPanel.classList.contains('open')) {
+        if (ncpScreen2.style.display !== 'none') {
+            ncpScreen2.style.display = 'none';
+            ncpScreen1.style.display = '';
+            document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+        } else {
+            closeNcp();
+        }
+        return;
+    }
     if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
     if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
     if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
@@ -212,16 +229,42 @@ function showToast(msg, type) {
     }, 2500);
 }
 
+function toggleConvMeta(convId, meta) {
+    var fd = new FormData();
+    fd.append('conv_id', convId);
+    fd.append('meta', meta);
+    fetch('../messages/toggle_conv_meta.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            var on = res.value === 1;
+            var msgs = {
+                pinned:   [on ? 'Conversación fijada'       : 'Fijado quitado'],
+                favorite: [on ? 'Añadido a favoritos'       : 'Eliminado de favoritos'],
+                muted:    [on ? 'Conversación silenciada'   : 'Notificaciones activadas'],
+            };
+            showToast(msgs[meta][0], 'success');
+            loadConversations();
+        });
+}
+
 function getConvMenuItems(convId) {
+    var conv = null;
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == convId) { conv = conversations[i]; break; }
+    }
+    var pinned = conv && conv.is_pinned == 1;
+    var muted  = conv && conv.is_muted  == 1;
+    var fav    = conv && conv.is_favorite == 1;
     return [
-        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
-        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
-        { icon: 'mail', label: 'Marcar no leído', action: function() { showToast('Próximamente'); } },
-        { icon: 'star', label: 'Favorito', action: function() { showToast('Próximamente'); } },
+        { icon: 'pin',      label: pinned ? 'Quitar fijado'   : 'Fijar',    action: function() { toggleConvMeta(convId, 'pinned'); } },
+        { icon: 'bell-off', label: muted  ? 'Activar sonido'  : 'Silenciar',action: function() { toggleConvMeta(convId, 'muted'); } },
+        { icon: 'mail',     label: 'Marcar no leído',                        action: function() { showToast('Próximamente'); } },
+        { icon: 'star',     label: fav    ? 'Quitar favorito' : 'Favorito', action: function() { toggleConvMeta(convId, 'favorite'); } },
         { divider: true },
-        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
-        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
-        { icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } }
+        { icon: 'x',        label: 'Cerrar chat',                            action: function() { closeChatPanel(); } },
+        { icon: 'shield',   label: 'Bloquear',   cls: 'danger',             action: function() { showToast('Próximamente'); } },
+        { icon: 'trash-2',  label: 'Eliminar',   cls: 'danger',             action: function() { showToast('Próximamente'); } }
     ];
 }
 
@@ -275,6 +318,16 @@ function closeChatPanel() {
     });
 }
 
+function loadConversations() {
+    fetch('../messages/get_conversations.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            conversations = res.conversations;
+            renderConvList(convSearch.value);
+        });
+}
+
 // --- render lista conversaciones ---
 
 function renderConvList(filter) {
@@ -295,7 +348,13 @@ function renderConvList(filter) {
         return;
     }
 
+    // fijadas primero, luego por fecha (orden ya viene del servidor)
+    filtered.sort(function(a, b) { return (b.is_pinned == 1 ? 1 : 0) - (a.is_pinned == 1 ? 1 : 0); });
+
     var html = '';
+    var shownPinSep = false, shownRegSep = false;
+    var hasPinned = filtered.some(function(c) { return c.is_pinned == 1; });
+
     for (var i = 0; i < filtered.length; i++) {
         var c = filtered[i];
         var name = c.other_name || 'Usuario';
@@ -306,10 +365,24 @@ function renderConvList(filter) {
         var time = formatTime(c.last_time);
         var isActive = c.id == activeConvId ? ' active' : '';
 
+        if (hasPinned && c.is_pinned == 1 && !shownPinSep) {
+            html += '<div class="conv-sep"><i data-lucide="pin"></i> Fijadas</div>';
+            shownPinSep = true;
+        }
+        if (hasPinned && c.is_pinned != 1 && !shownRegSep) {
+            html += '<div class="conv-sep">Recientes</div>';
+            shownRegSep = true;
+        }
+
+        var flags = '';
+        if (c.is_pinned == 1)   flags += '<i data-lucide="pin" class="conv-flag"></i>';
+        if (c.is_favorite == 1) flags += '<i data-lucide="star" class="conv-flag fav"></i>';
+        if (c.is_muted == 1)    flags += '<i data-lucide="bell-off" class="conv-flag muted"></i>';
+
         html += '<div class="conv-item' + isActive + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '">';
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
-        html += '<div class="conv-name">' + escapeHtml(name) + '</div>';
+        html += '<div class="conv-name">' + escapeHtml(name) + (flags ? '<span class="conv-flags">' + flags + '</span>' : '') + '</div>';
         html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
         html += '</div>';
         html += '<div class="conv-meta">';
@@ -683,14 +756,74 @@ fileInput.addEventListener('change', function() {
         .catch(function() { btnSend.disabled = false; showToast('Error de red', 'error'); });
 });
 
-// --- modal nueva conversacion ---
+// --- panel nueva conversacion ---
 
-btnNewConv.addEventListener('click', function() {
-    newConvBackdrop.classList.add('open');
-    userSearch.value = '';
-    userResults.innerHTML = '';
-    setTimeout(function() { userSearch.focus(); }, 50);
+function openNcp() {
+    ncpScreen1.style.display = '';
+    ncpScreen2.style.display = 'none';
+    document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+    newConvPanel.classList.remove('closing');
+    newConvPanel.classList.add('open');
+    lucide.createIcons({ nodes: [newConvPanel] });
+}
+
+function closeNcp(cb) {
+    if (!newConvPanel.classList.contains('open')) { if (cb) cb(); return; }
+    newConvPanel.classList.remove('open');
+    newConvPanel.classList.add('closing');
+    newConvPanel.addEventListener('animationend', function h() {
+        newConvPanel.removeEventListener('animationend', h);
+        newConvPanel.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
+btnNewConv.addEventListener('click', function() { openNcp(); });
+
+ncpBack.addEventListener('click', function() {
+    if (ncpScreen2.style.display !== 'none') {
+        ncpScreen2.style.display = 'none';
+        ncpScreen1.style.display = '';
+        document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+    } else {
+        closeNcp();
+    }
 });
+
+document.querySelector('[data-ncp="search"]').addEventListener('click', function() {
+    ncpScreen1.style.display = 'none';
+    ncpScreen2.style.display = '';
+    document.getElementById('ncpTitle').textContent = 'Buscar usuario';
+    setTimeout(function() { ncpUserSearch.focus(); }, 50);
+});
+
+var ncpTimer = null;
+ncpUserSearch.addEventListener('input', function() {
+    clearTimeout(ncpTimer);
+    var q = this.value.trim();
+    if (q.length < 2) { ncpResults.innerHTML = ''; return; }
+    ncpTimer = setTimeout(function() {
+        fetch('../messages/search_users.php?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res.ok || !res.users.length) {
+                    ncpResults.innerHTML = '<div class="ncp-user-item" style="color:var(--text-muted)">Sin resultados</div>';
+                    return;
+                }
+                ncpResults.innerHTML = res.users.map(function(u) {
+                    return '<div class="ncp-user-item" data-uid="' + u.id + '">' + escapeHtml(u.name) + '</div>';
+                }).join('');
+            });
+    }, 250);
+});
+
+ncpResults.addEventListener('click', function(e) {
+    var item = e.target.closest('.ncp-user-item[data-uid]');
+    if (!item) return;
+    closeNcp(function() { startConversation(parseInt(item.dataset.uid)); });
+});
+
+// --- modal nueva conversacion (fallback) ---
 
 btnCloseModal.addEventListener('click', closeModal);
 newConvBackdrop.addEventListener('click', function(e) {

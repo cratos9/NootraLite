@@ -18,6 +18,26 @@
 
         <!-- panel izquierdo -->
         <aside class="conv-panel">
+            <div class="new-conv-panel" id="newConvPanel">
+                <div class="ncp-header">
+                    <button class="ncp-back" id="ncpBack" aria-label="Volver"><i data-lucide="arrow-left"></i></button>
+                    <span class="ncp-title" id="ncpTitle">Nueva conversación</span>
+                </div>
+                <div class="ncp-screen" id="ncpScreen1">
+                    <div class="ncp-options">
+                        <div class="ncp-option" data-ncp="search">
+                            <span class="ncp-opt-icon" style="background:#7c3aed"><i data-lucide="user-search"></i></span>
+                            <span class="ncp-opt-label">Buscar usuario</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ncp-screen" id="ncpScreen2" style="display:none">
+                    <div class="ncp-search-wrap">
+                        <input type="text" id="ncpUserSearch" placeholder="Buscar usuario..." autocomplete="off">
+                    </div>
+                    <div class="ncp-results" id="ncpResults"></div>
+                </div>
+            </div>
             <div class="conv-header">
                 <span class="conv-title">Mensajes</span>
                 <button class="btn-new-conv" id="btnNewConv" aria-label="Nueva conversación">
@@ -31,6 +51,7 @@
             <div class="conv-filters">
                 <button class="filter-chip active" data-filter="all">Todos</button>
                 <button class="filter-chip" data-filter="unread">No leídos</button>
+                <button class="filter-chip" data-filter="favorites">Favoritos</button>
             </div>
             <div class="conv-list" id="convList">
                 <!-- se llena con JS -->
