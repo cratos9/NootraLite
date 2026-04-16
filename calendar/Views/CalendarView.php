@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="../css/includes/sidebar.css">
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
@@ -216,7 +217,9 @@
 
 <script>var events = <?= json_encode(array_values($events)) ?>;</script>
 <script src="../js/includes/sidebar.js"></script>
+<script src="../js/includes/toast.js"></script>
 <script src="../js/calendar/calendar.js"></script>
 <script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
+
 </body>
 </html>
