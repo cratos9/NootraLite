@@ -8,11 +8,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$conv_id = (int)($_POST['conv_id'] ?? 0);
-$body = trim($_POST['body'] ?? '');
+$conv_id  = (int)($_POST['conv_id'] ?? 0);
+$body     = trim($_POST['body'] ?? '');
+$att_url  = trim($_POST['attachment_url']  ?? '');
+$att_type = trim($_POST['attachment_type'] ?? '');
 $uid = 1; // fijo hasta que haya sesion
 
-if (!$conv_id || $body === '') {
+if (!$conv_id || ($body === '' && $att_url === '')) {
     echo json_encode(['ok' => false, 'error' => 'datos incompletos']);
     exit;
 }
@@ -27,16 +29,16 @@ try {
         exit;
     }
     $model = new MessageModel($pdo);
-    $id = $model->send($conv_id, $uid, $body);
+    $id = $model->send($conv_id, $uid, $body ?: null, $att_url ?: null, $att_type ?: null);
     echo json_encode([
         'ok' => true,
         'message' => [
             'id' => (int)$id,
             'conversation_id' => $conv_id,
             'sender_id' => $uid,
-            'body' => $body,
-            'attachment_url' => null,
-            'attachment_type' => null,
+            'body' => $body ?: null,
+            'attachment_url'  => $att_url  ?: null,
+            'attachment_type' => $att_type ?: null,
             'is_read' => 0,
             'created_at' => date('Y-m-d H:i:s'),
         ]

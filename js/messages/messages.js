@@ -15,10 +15,22 @@ var activeFilter = 'all';
 var attachPopup  = document.getElementById('attachPopup');
 var fileInput    = document.getElementById('fileInput');
 
+var pendingAttUrl  = null;
+var pendingAttType = null;
+var pendingAttName = null;
+var pendingAttSize = 0;
+
 var btnNewConv    = document.getElementById('btnNewConv');
 var newConvBackdrop = document.getElementById('newConvBackdrop');
 var btnCloseModal = document.getElementById('btnCloseModal');
 var userSearch    = document.getElementById('userSearch');
+
+var newConvPanel  = document.getElementById('newConvPanel');
+var ncpBack       = document.getElementById('ncpBack');
+var ncpScreen1    = document.getElementById('ncpScreen1');
+var ncpScreen2    = document.getElementById('ncpScreen2');
+var ncpUserSearch = document.getElementById('ncpUserSearch');
+var ncpResults    = document.getElementById('ncpResults');
 var userResults   = document.getElementById('userResults');
 
 var pollInterval = null;
@@ -173,6 +185,16 @@ function closeAttachPopup(cb) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (newConvPanel.classList.contains('open')) {
+        if (ncpScreen2.style.display !== 'none') {
+            ncpScreen2.style.display = 'none';
+            ncpScreen1.style.display = '';
+            document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+        } else {
+            closeNcp();
+        }
+        return;
+    }
     if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
     if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
     if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
@@ -189,74 +211,84 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function showToast(msg, type) {
-    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
-    var t = type || 'success';
-    var existing = document.querySelectorAll('.msg-toast');
-    var base = window.innerWidth <= 480 ? 80 : 24;
-    var offset = base + existing.length * 50;
-    var el = document.createElement('div');
-    el.className = 'msg-toast msg-toast-' + t;
-    el.style.bottom = offset + 'px';
-    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
-    document.body.appendChild(el);
-    lucide.createIcons();
-    setTimeout(function() {
-        el.classList.add('hide');
-        el.addEventListener('animationend', function() { el.remove(); });
-    }, 2500);
+
+
+function toggleConvMeta(convId, meta) {
+    var fd = new FormData();
+    fd.append('conv_id', convId);
+    fd.append('meta', meta);
+    fetch('../messages/toggle_conv_meta.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            var on = res.value === 1;
+            var msgs = {
+                pinned:   [on ? 'Conversación fijada'       : 'Fijado quitado'],
+                favorite: [on ? 'Añadido a favoritos'       : 'Eliminado de favoritos'],
+                muted:    [on ? 'Conversación silenciada'   : 'Notificaciones activadas'],
+            };
+            message.success(msgs[meta][0]);
+            loadConversations();
+        });
 }
 
 function getConvMenuItems(convId) {
+    var conv = null;
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == convId) { conv = conversations[i]; break; }
+    }
+    var pinned = conv && conv.is_pinned == 1;
+    var muted  = conv && conv.is_muted  == 1;
+    var fav    = conv && conv.is_favorite == 1;
     return [
-        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
-        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
-        { icon: 'mail', label: 'Marcar no leído', action: function() { showToast('Próximamente'); } },
-        { icon: 'star', label: 'Favorito', action: function() { showToast('Próximamente'); } },
+        { icon: 'pin',      label: pinned ? 'Quitar fijado'   : 'Fijar',    action: function() { toggleConvMeta(convId, 'pinned'); } },
+        { icon: 'bell-off', label: muted  ? 'Activar sonido'  : 'Silenciar',action: function() { toggleConvMeta(convId, 'muted'); } },
+        { icon: 'mail',     label: 'Marcar no leído',                        action: function() { message.tip('Próximamente'); } },
+        { icon: 'star',     label: fav    ? 'Quitar favorito' : 'Favorito', action: function() { toggleConvMeta(convId, 'favorite'); } },
         { divider: true },
-        { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
-        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
-        { icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } }
+        { icon: 'x',        label: 'Cerrar chat',                            action: function() { closeChatPanel(); } },
+        { icon: 'shield',   label: 'Bloquear',   cls: 'danger',             action: function() { message.tip('Próximamente'); } },
+        { icon: 'trash-2',  label: 'Eliminar',   cls: 'danger',             action: function() { message.tip('Próximamente'); } }
     ];
 }
 
 function getHeaderMenuItems() {
     return [
-        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { showToast('Próximamente'); } },
-        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { showToast('Próximamente'); } },
-        { icon: 'bell-off', label: 'Silenciar', action: function() { showToast('Próximamente'); } },
-        { icon: 'user', label: 'Info contacto', action: function() { showToast('Próximamente'); } },
+        { icon: 'bookmark', label: 'Mensajes destacados', action: function() { message.tip('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
+        { icon: 'bell-off', label: 'Silenciar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'user', label: 'Info contacto', action: function() { message.tip('Próximamente'); } },
         { divider: true },
         { icon: 'x', label: 'Cerrar chat', action: function() { closeChatPanel(); } },
-        { icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } },
-        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { showToast('Próximamente'); } },
+        { icon: 'flag', label: 'Reportar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'shield', label: 'Bloquear', cls: 'danger', action: function() { message.tip('Próximamente'); } },
         { divider: true },
-        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { showToast('Próximamente'); } },
-        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { showToast('Próximamente'); } }
+        { icon: 'trash', label: 'Vaciar chat', cls: 'danger', action: function() { message.tip('Próximamente'); } },
+        { icon: 'trash-2', label: 'Eliminar chat', cls: 'danger', action: function() { message.tip('Próximamente'); } }
     ];
 }
 
 function getMsgMenuItems(isMine, text) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
-        navigator.clipboard.writeText(text).then(function() { showToast('Copiado'); });
+        navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
     var base = [
-        { icon: 'reply', label: 'Responder', action: function() { showToast('Próximamente'); } },
+        { icon: 'reply', label: 'Responder', action: function() { message.tip('Próximamente'); } },
         copy,
-        { icon: 'forward', label: 'Reenviar', action: function() { showToast('Próximamente'); } },
-        { icon: 'pin', label: 'Fijar', action: function() { showToast('Próximamente'); } },
-        { icon: 'bookmark', label: 'Destacar', action: function() { showToast('Próximamente'); } },
+        { icon: 'forward', label: 'Reenviar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'pin', label: 'Fijar', action: function() { message.tip('Próximamente'); } },
+        { icon: 'bookmark', label: 'Destacar', action: function() { message.tip('Próximamente'); } },
         { divider: true }
     ];
     if (isMine) {
-        base.push({ icon: 'info', label: 'Info', action: function() { showToast('Próximamente'); } });
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'info', label: 'Info', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
     } else {
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { showToast('Próximamente'); } });
-        base.push({ icon: 'flag', label: 'Reportar', action: function() { showToast('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'flag', label: 'Reportar', action: function() { message.tip('Próximamente'); } });
     }
     base.push({ divider: true });
-    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { showToast('Próximamente'); } });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { message.tip('Próximamente'); } });
     return base;
 }
 
@@ -268,6 +300,16 @@ function closeChatPanel() {
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.classList.remove('active');
     });
+}
+
+function loadConversations() {
+    fetch('../messages/get_conversations.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            conversations = res.conversations;
+            renderConvList(convSearch.value);
+        });
 }
 
 // --- render lista conversaciones ---
@@ -290,7 +332,13 @@ function renderConvList(filter) {
         return;
     }
 
+    // fijadas primero, luego por fecha (orden ya viene del servidor)
+    filtered.sort(function(a, b) { return (b.is_pinned == 1 ? 1 : 0) - (a.is_pinned == 1 ? 1 : 0); });
+
     var html = '';
+    var shownPinSep = false, shownRegSep = false;
+    var hasPinned = filtered.some(function(c) { return c.is_pinned == 1; });
+
     for (var i = 0; i < filtered.length; i++) {
         var c = filtered[i];
         var name = c.other_name || 'Usuario';
@@ -301,10 +349,24 @@ function renderConvList(filter) {
         var time = formatTime(c.last_time);
         var isActive = c.id == activeConvId ? ' active' : '';
 
+        if (hasPinned && c.is_pinned == 1 && !shownPinSep) {
+            html += '<div class="conv-sep"><i data-lucide="pin"></i> Fijadas</div>';
+            shownPinSep = true;
+        }
+        if (hasPinned && c.is_pinned != 1 && !shownRegSep) {
+            html += '<div class="conv-sep">Recientes</div>';
+            shownRegSep = true;
+        }
+
+        var flags = '';
+        if (c.is_pinned == 1)   flags += '<i data-lucide="pin" class="conv-flag"></i>';
+        if (c.is_favorite == 1) flags += '<i data-lucide="star" class="conv-flag fav"></i>';
+        if (c.is_muted == 1)    flags += '<i data-lucide="bell-off" class="conv-flag muted"></i>';
+
         html += '<div class="conv-item' + isActive + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '">';
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
-        html += '<div class="conv-name">' + escapeHtml(name) + '</div>';
+        html += '<div class="conv-name">' + escapeHtml(name) + (flags ? '<span class="conv-flags">' + flags + '</span>' : '') + '</div>';
         html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
         html += '</div>';
         html += '<div class="conv-meta">';
@@ -514,6 +576,18 @@ function renderMessages(msgs) {
         html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
         html += '<div class="msg-bubble">';
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
+        if (m.attachment_url) {
+            if (m.attachment_type === 'image') {
+                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy">';
+            } else {
+                var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
+                html += '<div class="msg-attachment">';
+                html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+                html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
+                html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
+                html += '</div></div>';
+            }
+        }
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
         html += '</div>';
         html += '</div>';
@@ -526,6 +600,12 @@ function escapeHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -534,32 +614,52 @@ function scrollToBottom() {
 
 function sendMessage() {
     var body = msgInput.value.trim();
-    if (!body || !activeConvId) return;
+    if ((!body && !pendingAttUrl) || !activeConvId) return;
 
     msgInput.value = '';
     msgInput.focus();
 
+    var snapAttUrl  = pendingAttUrl;
+    var snapAttType = pendingAttType;
+    var snapAttName = pendingAttName;
+    var snapAttSize = pendingAttSize;
+    pendingAttUrl = pendingAttType = pendingAttName = null;
+    pendingAttSize = 0;
+
     // render optimista
-    var html = '<div class="msg-row mine">';
-    html += '<div class="msg-bubble">';
-    html += '<span class="msg-text">' + escapeHtml(body) + '</span>';
+    var html = '<div class="msg-row mine"><div class="msg-bubble">';
+    if (body) html += '<span class="msg-text">' + escapeHtml(body) + '</span>';
+    if (snapAttName) {
+        if (snapAttType === 'image') {
+            html += '<img class="msg-img" src="' + snapAttUrl + '" alt="imagen" loading="lazy">';
+        } else {
+            html += '<div class="msg-attachment">';
+            html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+            html += '<div class="att-info"><div class="att-name">' + escapeHtml(snapAttName) + '</div>';
+            html += '<div class="att-size">' + formatFileSize(snapAttSize) + '</div></div></div>';
+        }
+    }
     html += '<span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span>';
     html += '</div></div>';
     chatMessages.insertAdjacentHTML('beforeend', html);
+    lucide.createIcons({ nodes: [chatMessages.lastElementChild] });
     scrollToBottom();
 
     var fd = new FormData();
     fd.append('conv_id', activeConvId);
     fd.append('body', body);
+    if (snapAttUrl) {
+        fd.append('attachment_url', snapAttUrl);
+        fd.append('attachment_type', snapAttType);
+    }
 
     fetch('../messages/send_message.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
-            // actualizar last_msg en data local
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
-                    conversations[i].last_msg = body;
+                    conversations[i].last_msg = body || '📎 Adjunto';
                     conversations[i].last_time = res.message.created_at;
                 }
             }
@@ -605,32 +705,109 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
             if (action === 'photos') {
                 fileInput.accept = 'image/*';
                 fileInput.click();
-                fileInput.addEventListener('change', function reset() {
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
-                    fileInput.removeEventListener('change', reset);
-                });
             } else if (action === 'document') {
                 fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
                 fileInput.click();
-                fileInput.addEventListener('change', function reset() {
-                    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
-                    fileInput.removeEventListener('change', reset);
-                });
             } else {
-                showToast('Próximamente', 'warning');
+                message.warning('Próximamente');
             }
         });
     });
 });
 
-// --- modal nueva conversacion ---
+fileInput.addEventListener('change', function() {
+    var f = fileInput.files[0];
+    fileInput.value = '';
+    fileInput.accept = 'image/*,.pdf,.doc,.docx,.zip';
+    if (!f || !activeConvId) return;
 
-btnNewConv.addEventListener('click', function() {
-    newConvBackdrop.classList.add('open');
-    userSearch.value = '';
-    userResults.innerHTML = '';
-    setTimeout(function() { userSearch.focus(); }, 50);
+    var fd = new FormData();
+    fd.append('file', f);
+    message.tip('Subiendo archivo...');
+    btnSend.disabled = true;
+
+    fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            btnSend.disabled = false;
+            if (!res.ok) { message.error(res.error || 'Error al subir'); return; }
+            pendingAttUrl  = res.url;
+            pendingAttType = res.type;
+            pendingAttName = res.name;
+            pendingAttSize = res.size;
+            sendMessage();
+        })
+        .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
 });
+
+// --- panel nueva conversacion ---
+
+function openNcp() {
+    ncpScreen1.style.display = '';
+    ncpScreen2.style.display = 'none';
+    document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+    newConvPanel.classList.remove('closing');
+    newConvPanel.classList.add('open');
+    lucide.createIcons({ nodes: [newConvPanel] });
+}
+
+function closeNcp(cb) {
+    if (!newConvPanel.classList.contains('open')) { if (cb) cb(); return; }
+    newConvPanel.classList.remove('open');
+    newConvPanel.classList.add('closing');
+    newConvPanel.addEventListener('animationend', function h() {
+        newConvPanel.removeEventListener('animationend', h);
+        newConvPanel.classList.remove('closing');
+        if (cb) cb();
+    });
+}
+
+btnNewConv.addEventListener('click', function() { openNcp(); });
+
+ncpBack.addEventListener('click', function() {
+    if (ncpScreen2.style.display !== 'none') {
+        ncpScreen2.style.display = 'none';
+        ncpScreen1.style.display = '';
+        document.getElementById('ncpTitle').textContent = 'Nueva conversación';
+    } else {
+        closeNcp();
+    }
+});
+
+document.querySelector('[data-ncp="search"]').addEventListener('click', function() {
+    ncpScreen1.style.display = 'none';
+    ncpScreen2.style.display = '';
+    document.getElementById('ncpTitle').textContent = 'Buscar usuario';
+    setTimeout(function() { ncpUserSearch.focus(); }, 50);
+});
+
+var ncpTimer = null;
+ncpUserSearch.addEventListener('input', function() {
+    clearTimeout(ncpTimer);
+    var q = this.value.trim();
+    if (q.length < 2) { ncpResults.innerHTML = ''; return; }
+    ncpTimer = setTimeout(function() {
+        fetch('../messages/search_users.php?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res.ok || !res.users.length) {
+                    ncpResults.innerHTML = '<div class="ncp-user-item" style="color:var(--text-muted)">Sin resultados</div>';
+                    return;
+                }
+                ncpResults.innerHTML = res.users.map(function(u) {
+                    return '<div class="ncp-user-item" data-uid="' + u.id + '">' + escapeHtml(u.name) + '</div>';
+                }).join('');
+            });
+    }, 250);
+});
+
+ncpResults.addEventListener('click', function(e) {
+    var item = e.target.closest('.ncp-user-item[data-uid]');
+    if (!item) return;
+    closeNcp(function() { startConversation(parseInt(item.dataset.uid)); });
+});
+
+// --- modal nueva conversacion (fallback) ---
 
 btnCloseModal.addEventListener('click', closeModal);
 newConvBackdrop.addEventListener('click', function(e) {

@@ -4,11 +4,12 @@
     <script>document.documentElement.style.visibility='hidden';document.documentElement.style.background='#0f0f1a'</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <title>Mensajes — NootraLite</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="../css/includes/sidebar.css">
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/messages/messages.css">
 </head>
 <body>
@@ -18,6 +19,26 @@
 
         <!-- panel izquierdo -->
         <aside class="conv-panel">
+            <div class="new-conv-panel" id="newConvPanel">
+                <div class="ncp-header">
+                    <button class="ncp-back" id="ncpBack" aria-label="Volver"><i data-lucide="arrow-left"></i></button>
+                    <span class="ncp-title" id="ncpTitle">Nueva conversación</span>
+                </div>
+                <div class="ncp-screen" id="ncpScreen1">
+                    <div class="ncp-options">
+                        <div class="ncp-option" data-ncp="search">
+                            <span class="ncp-opt-icon" style="background:#7c3aed"><i data-lucide="user-search"></i></span>
+                            <span class="ncp-opt-label">Buscar usuario</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ncp-screen" id="ncpScreen2" style="display:none">
+                    <div class="ncp-search-wrap">
+                        <input type="text" id="ncpUserSearch" placeholder="Buscar usuario..." autocomplete="off">
+                    </div>
+                    <div class="ncp-results" id="ncpResults"></div>
+                </div>
+            </div>
             <div class="conv-header">
                 <span class="conv-title">Mensajes</span>
                 <button class="btn-new-conv" id="btnNewConv" aria-label="Nueva conversación">
@@ -31,6 +52,7 @@
             <div class="conv-filters">
                 <button class="filter-chip active" data-filter="all">Todos</button>
                 <button class="filter-chip" data-filter="unread">No leídos</button>
+                <button class="filter-chip" data-filter="favorites">Favoritos</button>
             </div>
             <div class="conv-list" id="convList">
                 <!-- se llena con JS -->
@@ -110,6 +132,7 @@ var convData = <?= json_encode($conversations) ?>;
 var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
+<script src="../js/includes/toast.js"></script>
 <script src="../js/messages/messages.js"></script>
 <script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
