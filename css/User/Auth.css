@@ -115,6 +115,7 @@ input{
     border: 1px solid #2d2d4e;
     border-radius: 8px;
     height: 26px;
+    color: #757575;
 }
 
 input:hover{
@@ -303,6 +304,7 @@ input:focus{
 
 .light-mode-input{
     background-color: #9f9fe4;
+    color : #333;
 }
 
 .light-mode .password-toggle{
@@ -348,7 +350,11 @@ input:focus{
 
 
 
-@media screen and (max-width:750px){
+@media screen and (max-width:768px){
+    html{
+        overflow: hidden;
+    }
+
     body{
         align-items: center;
         justify-content: end;
@@ -360,11 +366,12 @@ input:focus{
     }
 }
 
-@media screen and (max-width: 400px){
+@media screen and (max-width: 480px){
     .container{
         height: 100vh;
         border-radius: 0;
         justify-content: center;
+        padding-bottom: 10px;
     }
 
     .icon{
