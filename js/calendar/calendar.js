@@ -24,6 +24,36 @@ function getTip(u) {
     return u === 'past' ? 'Vencido' : u === 'soon' ? 'Próximo' : 'Futuro';
 }
 
+function toggleDone(evId) {
+    var ev = events.find(function(e) { return e.id === evId; });
+    if (!ev) return;
+    var newDone = +ev.is_done ? 0 : 1;
+    fetch('mark_done.php', { method: 'POST', body: new URLSearchParams({ event_id: evId, done: newDone }) })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res.ok) return;
+        ev.is_done = newDone;
+        document.querySelectorAll('[data-ev-id="' + evId + '"]').forEach(function(el) {
+            el.classList.toggle('ev-done', newDone === 1);
+            var btn = el.querySelector('.btn-ev-check');
+            if (btn) { btn.classList.toggle('done', newDone === 1); btn.title = newDone ? 'Desmarcar' : 'Marcar completado'; }
+        });
+        var popDone = document.getElementById('pop-done');
+        if (popDone && currentEventId === evId) popDone.textContent = newDone ? 'Desmarcar completado' : 'Marcar completado';
+        var mevDone = document.getElementById('mev-sheet-done');
+        if (mevDone && mobileCurrentEvId === evId) { mevDone.querySelector('span').textContent = newDone ? 'Desmarcar' : 'Completado'; mevDone.classList.toggle('done', newDone === 1); }
+        showToast(newDone ? 'Evento completado' : 'Evento desmarcado', 'success');
+    });
+}
+
+function makeCheckBtn(evId, isDone) {
+    var btn = document.createElement('button');
+    btn.className = 'btn-ev-check' + (+isDone ? ' done' : '');
+    btn.title = +isDone ? 'Desmarcar' : 'Marcar completado';
+    btn.addEventListener('click', function(e) { e.stopPropagation(); toggleDone(evId); });
+    return btn;
+}
+
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
 var weekStart = null;
@@ -101,9 +131,11 @@ function renderCalendar(month, year) {
             for (var e = 0; e < max; e++) {
                 var evEl = document.createElement('div');
                 evEl.className = 'cal-event ev-' + getUrgency(evList[e]);
+                if (evList[e].is_done) evEl.classList.add('ev-done');
                 evEl.style.background = evList[e].color + '22';
                 evEl.style.color = evList[e].color;
                 evEl.dataset.id    = evList[e].id;
+                evEl.dataset.evId  = evList[e].id;
                 evEl.dataset.title = evList[e].title;
                 evEl.dataset.time  = evList[e].time;
                 evEl.dataset.color = evList[e].color;
@@ -327,6 +359,7 @@ popup.innerHTML = '<div class="ev-popup-header">'
     + '<div class="ev-popup-meta"><i data-lucide="clock" style="width:12px;height:12px"></i><span id="pop-time"></span></div>'
     + '<div class="ev-popup-meta" style="margin-top:2px"><i data-lucide="calendar" style="width:12px;height:12px"></i><span id="pop-date"></span></div>'
     + '<div class="ev-popup-actions">'
+    + '<button id="pop-done" class="ev-popup-action-btn done-btn">Marcar completado</button>'
     + '<button id="pop-edit" class="ev-popup-action-btn edit">Editar</button>'
     + '<button id="pop-delete" class="ev-popup-action-btn delete">Eliminar</button>'
     + '</div>';
@@ -334,6 +367,10 @@ document.body.appendChild(popup);
 
 document.getElementById('pop-close').addEventListener('click', function() {
     closePopup();
+});
+
+document.getElementById('pop-done').addEventListener('click', function() {
+    toggleDone(currentEventId);
 });
 
 document.getElementById('pop-edit').addEventListener('click', function() {
@@ -437,6 +474,8 @@ function showEventPopupAt(ev, el) {
     document.getElementById('pop-date').textContent = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
     var delBtn = document.getElementById('pop-delete');
     if (delBtn) { delBtn.textContent = 'Eliminar'; delBtn.style.color = '#ef4444'; }
+    var doneBtn = document.getElementById('pop-done');
+    if (doneBtn) doneBtn.textContent = ev.is_done ? 'Desmarcar completado' : 'Marcar completado';
     var rect = el.getBoundingClientRect();
     posPopup(rect, 6);
     popup.style.left = Math.min(rect.left, window.innerWidth - 288) + 'px';
@@ -661,6 +700,7 @@ function renderMobileEventList(day, month, year) {
         var ev = filtered[i];
         var card = document.createElement('div');
         card.className = 'mobile-ev-card ev-' + getUrgency(ev);
+        if (ev.is_done) card.classList.add('ev-done');
 
         var bar = document.createElement('div');
         bar.className = 'mobile-ev-bar';
@@ -747,9 +787,11 @@ function renderAgenda(month, year) {
 
         var item = document.createElement('div');
         item.className = 'agenda-item ev-' + getUrgency(ev);
+        if (ev.is_done) item.classList.add('ev-done');
         if (ev.day === hoy.getDate() && month === hoy.getMonth() && year === hoy.getFullYear())
             item.classList.add('agenda-today');
         item.style.animationDelay = (j * 0.04) + 's';
+        item.dataset.evId = ev.id;
 
         var dateBlock = document.createElement('div');
         dateBlock.className = 'agenda-date';
@@ -789,8 +831,7 @@ function renderAgenda(month, year) {
         item.appendChild(dateBlock);
         item.appendChild(info);
         item.appendChild(dot);
-
-        item.dataset.evId = ev.id;
+        item.appendChild(makeCheckBtn(ev.id, !!ev.is_done));
         (function(evData, itemEl) {
             var _agTimer = null;
             itemEl.addEventListener('click', function() {
@@ -910,21 +951,31 @@ function renderWeek(startDate) {
             (function(ev, idx) {
                 var card = document.createElement('div');
                 card.className = 'week-event ev-' + getUrgency(ev);
+                if (ev.is_done) card.classList.add('ev-done');
                 card.style.animationDelay = (d * 0.03 + idx * 0.04) + 's';
-                card.style.background = ev.color + '33';
-                card.style.borderLeft = '3px solid ' + ev.color;
+
+                var bar = document.createElement('span');
+                bar.className = 'week-ev-bar';
+                bar.style.background = ev.color;
+                card.appendChild(bar);
+
+                var content = document.createElement('div');
+                content.className = 'week-ev-content';
 
                 var titleEl = document.createElement('span');
+                titleEl.className = 'week-ev-title';
                 titleEl.textContent = ev.title;
-                card.appendChild(titleEl);
+                content.appendChild(titleEl);
 
                 if (ev.time && !ev.all_day) {
                     var timeEl = document.createElement('span');
                     timeEl.className = 'week-event-time';
                     timeEl.textContent = ev.time;
-                    card.appendChild(timeEl);
+                    content.appendChild(timeEl);
                 }
 
+                card.appendChild(content);
+                if (window.innerWidth > 480) card.appendChild(makeCheckBtn(ev.id, !!ev.is_done));
                 card.dataset.evId = ev.id;
                 var _wTimer = null;
                 card.addEventListener('click', function(e) {
@@ -1099,7 +1150,7 @@ function renderUpcoming() {
         grupos[k].forEach(function(ev) {
             var showDate = (k === 'semana' || k === 'resto');
             var fechaStr = showDate ? new Date(ev.year, ev.month, ev.day).toLocaleDateString('es', { weekday: 'short', day: 'numeric' }) : '';
-            html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + '" data-id="' + ev.id + '">'
+            html += '<div class="upcoming-event-card ev-' + getUrgency(ev) + (+ev.is_done ? ' ev-done' : '') + '" data-id="' + ev.id + '" data-ev-id="' + ev.id + '">'
                 + '<div class="upcoming-event-bar" style="background:' + ev.color + '"></div>'
                 + '<div class="upcoming-event-info">'
                 + '<div class="upcoming-event-title">' + ev.title + '</div>'
@@ -1167,11 +1218,17 @@ function openDayDetail(day, dayEvents) {
     dayEvents.forEach(function(ev) {
         var card = document.createElement('div');
         card.className = 'day-detail-card ev-' + getUrgency(ev);
+        if (ev.is_done) card.classList.add('ev-done');
+        card.dataset.evId = ev.id;
         card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
             + '<span class="day-detail-ev-title">' + ev.title + '</span>'
-            + '<span class="day-detail-ev-time">' + ev.time + '</span>'
-            + '<span class="ev-urgency-dot" data-tip="' + getTip(getUrgency(ev)) + '"></span>';
-        card.addEventListener('click', function() {
+            + '<div class="day-detail-right">'
+            + '<span class="day-detail-ev-time">' + (ev.time || 'Todo el día') + '</span>'
+            + '<span class="ev-urgency-dot" data-tip="' + getTip(getUrgency(ev)) + '"></span>'
+            + '</div>';
+        card.querySelector('.day-detail-right').appendChild(makeCheckBtn(ev.id, !!ev.is_done));
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-ev-check')) return;
             closeDayDetail();
             openEventEditModal(ev);
         });
@@ -1344,6 +1401,12 @@ function openMobileEventSheet(evId) {
     document.getElementById('mev-sheet-time').textContent  = ev.time || 'Todo el día';
     document.getElementById('mev-sheet-date').textContent  = ev.day + ' de ' + meses[ev.month] + ' ' + ev.year;
 
+    var doneBtn = document.getElementById('mev-sheet-done');
+    if (doneBtn) {
+        doneBtn.querySelector('span').textContent = ev.is_done ? 'Desmarcar' : 'Completado';
+        doneBtn.classList.toggle('done', !!ev.is_done);
+    }
+
     var delBtn = document.getElementById('mev-sheet-delete');
     delete delBtn.dataset.confirming;
     delBtn.querySelector('span').textContent = 'Eliminar';
@@ -1366,6 +1429,10 @@ function closeMevSheet(callback) {
 
 mevSheetOverlay.addEventListener('click', function(e) {
     if (e.target === this) closeMevSheet();
+});
+
+document.getElementById('mev-sheet-done').addEventListener('click', function() {
+    toggleDone(mobileCurrentEvId);
 });
 
 document.getElementById('mev-sheet-edit').addEventListener('click', function() {
