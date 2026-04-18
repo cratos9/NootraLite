@@ -559,23 +559,7 @@ function showErr(el) {
     el.classList.add('form-error');
 }
 
-function showToast(msg, type) {
-    var icons = { success: 'check-circle', danger: 'trash-2', warning: 'alert-triangle' };
-    var t = type || 'success';
-    var existing = document.querySelectorAll('.cal-toast');
-    var base = window.innerWidth <= 480 ? 80 : 24;
-    var offset = base + existing.length * 50;
-    var el = document.createElement('div');
-    el.className = 'cal-toast cal-toast-' + t;
-    el.style.bottom = offset + 'px';
-    el.innerHTML = '<i data-lucide="' + (icons[t] || 'check-circle') + '" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>' + msg;
-    document.body.appendChild(el);
-    lucide.createIcons();
-    setTimeout(function() {
-        el.classList.add('hide');
-        el.addEventListener('animationend', function() { el.remove(); });
-    }, 2500);
-}
+
 
 function renderMiniCal(month, year) {
     var grid = document.getElementById('mini-cal-grid');

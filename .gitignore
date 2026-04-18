@@ -1,3 +1,14 @@
 database/
 .env
 node_modules/
+docs/
+uploads/
+
+files/*
+!files/images/
+!files/documents/
+
+files/images/*
+!files/images/default.png
+
+files/documents/*

@@ -22,6 +22,8 @@ main{
     height: 125px;
     border-radius: 50%;
     background-color: var(--accent-purple);
+    object-fit: cover;
+    display: block;
 }
 
 .user{
@@ -109,7 +111,7 @@ hr{
     padding: 20px 0;
 }
 
-.options .btn-logout, .options .btn-edit_profile{
+.options .btn-logout, .options .btn-edit_profile, .options .btn-edit_password{
     padding: 10px 15px;
     border-radius: 5px;
     text-decoration: none;
@@ -119,11 +121,7 @@ hr{
     transition: background-color 0.3s ease;
 }
 
-.options .btn-logout:hover{
-    background-color: var(--accent-pink);
-}
-
-.options .btn-edit_profile:hover{
+.options .btn-logout:hover, .options .btn-edit_profile:hover, .options .btn-edit_password:hover{
     background-color: var(--accent-pink);
 }
 
@@ -140,4 +138,74 @@ hr{
 .options .btn-delete_account:hover{
     color: red;
     border-color: red;
+}
+
+.tablet{
+    display: none;
+}
+
+@media screen  and (max-width: 768px) {
+    .principalInfo{
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bio{
+        text-align: center;
+    }
+
+    .data{
+        width: 90%;
+    }
+    
+    .tablet{
+        display: block;
+    }
+
+    .icon-info{
+        display: none;
+    }
+
+}
+
+@media  screen and (max-width: 480px) {
+    .principalInfo{
+        flex-direction: column;
+        align-items: center;
+    }   
+
+
+    .bio{
+        text-align: center;
+    }
+
+    .data{
+        width: 90%;
+    }
+
+    .info{
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .user-details{
+        display: block;
+    }
+
+    .tablet{
+        display: none;
+    }
+    
+    hr{
+        display: none;
+    }
+
+    .options{
+        flex-direction: column;
+    }
+
+    .btn-logout, .btn-edit_profile, .btn-edit_password, .btn-delete_account{
+        width: 100%;
+        text-align: center;
+    }
 }

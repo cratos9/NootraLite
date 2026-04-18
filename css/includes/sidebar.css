@@ -87,14 +87,14 @@ body {
 
 .logo-icon {
     width: 36px; height: 36px;
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 16px; color: white;
+    object-fit: contain;
     flex-shrink: 0;
+    transform: scale(3.0);
     transition: transform 0.2s;
+    display: block;
 }
-.sidebar:hover .logo-icon { transform: scale(1.08) rotate(3deg); }
+.sidebar-logo { overflow: hidden; }
+.sidebar:hover .logo-icon { transform: scale(3.2) rotate(3deg); }
 .sidebar-close { display: none; }
 
 .logo-text {
@@ -104,12 +104,14 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     opacity: 0;
+    max-width: 0;
+    overflow: hidden;
     white-space: nowrap;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s, max-width 0.15s;
 }
-
 .sidebar:hover .logo-text {
     opacity: 1;
+    max-width: 200px;
     transition-delay: 0.08s;
 }
 
@@ -218,11 +220,12 @@ body {
         width: 260px;
         transform: translateX(-100%);
         transition: transform 0.3s ease, background-color 0.2s;
+        overflow: hidden;
     }
     .sidebar:hover { width: 260px; }
     .sidebar.open { transform: translateX(0); }
     .sidebar.open .nav-item span,
-    .sidebar.open .logo-text { opacity: 1; }
+    .sidebar.open .logo-text { opacity: 1; max-width: 200px; }
     .sidebar-close { display:flex; align-items:center; justify-content:center; background:none; border:none; color:var(--text-muted); cursor:pointer; margin-left:auto; padding:4px; border-radius:6px; }
     .sidebar-close:hover { color:var(--text-primary); background:rgba(255,255,255,0.08); }
     .sidebar-close svg { width:18px; height:18px; }
@@ -306,3 +309,49 @@ body {
     .light-mode .bottom-nav-item.active span { color: #7c3aed; font-weight: 700; }
     body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
 }
+
+/* badge mensajes sin leer */
+.nav-msg-badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    min-width: 16px; height: 16px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border-radius: 8px;
+    font-size: 9px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    pointer-events: none;
+}
+.bottom-msg-badge {
+    position: absolute;
+    top: 4px; right: calc(50% - 18px);
+    min-width: 15px; height: 15px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border-radius: 8px;
+    font-size: 9px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px;
+    pointer-events: none;
+}
+
+.sidebar-notif-toast {
+    position: fixed;
+    bottom: 24px; right: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-left: 3px solid #7c3aed;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px; color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    z-index: 9999;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    animation: toastIn 0.2s ease;
+    max-width: 260px;
+}
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+

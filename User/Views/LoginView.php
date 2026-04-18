@@ -41,7 +41,7 @@
                 </div>
                     <div class="form-actions">
                         <label for="remember" class="reminder">Recuérdame<input type="checkbox" id="remember" name="remember"></label>
-                        <a class="forgot-link">¿Olvidaste tu contraseña?</a>
+                        <a href="ForgotPassword.php" class="forgot-link">¿Olvidaste tu contraseña?</a>
                     </div>
             <button type="submit" id="register-btn" >Iniciar sesion</button>
         </form>
