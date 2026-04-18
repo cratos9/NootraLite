@@ -20,6 +20,9 @@ function getUrgency(ev) {
     if (diff < 86400000) return 'soon';
     return 'future';
 }
+function getTip(u) {
+    return u === 'past' ? 'Vencido' : u === 'soon' ? 'Próximo' : 'Futuro';
+}
 
 var calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 var currentView = 'month';
@@ -108,6 +111,7 @@ function renderCalendar(month, year) {
                 evEl.textContent = evList[e].title;
                 var urgDot = document.createElement('span');
                 urgDot.className = 'ev-urgency-dot';
+                urgDot.dataset.tip = getTip(getUrgency(evList[e]));
                 evEl.appendChild(urgDot);
                 cell.appendChild(evEl);
             }
@@ -637,6 +641,7 @@ function renderMobileEventList(day, month, year) {
 
         var urgDot = document.createElement('span');
         urgDot.className = 'ev-urgency-dot';
+        urgDot.dataset.tip = getTip(getUrgency(ev));
 
         card.dataset.evId = ev.id;
         card.appendChild(bar);
@@ -1125,7 +1130,7 @@ function openDayDetail(day, dayEvents) {
         card.innerHTML = '<span class="day-detail-dot" style="background:' + ev.color + '"></span>'
             + '<span class="day-detail-ev-title">' + ev.title + '</span>'
             + '<span class="day-detail-ev-time">' + ev.time + '</span>'
-            + '<span class="ev-urgency-dot"></span>';
+            + '<span class="ev-urgency-dot" data-tip="' + getTip(getUrgency(ev)) + '"></span>';
         card.addEventListener('click', function() {
             closeDayDetail();
             document.getElementById('pop-dot').style.background = ev.color;

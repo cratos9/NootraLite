@@ -199,7 +199,7 @@
     transition: transform 0.1s, filter 0.1s;
 }
 
-.cal-event:hover { transform: translateY(-1px); filter: brightness(1.15); }
+.cal-event:hover { transform: translateY(-1px); filter: brightness(1.15); overflow: visible; }
 
 .ev-popup {
     position: fixed;
@@ -1333,8 +1333,8 @@
 
 /* urgencia */
 .ev-urgency-dot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     position: absolute;
     right: 4px;
@@ -1342,13 +1342,35 @@
     transform: translateY(-50%);
     transition: box-shadow 0.2s;
 }
+.ev-urgency-dot::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 140%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    border: 1px solid var(--border);
+    font-family: Poppins, sans-serif;
+    z-index: 10;
+}
+.ev-urgency-dot:hover::after { opacity: 1; }
 .ev-past .ev-urgency-dot  { background: #ef4444; box-shadow: 0 0 4px rgba(239,68,68,0.4); }
 .ev-soon .ev-urgency-dot  { background: #f59e0b; box-shadow: 0 0 4px rgba(245,158,11,0.4); }
 .ev-future .ev-urgency-dot { background: #10b981; box-shadow: 0 0 4px rgba(16,185,129,0.4); }
-.cal-event:hover .ev-urgency-dot { box-shadow: 0 0 6px 1px currentColor; }
-.light-mode .ev-past .ev-urgency-dot  { box-shadow: 0 0 3px rgba(239,68,68,0.3); }
-.light-mode .ev-soon .ev-urgency-dot  { box-shadow: 0 0 3px rgba(245,158,11,0.3); }
-.light-mode .ev-future .ev-urgency-dot { box-shadow: 0 0 3px rgba(16,185,129,0.3); }
+.cal-event:hover .ev-urgency-dot { box-shadow: 0 0 8px 2px currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.light-mode .ev-past .ev-urgency-dot  { box-shadow: 0 0 5px rgba(239,68,68,0.5); }
+.light-mode .ev-soon .ev-urgency-dot  { box-shadow: 0 0 5px rgba(245,158,11,0.5); }
+.light-mode .ev-future .ev-urgency-dot { box-shadow: 0 0 5px rgba(16,185,129,0.5); }
 
-.ev-past { opacity: 0.55; }
-.ev-past:hover { opacity: 0.75; }
+
+@media (max-width: 750px) {
+    .ev-urgency-dot { width: 5px; height: 5px; }
+}
