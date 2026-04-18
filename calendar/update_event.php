@@ -47,6 +47,7 @@ try {
             'time'  => $all_day ? 'Todo el día' : $dt->format('H:i'),
             'start_datetime' => $start_dt,
             'all_day' => (bool)$all_day,
+            'is_done' => false,
         ]
     ]);
 } catch (Exception $e) {

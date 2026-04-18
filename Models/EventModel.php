@@ -9,7 +9,7 @@ class EventModel {
 
     public function getAll($uid) {
         $stmt = $this->db->prepare(
-            "SELECT id, title, color, start_datetime, all_day FROM tasks WHERE user_id = ? ORDER BY start_datetime"
+            "SELECT id, title, color, start_datetime, all_day, is_done FROM tasks WHERE user_id = ? ORDER BY start_datetime"
         );
         $stmt->execute([$uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
