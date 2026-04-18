@@ -1247,6 +1247,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
     padding: 8px 10px;
     border-radius: 8px;
     background: var(--bg-tertiary);
@@ -1273,6 +1274,7 @@
     font-size: 11px;
     color: var(--text-muted);
     flex-shrink: 0;
+    margin-right: 16px;
 }
 
 .day-detail-footer {
