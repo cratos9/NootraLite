@@ -167,6 +167,7 @@
             <div class="mev-sheet-meta"><i data-lucide="clock" style="width:13px;height:13px"></i><span id="mev-sheet-time"></span></div>
             <div class="mev-sheet-meta"><i data-lucide="calendar" style="width:13px;height:13px"></i><span id="mev-sheet-date"></span></div>
             <div class="mev-sheet-actions">
+                <button class="mev-sheet-btn mev-btn-done" id="mev-sheet-done"><i data-lucide="check-circle"></i><span>Completado</span></button>
                 <button class="mev-sheet-btn mev-btn-edit" id="mev-sheet-edit"><i data-lucide="pencil"></i><span>Editar</span></button>
                 <button class="mev-sheet-btn mev-btn-delete" id="mev-sheet-delete"><i data-lucide="trash-2"></i><span>Eliminar</span></button>
             </div>

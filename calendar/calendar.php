@@ -27,6 +27,7 @@ foreach ($rows as $r) {
         'time'  => $r['all_day'] ? 'Todo el día' : $dt->format('H:i'),
         'start_datetime' => $r['start_datetime'],
         'all_day' => (bool)$r['all_day'],
+        'is_done' => (bool)$r['is_done'],
     ];
 }
 
