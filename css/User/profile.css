@@ -144,6 +144,21 @@ hr{
     display: none;
 }
 
+.btn-verify_email{
+    padding: 10px 15px;
+    border: 1px solid var(--accent-pink);
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+.btn-verify_email:hover{
+    background-color: var(--accent-pink);
+}
+
 @media screen  and (max-width: 768px) {
     .principalInfo{
         flex-direction: column;

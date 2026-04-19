@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="../js/includes/lightMode.js" defer></script>
+    <script src="../js/includes/toast.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/User/profile.css">
     <link rel="stylesheet" href="../css/includes/sidebar.css">
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/includes/lightMode.css">
     <title>Perfil</title>
 </head>
@@ -31,7 +33,7 @@
                     <p class="data"><?php echo decrypt_data($_SESSION['user']['full_name']); ?></p>
                 </div>
                 <div class="info">
-                    <p class="label">Correo:</p>
+                    <p class="label">Correo ( <?php echo $isVerified ? 'Verificado' : 'No verificado'; ?> ) :</p>
                     <p class="data"><?php echo $_SESSION['user']['email']; ?></p>
                 </div>
                 <div class="info">
@@ -46,6 +48,14 @@
                     <p class="label">Estado:</p>
                     <p class="data"><?= !empty($_SESSION['user']['city']) ? decrypt_data($_SESSION['user']['city']) : "No proporcionado" ?></p>
                 </div>
+                <?php if (!$isVerified): ?>
+                    <div class="info">
+                        <form action="EmailToVerify.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email">Verificar correo</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
             </section>
         </section>
         <section class="schoolInfo">
@@ -78,6 +88,13 @@
             <a href="DeleteAccount.php" class="btn-delete_account">Eliminar cuenta</a>
         </section>
     </main>
+    <?php if (!$isVerified): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            message.error('Tu cuenta no esta verificada.');
+        });
+    </script>
+    <?php endif; ?>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>
 </body>
