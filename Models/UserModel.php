@@ -161,7 +161,7 @@ class User{
     }
 
     public function VerifyEmail($email){
-        $sql = "UPDATE users SET is_verified = 1 WHERE email = ?";
+        $sql = "UPDATE users SET is_verified = 1, email_verified_at = NOW() WHERE email = ?";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([$email]);
     }
