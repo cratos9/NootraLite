@@ -48,12 +48,14 @@
                     <p class="label">Estado:</p>
                     <p class="data"><?= !empty($_SESSION['user']['city']) ? decrypt_data($_SESSION['user']['city']) : "No proporcionado" ?></p>
                 </div>
-                <div class="info">
-                    <form action="EmailToVerify.php" method="post">
-                        <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
-                        <button type="submit" class="btn-verify_email" <?= $isVerified ? 'disabled' : '' ?>>Verificar correo</button>
-                    </form>
-                </div>
+                <?php if (!$isVerified): ?>
+                    <div class="info">
+                        <form action="EmailToVerify.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email">Verificar correo</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
             </section>
         </section>
         <section class="schoolInfo">
