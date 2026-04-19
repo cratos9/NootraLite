@@ -149,7 +149,36 @@ class User{
         } else {
             return false;
         }
-}
+    }
+
+    public function IsVerified($userId){
+        $sql = "SELECT is_verified FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo $user['is_verified'] . "is verified";
+        return $user == 1 ? true : false;
+    }
+
+    public function VerifyEmail($email){
+        $sql = "UPDATE users SET is_verified = 1 WHERE email = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$email]);
+    }
+
+    public function SetVerificationToken($email, $token){
+        $sql = "UPDATE users SET verification_token = ?, verification_token_expiry = DATE_ADD(NOW(), INTERVAL 24 HOUR) WHERE email = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$token, $email]);
+    }
+
+    public function GetVerificationToken($email, $token){
+        $sql = "SELECT id FROM users WHERE email = ? AND verification_token = ? AND verification_token_expiry IS NOT NULL AND verification_token_expiry > NOW()";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$email, $token]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
 }
 
 ?>
