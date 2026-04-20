@@ -35,5 +35,23 @@ class Book{
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function deleteBook($bookId, $userId){
+        $query = "DELETE FROM notebooks WHERE id = :book_id AND user_id = :user_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':book_id', $bookId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function updateBook($bookId, $userId, $title, $description, $color, $category, $semester, $tags){
+        $title = encrypt_data($title);
+        $description = encrypt_data($description);
+        $tags = encrypt_data($tags);
+        $category = encrypt_data($category);
+        $sql = "UPDATE notebooks SET title = ?, description = ?, color = ?, category = ?, semester = ?, tags = ? WHERE id = ? AND user_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$title, $description, $color, $category, $semester, $tags, $bookId, $userId]);
+    }
 }
 ?>
