@@ -7,6 +7,8 @@ require_once '../includes/lightMode.php';
 $activePage = 'profile';
 include '../includes/sidebar.php';
 
+$message = null;
+
 $database = new Database();
 try {
     $conn = $database->connect();
@@ -20,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $password = $_POST['password'];
 
     if (empty($password)) {
-        $mensaje = "Por favor, ingresa tu contraseña para confirmar.";
+        $message = "Por favor, ingresa tu contraseña para confirmar.";
         include 'Views/DeleteAccountView.php';
         exit();
     }
@@ -30,9 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         session_destroy();
         header('Location: ../index.php');
     } else {
-        $mensaje = "Contraseña incorrecta. Inténtalo de nuevo.";
+        $message = "Contraseña incorrecta. Inténtalo de nuevo.";
     }
 }
-
 include 'Views/DeleteAccountView.php';
+if (isset($message)) {
+    echo '
+    <script>
+    message.error("' . $message . '");
+    </script>';
+}
 ?>

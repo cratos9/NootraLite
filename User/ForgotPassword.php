@@ -13,8 +13,8 @@ try {
 
 $user = new User($conn);
 
-$mensaje = '';
-$errors = [];
+$message = "";
+$messageType = "";
 $isSuccess = false;
 $oldInput = [
 	'email' => '',
@@ -25,11 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$oldInput['email'] = $email;
 
 	if ($email === '') {
-		$errors['email'] = 'El correo es obligatorio.';
+		$message = 'El correo es obligatorio.';
+		$messageType = 'error';
 	} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-		$errors['email'] = 'El formato del correo no es valido.';
+		$message = 'El formato del correo es invalido.';
+		$messageType = 'error';
 	} elseif (strlen($email) > 120) {
-		$errors['email'] = 'El correo no puede exceder 120 caracteres.';
+		$message = 'El correo no puede exceder 120 caracteres.';
+		$messageType = 'error';
 	}
 
 	if (empty($errors)) {
@@ -54,17 +57,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 			$sendResult = $mail->send($email, $subject, $body);
 			if ($sendResult !== true) {
-				$errors['email'] = 'No se pudo enviar el correo de recuperacion. Intentalo mas tarde.';
+				$message = 'No se pudo enviar el correo de recuperacion. Intentalo mas tarde.';
+				$messageType = 'error';
 			} else {
 				$isSuccess = true;
-				$mensaje = 'Te enviamos un enlace de recuperacion.';
+				$message = 'Te enviamos un enlace de recuperacion.';
+				$messageType = 'tip';
 			}
 		} else {
 			$isSuccess = true;
-			$mensaje = 'Te enviamos un enlace de recuperacion.';
+			$message = 'Te enviamos un enlace de recuperacion.';
+			$messageType = 'tip';
 		}
 	}
 }
 
 include 'Views/ForgotPasswordView.php';
+if ($message) {
+	echo '
+	<script>
+	message.' . $messageType . '("' . $message . '");
+	</script>';
+}
 ?>

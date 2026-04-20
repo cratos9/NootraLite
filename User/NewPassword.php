@@ -13,8 +13,8 @@ try {
 
 $user = new User($conn);
 
-$mensaje = '';
-$errors = [];
+$message = "";
+$messageType = "";
 $isSuccess = false;
 $tokenInvalid = false;
 
@@ -23,7 +23,8 @@ $token = trim((string) ($_GET['token'] ?? ($_POST['token'] ?? '')));
 
 if ($userId <= 0 || $token === '') {
     $tokenInvalid = true;
-    $mensaje = 'El enlace de recuperacion no es valido.';
+    $message = 'El enlace de recuperacion no es valido.';
+    $messageType = 'error';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$tokenInvalid) {
@@ -31,29 +32,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$tokenInvalid) {
     $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
 
     if ($newPassword === '') {
-        $errors['password'] = 'La contrasena es obligatoria.';
+        $message = 'La contrasena es obligatoria.';
+        $messageType = 'error';
     } elseif (strlen($newPassword) < 8) {
-        $errors['password'] = 'La contrasena debe tener al menos 8 caracteres.';
+        $message = 'La contrasena debe tener al menos 8 caracteres.';
+        $messageType = 'error';
     } elseif (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[a-z]/', $newPassword) || !preg_match('/\d/', $newPassword)) {
-        $errors['password'] = 'La contrasena debe incluir mayuscula, minuscula y numero.';
+        $message = 'La contrasena debe incluir mayuscula, minuscula y numero.';
+        $messageType = 'error';
     }
 
     if ($confirmPassword === '') {
-        $errors['confirm_password'] = 'Confirma tu contrasena.';
+        $message = 'Confirma tu contrasena.';
+        $messageType = 'error';
     } elseif ($newPassword !== $confirmPassword) {
-        $errors['confirm_password'] = 'Las contrasenas no coinciden.';
+        $message = 'Las contrasenas no coinciden.';
+        $messageType = 'error';
     }
 
     if (empty($errors)) {
         if ($user->ResetPassword($userId, $token, $newPassword)) {
             $isSuccess = true;
-            $mensaje = 'Tu contrasena se actualizo correctamente. Ya puedes iniciar sesion.';
+            $message = 'Tu contrasena se actualizo correctamente. Ya puedes iniciar sesion.';
+            $messageType = 'tip';
         } else {
             $tokenInvalid = true;
-            $mensaje = 'El enlace es invalido o ya expiro. Solicita uno nuevo.';
+            $message = 'El enlace es invalido o ya expiro. Solicita uno nuevo.';
+            $messageType = 'error';
         }
     }
 }
 
 include 'Views/NewPasswordView.php';
+if ($message) {
+    echo '
+    <script>
+    message.' . $messageType . '("' . $message . '");
+    </script>';
+}
 ?>

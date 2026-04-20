@@ -327,29 +327,6 @@ input:focus{
         linear-gradient(120deg, #7c3aed, #ec4899) border-box;
 }
 
-.error{
-    position: absolute;
-    top: 20px;
-    z-index: 30;
-    color: #ff4d4d;
-    background-color: #ffe5e5;
-    border: 1px solid #ff4d4d;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-family: poppins, sans-serif;
-}
-
-.field-error{
-    display: block;
-    margin-top: 4px;
-    color: #fda4af;
-    font-size: 12px;
-    line-height: 1.2;
-}
-
-
-
 @media screen and (max-width:768px){
     html{
         overflow: hidden;

@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-        <script src="../js/User/Auth.js" defer></script>
+    <script src="../js/User/Auth.js" defer></script>
+    <script src="../js/includes/toast.js"></script>
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/User/Auth.css">
     <title>Inicio de sesion</title>
 </head>
@@ -17,10 +19,6 @@
     <div class="bg-decoration bg-decoration_2"></div>
     <div class="bg-decoration bg-decoration_1"></div>
     <div class="bg-decoration bg-decoration_2"></div>
-
-    <?php if ($mensaje): ?>
-        <p class="error"><?= htmlspecialchars($mensaje) ?></p>
-        <?php endif; ?>
         
         <div class="container">
             <i data-lucide="user" class="icon icon-purple"></i>
