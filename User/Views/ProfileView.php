@@ -22,7 +22,7 @@
             </div>
             <div class='user'>
                 <p class="full-name"><?php echo $_SESSION['user']['username']; ?></p>
-                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? decrypt_data($_SESSION['user']['bio']) : "Sin biografía" ?></p>
+                <p class="bio"><?= !empty($_SESSION['user']['bio']) ? htmlspecialchars(decrypt_data($_SESSION['user']['bio'])) : "Sin biografía" ?></p>
             </div>
         </section>
         <section class="userInfo">
@@ -30,23 +30,23 @@
             <section class="user-details">
                 <div class="info">
                     <p class="label">Nombre:</p>
-                    <p class="data"><?php echo decrypt_data($_SESSION['user']['full_name']); ?></p>
+                    <p class="data"><?php echo htmlspecialchars(decrypt_data($_SESSION['user']['full_name'])); ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Correo ( <?php echo $isVerified ? 'Verificado' : 'No verificado'; ?> ) :</p>
-                    <p class="data"><?php echo $_SESSION['user']['email']; ?></p>
+                    <p class="data"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></p>
                 </div>
                 <div class="info">
                     <p class="label">País:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['country']) ? decrypt_data($_SESSION['user']['country']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['country']) ? htmlspecialchars(decrypt_data($_SESSION['user']['country'])) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Teléfono:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? $_SESSION['user']['phone'] : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Estado:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['city']) ? decrypt_data($_SESSION['user']['city']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['city']) ? htmlspecialchars(decrypt_data($_SESSION['user']['city'])) : "No proporcionado" ?></p>
                 </div>
                 <?php if (!$isVerified): ?>
                     <div class="info">
@@ -63,15 +63,15 @@
             <section class="user-details">
                 <div class="info">
                     <p class="label">Escuela:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['school']) ? decrypt_data($_SESSION['user']['institution']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['school']) ? htmlspecialchars(decrypt_data($_SESSION['user']['institution'])) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">Carrera:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['grade']) ? decrypt_data($_SESSION['user']['carrer']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['grade']) ? htmlspecialchars(decrypt_data($_SESSION['user']['carrer'])) : "No proporcionado" ?></p>
                 </div>
                 <div class="info">
                     <p class="label">ID de estudiante:</p>
-                    <p class="data"><?= !empty($_SESSION['user']['student_id']) ? decrypt_data($_SESSION['user']['student_id']) : "No proporcionado" ?></p>
+                    <p class="data"><?= !empty($_SESSION['user']['student_id']) ? htmlspecialchars(decrypt_data($_SESSION['user']['student_id'])) : "No proporcionado" ?></p>
                 </div>
             </section>
         </section>

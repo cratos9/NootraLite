@@ -1,0 +1,71 @@
+body{
+    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+main{
+    padding: 20px;
+    padding-top: 50px;
+    width: 100%;
+    margin-left: 60px;
+}
+
+h3{
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    width: 100%;
+    color: var(--text-secondary);
+}
+
+.icon-book{
+    width: 40px;
+    height: 40px;
+    border: 1px solid;
+    border-radius: 5px;
+    padding: 5px;
+    margin-right: 5px;
+}
+
+.book-info, .notes{
+    border: 1px solid;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.notes{
+    margin-top: 10px;
+    border-color: --border;
+}
+
+.back, .edit-book, .delete-book{
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: background-color 0.3s ease;
+}
+
+.delete-book{
+    border-color: red;
+    color: red;
+}
+
+.back:hover, .edit-book:hover{
+    background-color: var(--bg-secondary);
+}
+
+.delete-book:hover{
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.options{
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}

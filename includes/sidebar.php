@@ -13,7 +13,7 @@
         <a class="nav-item <?= ($activePage ?? '') === 'calendar' ? 'active' : '' ?>" href="../calendar/calendar.php" data-tooltip="Calendario">
             <i data-lucide="calendar-days"></i> <span>Calendario</span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'notebooks' ? 'active' : '' ?>" href="#" data-tooltip="Cuadernos">
+        <a class="nav-item <?= ($activePage ?? '') === 'notebooks' ? 'active' : '' ?>" href="../Books/Books.php" data-tooltip="Cuadernos">
             <i data-lucide="book-open"></i> <span>Cuadernos</span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#" data-tooltip="Tareas">
