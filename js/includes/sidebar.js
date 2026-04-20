@@ -39,7 +39,7 @@ var navBadge = document.getElementById('navMsgBadge');
 var bottomBadge = document.getElementById('bottomMsgBadge');
 
 function checkMsgNotifs() {
-    fetch('/messages/poll_notifications.php')
+    fetch('../messages/poll_notifications.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
@@ -53,7 +53,7 @@ function checkMsgNotifs() {
                 bottomBadge.style.display = n > 0 ? 'flex' : 'none';
             }
             // toast solo si aumentaron y no estamos en mensajes
-            if (n > prevUnread && window.location.pathname.indexOf('/messages/') === -1) {
+            if (n > prevUnread && window.location.pathname.indexOf('messages') === -1) {
                 showMsgToast('Tienes ' + n + ' mensaje' + (n !== 1 ? 's' : '') + ' sin leer');
             }
             prevUnread = n;
