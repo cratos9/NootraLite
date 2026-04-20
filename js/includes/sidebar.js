@@ -39,7 +39,7 @@ var navBadge = document.getElementById('navMsgBadge');
 var bottomBadge = document.getElementById('bottomMsgBadge');
 
 function checkMsgNotifs() {
-    fetch('/messages/poll_notifications.php')
+    fetch('../messages/poll_notifications.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
