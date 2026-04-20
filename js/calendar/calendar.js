@@ -42,7 +42,7 @@ function toggleDone(evId) {
         if (popDone && currentEventId === evId) popDone.textContent = newDone ? 'Desmarcar completado' : 'Marcar completado';
         var mevDone = document.getElementById('mev-sheet-done');
         if (mevDone && mobileCurrentEvId === evId) { mevDone.querySelector('span').textContent = newDone ? 'Desmarcar' : 'Completado'; mevDone.classList.toggle('done', newDone === 1); }
-        showToast(newDone ? 'Evento completado' : 'Evento desmarcado', 'success');
+        message.success(newDone ? 'Evento completado' : 'Evento desmarcado');
     });
 }
 
@@ -266,7 +266,7 @@ document.querySelector('.btn-save').addEventListener('click', function() {
             }
             var msg = editingEventId ? 'Evento actualizado' : 'Evento guardado';
             reRenderAll();
-            showToast(msg);
+            message.success(msg);
             closeModal(function() {
                 document.getElementById('ev-title').value = '';
                 document.getElementById('ev-time').value = '';
@@ -431,7 +431,7 @@ document.getElementById('pop-delete').addEventListener('click', function() {
         var deletedId = currentEventId;
         events = events.filter(function(ev) { return ev.id !== deletedId; });
         currentEventId = null;
-        showToast('Evento eliminado', 'danger');
+        message.error('Evento eliminado');
         closePopup(function() { reRenderAll(); });
         return;
     })
@@ -1378,7 +1378,7 @@ document.getElementById('mfp-save').addEventListener('click', function() {
             var toastMsg = mobileEditingId ? 'Evento actualizado' : 'Evento guardado';
             closeMobileForm();
             reRenderAll();
-            showToast(toastMsg);
+            message.success(toastMsg);
         })
         .catch(function() {
             errEl.textContent = 'error al guardar, intenta de nuevo';
