@@ -14,6 +14,7 @@ function updateThemeIcons(isLight) {
 
 function applyTheme(isLight) {
     document.body.classList.toggle('light-mode', isLight);
+    document.documentElement.classList.toggle('light-mode', isLight);
     updateThemeIcons(isLight);
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
