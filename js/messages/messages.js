@@ -295,10 +295,16 @@ function getMsgMenuItems(isMine, text) {
 function closeChatPanel() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     activeConvId = null;
-    chatActive.style.display = 'none';
-    chatEmpty.style.display = '';
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.classList.remove('active');
+    });
+    chatActive.classList.remove('chat-area-opening');
+    chatActive.classList.add('chat-area-closing');
+    chatActive.addEventListener('animationend', function h() {
+        chatActive.removeEventListener('animationend', h);
+        chatActive.classList.remove('chat-area-closing');
+        chatActive.style.display = 'none';
+        chatEmpty.style.display = '';
     });
 }
 
@@ -493,6 +499,9 @@ function openConversation(convId, name) {
 
     chatEmpty.style.display = 'none';
     chatActive.style.display = 'flex';
+    chatActive.classList.remove('chat-area-opening');
+    void chatActive.offsetWidth;
+    chatActive.classList.add('chat-area-opening');
     chatMessages.innerHTML = '<div class="msgs-loading"><span></span><span></span><span></span></div>';
 
     fetch('../messages/get_messages.php?conv_id=' + convId)
@@ -514,14 +523,20 @@ function openConversation(convId, name) {
 
 function closeMobileChat() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-    document.querySelector('.conv-panel').classList.remove('hidden');
-    document.querySelector('.chat-panel').classList.remove('mobile-active');
-    chatActive.style.display = 'none';
-    chatEmpty.style.display = '';
     activeConvId = null;
     lastMsgId = 0;
     var btn = document.getElementById('btnBack');
     if (btn) btn.remove();
+    chatActive.classList.remove('chat-area-opening');
+    chatActive.classList.add('chat-area-closing');
+    chatActive.addEventListener('animationend', function h() {
+        chatActive.removeEventListener('animationend', h);
+        chatActive.classList.remove('chat-area-closing');
+        chatActive.style.display = 'none';
+        chatEmpty.style.display = '';
+        document.querySelector('.conv-panel').classList.remove('hidden');
+        document.querySelector('.chat-panel').classList.remove('mobile-active');
+    });
 }
 
 // polling para mensajes nuevos en el chat activo
