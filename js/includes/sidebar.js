@@ -53,7 +53,7 @@ function checkMsgNotifs() {
                 bottomBadge.style.display = n > 0 ? 'flex' : 'none';
             }
             // toast solo si aumentaron y no estamos en mensajes
-            if (n > prevUnread && window.location.pathname.indexOf('/messages/') === -1) {
+            if (n > prevUnread && window.location.pathname.indexOf('messages') === -1) {
                 showMsgToast('Tienes ' + n + ' mensaje' + (n !== 1 ? 's' : '') + ' sin leer');
             }
             prevUnread = n;
