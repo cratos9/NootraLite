@@ -146,4 +146,13 @@ $activePage = 'profile';
 include '../includes/sidebar.php';
 
 include 'Views/EditProfileView.php';
+if (!empty($errors)) {
+    foreach ($errors as $error) {
+        echo '
+        <script>
+        message.error("' . $error . '");
+        </script>
+        ';
+    }
+}
 ?>

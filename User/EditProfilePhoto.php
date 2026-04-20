@@ -41,4 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_photo'])) {
 }
 
 include 'Views/EditProfilePhotoView.php';
+if ($message) {
+    echo '
+    <script>
+    message.' . $messageType . '("' . $message . '");
+    </script>';
+}
 ?>

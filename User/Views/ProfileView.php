@@ -6,10 +6,10 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="../js/includes/lightMode.js" defer></script>
     <script src="../js/includes/toast.js"></script>
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/User/profile.css">
     <link rel="stylesheet" href="../css/includes/sidebar.css">
-    <link rel="stylesheet" href="../css/includes/toast.css">
     <link rel="stylesheet" href="../css/includes/lightMode.css">
     <title>Perfil</title>
 </head>
@@ -88,13 +88,6 @@
             <a href="DeleteAccount.php" class="btn-delete_account">Eliminar cuenta</a>
         </section>
     </main>
-    <?php if (!$isVerified): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            message.error('Tu cuenta no esta verificada.');
-        });
-    </script>
-    <?php endif; ?>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>
 </body>

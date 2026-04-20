@@ -107,27 +107,6 @@ label{
     margin-bottom: 12px;
 }
 
-.field-error{
-    display: block;
-    color: #ef4444;
-    font-size: 12px;
-    margin-top: -6px;
-}
-
-.form-message{
-    max-width: 70%;
-    margin: 0 0 14px 0;
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-}
-
-.error-message{
-    color: #991b1b;
-    background-color: #fee2e2;
-    border: 1px solid #fca5a5;
-}
-
 .tablet{
     display: none;
 }

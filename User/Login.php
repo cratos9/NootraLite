@@ -12,7 +12,7 @@ try {
 }
 $user = new User($conn);
 
-$mensaje = "";
+$message = "";
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -60,8 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: ../Dashboard/index.php");
         exit();
     } else {
-        $mensaje = "Error al iniciar sesión";
+        $message = "Error al iniciar sesión, verifica tu correo y contraseña.";
     }
 }
 include 'Views/LoginView.php';
+if (!empty($message)) {
+    echo '
+    <script>
+    message.error("' . $message . '");
+    </script>';
+}
 ?>

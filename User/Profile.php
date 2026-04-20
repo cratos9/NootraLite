@@ -16,9 +16,13 @@ $user = new User($conn);
 $userId = $_SESSION['user']['id'] ?? null;
 
 $isVerified = $_SESSION['user']['is_verified'];
-
 $activePage = 'profile';
 include '../includes/sidebar.php';
-
 include 'Views/ProfileView.php';
+if (!$isVerified){
+    echo '
+    <script>
+    message.error("No estas verificado");
+    </script>';
+    }
 ?>

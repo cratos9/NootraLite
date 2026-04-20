@@ -13,7 +13,6 @@ try {
 
 $usuario = new User($conn);
 
-$mensaje = "";
 $errors = [];
 $oldInput = [
     'fullname' => '',
@@ -79,8 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: Login.php');
         exit();
     } elseif (empty($errors)) {
-        $mensaje = "Error al registrar";
+        $errors['general'] = "Error al registrar";
     }
 } 
 include 'Views/RegisterView.php';
+if (!empty($errors)) {
+    foreach ($errors as $error) {
+        echo '
+        <script>
+        message.error("' . $error . '");
+        </script>
+        ';
+    }
+}
 ?>

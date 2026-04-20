@@ -51,13 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         }
     }
 
+    }
+    
+    include 'Views/EditPasswordView.php';
     if (!empty($errors)) {
         $mensaje = '';
         foreach ($errors as $error) {
-            $mensaje .= $error . ' ';
+            echo '
+            <script>
+            message.error("' . $error . '");
+            </script>
+            ';
         }
     }
-}
-
-include 'Views/EditPasswordView.php';
 ?>
