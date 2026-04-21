@@ -36,7 +36,60 @@ var userResults   = document.getElementById('userResults');
 var pollInterval = null;
 var lastMsgId = 0;
 
+var activeConvName = null;
+var replyToId = null, replyToBody = null, replyToSender = null;
+var replyBar       = document.getElementById('replyBar');
+var replyBarSender = document.getElementById('replyBarSender');
+var replyBarBody   = document.getElementById('replyBarBody');
+var replyBarClose  = document.getElementById('replyBarClose');
+
 // --- utilidades ---
+
+function activateReply(msgId, body, senderName) {
+    replyToId = msgId; replyToBody = body; replyToSender = senderName;
+    replyBarSender.textContent = senderName;
+    replyBarBody.textContent = body;
+    replyBar.classList.remove('reply-bar-leaving');
+    replyBar.style.display = 'flex';
+    void replyBar.offsetWidth;
+    replyBar.classList.add('reply-bar-entering');
+    replyBar.addEventListener('animationend', function h() {
+        replyBar.removeEventListener('animationend', h);
+        replyBar.classList.remove('reply-bar-entering');
+    });
+    lucide.createIcons({ nodes: [replyBar] });
+    // pulso en el mensaje origen
+    var srcRow = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+    if (srcRow) {
+        var bub = srcRow.querySelector('.msg-bubble');
+        if (bub) {
+            bub.classList.remove('reply-source-flash');
+            void bub.offsetWidth;
+            bub.classList.add('reply-source-flash');
+            bub.addEventListener('animationend', function h2() {
+                bub.removeEventListener('animationend', h2);
+                bub.classList.remove('reply-source-flash');
+            });
+        }
+    }
+    msgInput.focus();
+}
+
+function cancelReply() {
+    replyToId = replyToBody = replyToSender = null;
+    replyBarSender.textContent = '';
+    replyBarBody.textContent = '';
+    if (replyBar.style.display === 'none') return;
+    replyBar.classList.remove('reply-bar-entering');
+    replyBar.classList.add('reply-bar-leaving');
+    replyBar.addEventListener('animationend', function h() {
+        replyBar.removeEventListener('animationend', h);
+        replyBar.classList.remove('reply-bar-leaving');
+        replyBar.style.display = 'none';
+    });
+}
+
+replyBarClose.addEventListener('click', cancelReply);
 
 function avatarColor(name) {
     var colors = ['#7c3aed','#ec4899','#2563eb','#059669','#d97706','#dc2626'];
@@ -196,6 +249,7 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
+    if (replyBar.style.display !== 'none') { cancelReply(); return; }
     if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
     if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
     if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); return; }
@@ -268,12 +322,12 @@ function getHeaderMenuItems() {
     ];
 }
 
-function getMsgMenuItems(isMine, text) {
+function getMsgMenuItems(isMine, text, msgId, senderName) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
         navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
     var base = [
-        { icon: 'reply', label: 'Responder', action: function() { message.tip('Próximamente'); } },
+        { icon: 'reply', label: 'Responder', action: function() { activateReply(msgId, text, senderName); } },
         copy,
         { icon: 'forward', label: 'Reenviar', action: function() { message.tip('Próximamente'); } },
         { icon: 'pin', label: 'Fijar', action: function() { message.tip('Próximamente'); } },
@@ -421,6 +475,18 @@ chatHeader.addEventListener('click', function(e) {
     openDropdown(btn, getHeaderMenuItems());
 });
 
+function getBubbleText(bubble) {
+    var textEl = bubble.querySelector('.msg-text');
+    var t = textEl ? textEl.textContent.trim() : '';
+    if (t) return t;
+    if (bubble.querySelector('.msg-img'))           return '📷 Imagen';
+    if (bubble.querySelector('.msg-attachment'))     return '📎 Archivo';
+    if (bubble.querySelector('.attach-location'))   return '📍 Ubicación';
+    if (bubble.querySelector('audio'))              return '🎵 Audio';
+    if (bubble.querySelector('.attach-contact'))    return '👤 Contacto';
+    return '📎 Adjunto';
+}
+
 // click derecho en burbujas
 chatMessages.addEventListener('contextmenu', function(e) {
     var bubble = e.target.closest('.msg-bubble');
@@ -428,10 +494,120 @@ chatMessages.addEventListener('contextmenu', function(e) {
     e.preventDefault();
     var row = bubble.closest('.msg-row');
     var isMine = row.classList.contains('mine');
-    var textEl = bubble.querySelector('.msg-text');
-    var text = textEl ? textEl.textContent : '';
-    openDropdown(bubble, getMsgMenuItems(isMine, text));
+    var text = getBubbleText(bubble);
+    var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
+    var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
+    openDropdown(bubble, getMsgMenuItems(isMine, text, msgId, senderName));
     posDropdownAt(e.clientX, e.clientY);
+});
+
+chatMessages.addEventListener('dblclick', function(e) {
+    var bubble = e.target.closest('.msg-bubble');
+    if (!bubble) return;
+    var row = bubble.closest('.msg-row');
+    var isMine = row.classList.contains('mine');
+    var text = getBubbleText(bubble);
+    var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
+    var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
+    activateReply(msgId, text, senderName);
+});
+
+// chevron button + click en reply-preview
+chatMessages.addEventListener('click', function(e) {
+    var btn = e.target.closest('.msg-actions-btn');
+    if (btn) {
+        e.stopPropagation();
+        var row = btn.closest('.msg-row');
+        var bubble = row.querySelector('.msg-bubble');
+        var isMine = row.classList.contains('mine');
+        var text = getBubbleText(bubble);
+        var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
+        var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
+        openDropdown(btn, getMsgMenuItems(isMine, text, msgId, senderName));
+        return;
+    }
+    var preview = e.target.closest('.reply-preview');
+    if (!preview) return;
+    var targetId = preview.getAttribute('data-reply-to');
+    if (!targetId) return;
+    var targetRow = chatMessages.querySelector('[data-msg-id="' + targetId + '"]');
+    if (!targetRow) return;
+    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var bub = targetRow.querySelector('.msg-bubble');
+    if (!bub) return;
+    bub.classList.remove('reply-source-flash');
+    void bub.offsetWidth;
+    bub.classList.add('reply-source-flash');
+    bub.addEventListener('animationend', function h() {
+        bub.removeEventListener('animationend', h);
+        bub.classList.remove('reply-source-flash');
+    });
+});
+
+// swipe derecho para responder (móvil) + long-press para menú
+var swipeRow = null, swipeX = 0, swipeY = 0, swipeDone = false;
+var longPressTimer = null, longPressRow = null, longPressX = 0, longPressY = 0;
+chatMessages.addEventListener('touchstart', function(e) {
+    var bub = e.target.closest('.msg-bubble');
+    if (!bub) return;
+    swipeRow = bub.closest('.msg-row');
+    swipeX = e.touches[0].clientX;
+    swipeY = e.touches[0].clientY;
+    swipeDone = false;
+    longPressRow = swipeRow;
+    longPressX = swipeX;
+    longPressY = swipeY;
+    longPressTimer = setTimeout(function() {
+        longPressTimer = null;
+        if (!longPressRow) return;
+        var row = longPressRow;
+        swipeRow = null; longPressRow = null;
+        var isMine = row.classList.contains('mine');
+        var srcBub = row.querySelector('.msg-bubble');
+        var text = srcBub ? getBubbleText(srcBub) : '';
+        var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
+        var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
+        openDropdown(srcBub, getMsgMenuItems(isMine, text, msgId, senderName));
+        posDropdownAt(longPressX, longPressY);
+    }, 500);
+}, { passive: true });
+chatMessages.addEventListener('touchmove', function(e) {
+    if (!swipeRow) return;
+    var dx = e.touches[0].clientX - swipeX;
+    var dy = e.touches[0].clientY - swipeY;
+    if ((Math.abs(dx) > 10 || Math.abs(dy) > 10) && longPressTimer) {
+        clearTimeout(longPressTimer); longPressTimer = null;
+    }
+    if (Math.abs(dy) > Math.abs(dx) + 8 || dx < 0) { swipeRow = null; return; }
+    var bub = swipeRow.querySelector('.msg-bubble');
+    if (!bub) return;
+    var move = Math.min(dx * 0.55, 54);
+    bub.style.transform = 'translateX(' + move + 'px)';
+    bub.style.transition = 'none';
+    var hit = dx >= 52;
+    swipeRow.classList.toggle('swipe-reply-hint', hit);
+    swipeDone = hit;
+}, { passive: true });
+chatMessages.addEventListener('touchend', function() {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    longPressRow = null;
+    if (!swipeRow) return;
+    var bub = swipeRow.querySelector('.msg-bubble');
+    if (bub) {
+        bub.style.transition = 'transform 0.22s cubic-bezier(0.22,1,0.36,1)';
+        bub.style.transform = '';
+        setTimeout(function() { if (bub) bub.style.transition = ''; }, 240);
+    }
+    swipeRow.classList.remove('swipe-reply-hint');
+    if (swipeDone) {
+        var isMine = swipeRow.classList.contains('mine');
+        var srcBub = swipeRow.querySelector('.msg-bubble');
+        var text = srcBub ? getBubbleText(srcBub) : '';
+        var msgId = parseInt(swipeRow.getAttribute('data-msg-id')) || 0;
+        var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
+        activateReply(msgId, text, senderName);
+    }
+    swipeRow = null; swipeDone = false;
 });
 
 // --- abrir conversacion ---
@@ -441,6 +617,8 @@ function openConversation(convId, name) {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     lastMsgId = 0;
     activeConvId = convId;
+    activeConvName = name;
+    cancelReply();
 
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.classList.toggle('active', parseInt(el.getAttribute('data-id')) === convId);
@@ -556,6 +734,7 @@ function pollMessages() {
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
             if (wasAtBottom) scrollToBottom();
+            loadConversations();
             // marcar leidos automatico
             var fd = new FormData();
             fd.append('conv_id', activeConvId);
@@ -589,7 +768,24 @@ function renderMessages(msgs) {
 
         var cls = isMine ? 'msg-row mine' : 'msg-row theirs';
         html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
+        if (isMine) html += '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>';
         html += '<div class="msg-bubble">';
+        if (m.reply_to_id) {
+            var rSender = parseInt(m.reply_sender_id) === currentUid ? 'Tú' : (activeConvName || 'Ellos');
+            var rBodyHtml;
+            if (!m.reply_body && !m.reply_attachment_type) {
+                rBodyHtml = '<span class="reply-preview-body reply-deleted">Mensaje eliminado</span>';
+            } else if (!m.reply_body) {
+                var attLabel = m.reply_attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo';
+                rBodyHtml = '<span class="reply-preview-body">' + attLabel + '</span>';
+            } else {
+                rBodyHtml = '<span class="reply-preview-body">' + escapeHtml(m.reply_body) + '</span>';
+            }
+            html += '<div class="reply-preview" data-reply-to="' + m.reply_to_id + '">';
+            html += '<span class="reply-preview-sender">' + escapeHtml(rSender) + '</span>';
+            html += rBodyHtml;
+            html += '</div>';
+        }
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
         if (m.attachment_url) {
             if (m.attachment_type === 'image') {
@@ -605,10 +801,12 @@ function renderMessages(msgs) {
         }
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
         html += '</div>';
+        if (!isMine) html += '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>';
         html += '</div>';
     }
 
     chatMessages.innerHTML = html;
+    lucide.createIcons({ nodes: [chatMessages] });
 }
 
 function escapeHtml(s) {
@@ -641,8 +839,17 @@ function sendMessage() {
     pendingAttUrl = pendingAttType = pendingAttName = null;
     pendingAttSize = 0;
 
+    var snapReplyId = replyToId, snapReplyBody = replyToBody, snapReplySender = replyToSender;
+    cancelReply();
+
     // render optimista
-    var html = '<div class="msg-row mine"><div class="msg-bubble">';
+    var html = '<div class="msg-row mine"><button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button><div class="msg-bubble">';
+    if (snapReplyId) {
+        html += '<div class="reply-preview reply-preview-anim" data-reply-to="' + snapReplyId + '">';
+        html += '<span class="reply-preview-sender">' + escapeHtml(snapReplySender) + '</span>';
+        html += '<span class="reply-preview-body">' + escapeHtml(snapReplyBody) + '</span>';
+        html += '</div>';
+    }
     if (body) html += '<span class="msg-text">' + escapeHtml(body) + '</span>';
     if (snapAttName) {
         if (snapAttType === 'image') {
@@ -667,18 +874,23 @@ function sendMessage() {
         fd.append('attachment_url', snapAttUrl);
         fd.append('attachment_type', snapAttType);
     }
+    if (snapReplyId) fd.append('reply_to_id', snapReplyId);
 
     fetch('../messages/send_message.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
+            // respuesta inmediata: mover conv al top en memoria
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
                     conversations[i].last_msg = body || '📎 Adjunto';
                     conversations[i].last_time = res.message.created_at;
+                    break;
                 }
             }
             renderConvList(convSearch.value);
+            // sync con servidor para orden real y datos frescos
+            loadConversations();
         });
 }
 
@@ -897,6 +1109,9 @@ fetch('../messages/update_last_seen.php', { method: 'POST' });
 setInterval(function() {
     fetch('../messages/update_last_seen.php', { method: 'POST' });
 }, 30000);
+
+// actualizar lista de convs en background (cubre convs inactivas)
+setInterval(loadConversations, 10000);
 
 // --- init ---
 
