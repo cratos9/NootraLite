@@ -69,6 +69,18 @@
             <div class="chat-active" id="chatActive">
                 <div class="chat-header" id="chatHeader"></div>
                 <div class="chat-messages" id="chatMessages"></div>
+
+                <div class="reply-bar" id="replyBar" style="display:none">
+                    <div class="reply-bar-indicator"></div>
+                    <div class="reply-bar-content">
+                        <span class="reply-bar-sender" id="replyBarSender"></span>
+                        <span class="reply-bar-body" id="replyBarBody"></span>
+                    </div>
+                    <button class="reply-bar-close" id="replyBarClose" aria-label="Cancelar respuesta">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+
                 <div class="chat-input-bar">
                     <button class="btn-attach" id="btnAttach" aria-label="Adjuntar">
                         <i data-lucide="paperclip"></i>
@@ -133,7 +145,7 @@ var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
-<script src="../js/messages/messages.js"></script>
+<script src="../js/messages/messages.js?v=<?= filemtime('../js/messages/messages.js') ?>"></script>
 <script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
 </html>

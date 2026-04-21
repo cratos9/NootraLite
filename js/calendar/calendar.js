@@ -1,7 +1,9 @@
 // toggle tema
 function toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    var isLight = document.body.classList.contains('light-mode');
+    var isCurrentlyLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+    var isLight = !isCurrentlyLight;
+    document.body.classList.toggle('light-mode', isLight);
+    document.documentElement.classList.toggle('light-mode', isLight);
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
