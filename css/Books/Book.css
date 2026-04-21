@@ -31,15 +31,23 @@ h3{
     margin-right: 5px;
 }
 
-.book-info, .notes{
+.book-info, .notes, .books-children, .attachments{
     border: 1px solid;
     padding: 20px;
     border-radius: 10px;
 }
 
-.notes{
+.notes, .books-children, .attachments{
     margin-top: 10px;
-    border-color: --border;
+    border-color: var(--border);
+}
+
+.books-children{
+    border-color: var(--accent-purple);
+}
+
+.attachments{
+    border-color: var(--accent-pink);
 }
 
 .back, .edit-book, .delete-book{
@@ -56,10 +64,6 @@ h3{
     color: red;
 }
 
-.back:hover, .edit-book:hover{
-    background-color: var(--bg-secondary);
-}
-
 .delete-book:hover{
     background-color: rgba(255, 0, 0, 0.1);
 }
@@ -68,4 +72,83 @@ h3{
     margin-top: 10px;
     display: flex;
     gap: 10px;
+}
+
+.add-note, .add-book-child, .add-attachment{
+    display: inline-block;
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: background-color 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.back:hover, .edit-book:hover, .add-note:hover, .add-book-child:hover, .add-attachment:hover{
+    background-color: var(--bg-secondary);
+}
+
+.note-card{
+    border: 1px solid var(--accent-purple);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title actions"
+        "content actions";
+    column-gap: 12px;
+    row-gap: 6px;
+    align-items: start;
+}
+
+.note-title{
+    grid-area: title;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.note-card p{
+    grid-area: content;
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.note-options{
+    grid-area: actions;
+    display: flex;
+    align-self: center;
+    justify-self: end;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.view-note,
+.edit-note,
+.delete-note{
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.view-note:hover,
+.edit-note:hover{
+    background-color: var(--bg-secondary);
+}
+
+.delete-note{
+    border-color: red;
+    color: red;
+}
+
+.delete-note:hover{
+    background-color: rgba(255, 0, 0, 0.1);
 }
