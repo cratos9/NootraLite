@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body,
+body.note-editor-content {
+  margin: 0;
+  padding: 1.1rem 1.2rem;
+  background: #0f0f1a;
+  color: #f1f5f9;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+body.note-editor-light {
+  background: #ffffff;
+  color: #1e2030;
+}
+
+body p,
+body.note-editor-content p {
+  margin: 0 0 1rem;
+}
+
+body h1,
+body.note-editor-content h1,
+body h2,
+body.note-editor-content h2,
+body h3,
+body.note-editor-content h3,
+body h4,
+body.note-editor-content h4,
+body h5,
+body.note-editor-content h5,
+body h6,
+body.note-editor-content h6 {
+  color: #f8fafc;
+  margin: 1.2rem 0 0.7rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+body.note-editor-light h1,
+body.note-editor-light h2,
+body.note-editor-light h3,
+body.note-editor-light h4,
+body.note-editor-light h5,
+body.note-editor-light h6 {
+  color: #111827;
+}
+
+body a,
+body.note-editor-content a {
+  color: #7c3aed;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+body ul,
+body.note-editor-content ul,
+body ol,
+body.note-editor-content ol {
+  margin: 0 0 1rem;
+  padding-left: 1.4rem;
+}
+
+body blockquote,
+body.note-editor-content blockquote {
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid #7c3aed;
+  background: #1a1a2e;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+body.note-editor-light blockquote {
+  background: #eef2ff;
+  border-left-color: #6d28d9;
+}
+
+body code,
+body.note-editor-content code {
+  font-family: 'Courier New', monospace;
+  background: #1a1a2e;
+  border: 1px solid #2d2d4e;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.35rem;
+}
+
+body.note-editor-light code {
+  background: #f1f5f9;
+  border-color: #cdd5e8;
+}
+
+body pre,
+body.note-editor-content pre {
+  background: #111827;
+  border: 1px solid #2d2d4e;
+  border-radius: 0.6rem;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+}
+
+body.note-editor-light pre {
+  background: #f8fafc;
+  border-color: #cdd5e8;
+}
+
+body pre code,
+body.note-editor-content pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+body table,
+body.note-editor-content table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #2d2d4e;
+  margin: 1rem 0;
+}
+
+body th,
+body.note-editor-content th,
+body td,
+body.note-editor-content td {
+  border: 1px solid #2d2d4e;
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+}
+
+body th,
+body.note-editor-content th {
+  background: #1a1a2e;
+  color: #f8fafc;
+}
+
+body.note-editor-light table,
+body.note-editor-light th,
+body.note-editor-light td {
+  border-color: #cdd5e8;
+}
+
+body.note-editor-light th {
+  background: #eef2ff;
+  color: #1e2030;
+}

@@ -1,0 +1,119 @@
+body{
+    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+main{
+    padding: 20px;
+    width: 100%;
+    margin-left: 60px;
+}
+
+h3{
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    margin-bottom: 10px;
+    width: 100%;
+    color: var(--text-secondary);
+}
+
+.new-book{
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+.new-book:hover{
+    background-color: var(--accent-purple);
+    color: var(--text-primary);
+    border-color: var(--accent-purple);
+}
+
+.books{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.book-card{
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.5s ease, scale 0.2s ease;
+}
+
+.book-card:hover{
+    transform: translateY(-2px);
+    scale: 1.02;
+    box-shadow: 3px 6px 9px var(--book-color, var(--border));
+}
+
+.book-title,
+.book-description,
+.book-category,
+.book-semester,
+.book-tags{
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
+}
+
+.icon-book{
+    width: 40px;
+    height: 40px;
+    border: 1px solid;
+    border-radius: 5px;
+    padding: 5px;
+    margin-right: 5px;
+}
+
+.open-book{
+    border: 1px solid;
+    padding: 5px 10px;
+    color: var(--text-primary);
+    background-color: transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    text-align: center;
+}
+
+.open-book:hover{
+    scale: 1.02;
+    transition: scale 0.2s ease;
+}
+
+.delete-book{
+    border: 1px solid red;
+    padding: 5px 10px;
+    color: red;
+    background-color: transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    text-align: center;
+    width: 100px;
+}
+
+.delete-book:hover{
+    background-color: var(--accent-pink);
+    color: var(--text-primary);
+    border-color: var(--accent-pink);
+}
