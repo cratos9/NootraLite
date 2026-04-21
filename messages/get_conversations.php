@@ -2,6 +2,7 @@
 require_once '../config/db.php';
 require_once '../Models/MessageModel.php';
 header('Content-Type: application/json');
+header('Cache-Control: no-store');
 $uid = 1;
 try {
     $pdo   = (new Database())->connect();

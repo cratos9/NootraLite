@@ -29,3 +29,8 @@ ALTER TABLE conversations
   ADD COLUMN is_favorite_u2 TINYINT(1) DEFAULT 0,
   ADD COLUMN is_muted_u1    TINYINT(1) DEFAULT 0,
   ADD COLUMN is_muted_u2    TINYINT(1) DEFAULT 0;
+
+# Soporte para replies (responder a mensaje), 21/04/2026
+ALTER TABLE messages
+  ADD COLUMN reply_to_id INT NULL AFTER is_read,
+  ADD CONSTRAINT fk_reply_to FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL;

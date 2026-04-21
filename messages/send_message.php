@@ -8,10 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$conv_id  = (int)($_POST['conv_id'] ?? 0);
-$body     = trim($_POST['body'] ?? '');
-$att_url  = trim($_POST['attachment_url']  ?? '');
-$att_type = trim($_POST['attachment_type'] ?? '');
+$conv_id     = (int)($_POST['conv_id'] ?? 0);
+$body        = trim($_POST['body'] ?? '');
+$att_url     = trim($_POST['attachment_url']  ?? '');
+$att_type    = trim($_POST['attachment_type'] ?? '');
+$reply_to_id = (int)($_POST['reply_to_id'] ?? 0) ?: null;
 $uid = 1; // fijo hasta que haya sesion
 
 if (!$conv_id || ($body === '' && $att_url === '')) {
@@ -29,18 +30,19 @@ try {
         exit;
     }
     $model = new MessageModel($pdo);
-    $id = $model->send($conv_id, $uid, $body ?: null, $att_url ?: null, $att_type ?: null);
+    $id = $model->send($conv_id, $uid, $body ?: null, $att_url ?: null, $att_type ?: null, $reply_to_id);
     echo json_encode([
         'ok' => true,
         'message' => [
-            'id' => (int)$id,
+            'id'              => (int)$id,
             'conversation_id' => $conv_id,
-            'sender_id' => $uid,
-            'body' => $body ?: null,
+            'sender_id'       => $uid,
+            'body'            => $body ?: null,
             'attachment_url'  => $att_url  ?: null,
             'attachment_type' => $att_type ?: null,
-            'is_read' => 0,
-            'created_at' => date('Y-m-d H:i:s'),
+            'reply_to_id'     => $reply_to_id,
+            'is_read'         => 0,
+            'created_at'      => date('Y-m-d H:i:s'),
         ]
     ]);
 } catch (Exception $e) {

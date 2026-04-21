@@ -32,20 +32,26 @@ class MessageModel {
 
     public function getMessages($conv_id) {
         $stmt = $this->db->prepare(
-            'SELECT id, conversation_id, sender_id, body,
-                    attachment_url, attachment_type, is_read, created_at
-             FROM messages WHERE conversation_id = ? ORDER BY created_at ASC'
+            'SELECT m.id, m.conversation_id, m.sender_id, m.body,
+                    m.attachment_url, m.attachment_type, m.is_read, m.created_at,
+                    m.reply_to_id,
+                    r.body AS reply_body,
+                    r.sender_id AS reply_sender_id,
+                    r.attachment_type AS reply_attachment_type
+             FROM messages m
+             LEFT JOIN messages r ON r.id = m.reply_to_id
+             WHERE m.conversation_id = ? ORDER BY m.created_at ASC'
         );
         $stmt->execute([$conv_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function send($conv_id, $sender_id, $body, $att_url = null, $att_type = null) {
+    public function send($conv_id, $sender_id, $body, $att_url = null, $att_type = null, $reply_to_id = null) {
         $stmt = $this->db->prepare(
-            'INSERT INTO messages (conversation_id, sender_id, body, attachment_url, attachment_type)
-             VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO messages (conversation_id, sender_id, body, attachment_url, attachment_type, reply_to_id)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$conv_id, $sender_id, $body, $att_url, $att_type]);
+        $stmt->execute([$conv_id, $sender_id, $body, $att_url, $att_type, $reply_to_id]);
         return $this->db->lastInsertId();
     }
 
