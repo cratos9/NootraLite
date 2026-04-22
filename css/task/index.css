@@ -1,0 +1,23 @@
+body{
+    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+main{
+    padding: 20px;
+    width: 100%;
+    margin-left: 60px;
+}
+
+header{
+    padding: 20px;
+    width: 100%;
+    margin-left: 60px;
+}
+
+h1{
+    font-size: 20px;
+    color: var(--text-primary);
+}
