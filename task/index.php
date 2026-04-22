@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-<html lang="es-MX">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <h1> hola mundo <h1>
-
-</body>
-
-</html>
+<?php
+require_once '../Models/TaskModel.php';
+include_once '../config/encrypt.php';
+include_once '../includes/lightMode.php';
+include '../includes/sidebar.php';
+include 'Views/indexView.php';
+?>
