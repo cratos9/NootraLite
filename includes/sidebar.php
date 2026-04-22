@@ -16,7 +16,7 @@
         <a class="nav-item <?= ($activePage ?? '') === 'notebooks' ? 'active' : '' ?>" href="../Books/Books.php" data-tooltip="Cuadernos">
             <i data-lucide="book-open"></i> <span>Cuadernos</span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="#" data-tooltip="Tareas">
+        <a class="nav-item <?= ($activePage ?? '') === 'tasks' ? 'active' : '' ?>" href="../task/index.php" data-tooltip="Tareas">
             <i data-lucide="check-square"></i> <span>Tareas</span>
         </a>
         <a class="nav-item <?= ($activePage ?? '') === 'messages' ? 'active' : '' ?>" href="../messages/messages.php" data-tooltip="Mensajes" style="position:relative;">
