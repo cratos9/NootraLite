@@ -27,6 +27,12 @@ try {
     }
     $model = new MessageModel($pdo);
     $model->markRead($conv_id, $uid);
+    // reset force_unread al abrir la conv
+    $r = $pdo->prepare('SELECT user1_id FROM conversations WHERE id = ?');
+    $r->execute([$conv_id]);
+    $u1 = (int)$r->fetchColumn();
+    $col = ($u1 === $uid) ? 'force_unread_u1' : 'force_unread_u2';
+    $pdo->prepare("UPDATE conversations SET $col = 0 WHERE id = ?")->execute([$conv_id]);
     echo json_encode(['ok' => true]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false]);
