@@ -145,6 +145,9 @@ var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
+<script src="../js/messages/messages-utils.js?v=<?= filemtime('../js/messages/messages-utils.js') ?>"></script>
+<script src="../js/messages/messages-ui.js?v=<?= filemtime('../js/messages/messages-ui.js') ?>"></script>
+<script src="../js/messages/messages-conv.js?v=<?= filemtime('../js/messages/messages-conv.js') ?>"></script>
 <script src="../js/messages/messages.js?v=<?= filemtime('../js/messages/messages.js') ?>"></script>
 <script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
 </body>
