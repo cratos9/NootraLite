@@ -664,6 +664,8 @@ function openConversation(convId, name) {
     if (window.innerWidth <= 480) {
         document.querySelector('.conv-panel').classList.add('hidden');
         document.querySelector('.chat-panel').classList.add('mobile-active');
+        var bnav = document.querySelector('.bottom-nav');
+        if (bnav) bnav.style.display = 'none';
         if (!document.getElementById('btnBack')) {
             var btn = document.createElement('button');
             btn.id = 'btnBack';
@@ -714,6 +716,8 @@ function closeMobileChat() {
         chatEmpty.style.display = '';
         document.querySelector('.conv-panel').classList.remove('hidden');
         document.querySelector('.chat-panel').classList.remove('mobile-active');
+        var bnav = document.querySelector('.bottom-nav');
+        if (bnav) bnav.style.display = '';
     });
 }
 

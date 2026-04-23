@@ -734,7 +734,13 @@
         background: var(--bg-primary);
     }
     .conv-panel.hidden { display: none; }
-    .chat-panel.mobile-active { display: flex; }
+    .chat-panel.mobile-active {
+        display: flex; flex-direction: column;
+        inset: 0;
+        overflow: hidden;
+    }
+    .chat-panel.mobile-active .chat-active { flex: 1; min-height: 0; height: auto; }
+    .chat-panel.mobile-active .chat-messages { flex: 1; min-height: 0; overflow-y: auto; }
 }
 
 @keyframes chatSlideIn {
