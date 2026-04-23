@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/calendar/calendar.css">
 </head>
 <body>
+<?php include '../includes/sidebar.php'; ?>
 <div class="main">
     <div class="topbar">
         <div class="topbar-left">
@@ -76,26 +77,26 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Título</label>
+                    <label for="ev-title">Título</label>
                     <input type="text" class="form-input" id="ev-title" placeholder="Ej. Parcial de Cálculo">
                     <span class="form-error" id="ev-title-error" style="display:none;font-size:11px;color:#ef4444;margin-top:2px"></span>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Fecha</label>
+                        <label for="ev-date">Fecha</label>
                         <input type="date" class="form-input" id="ev-date">
                     </div>
                     <div class="form-group">
-                        <label>Hora</label>
+                        <label for="ev-time">Hora</label>
                         <input type="time" class="form-input" id="ev-time">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Todo el día</label>
+                    <label for="ev-allday">Todo el día</label>
                     <input type="checkbox" id="ev-allday" style="margin-left:6px;cursor:pointer">
                 </div>
                 <div class="form-group">
-                    <label>Color</label>
+                    <span class="form-label">Color</span>
                     <div class="color-swatches">
                         <span class="swatch active" data-color="#7c3aed" style="background:#7c3aed"></span>
                         <span class="swatch" data-color="#ec4899" style="background:#ec4899"></span>
@@ -121,26 +122,26 @@
         </div>
         <div class="mfp-body">
             <div class="form-group">
-                <label>Título</label>
+                <label for="mev-title">Título</label>
                 <input type="text" class="form-input" id="mev-title" placeholder="Ej. Parcial de Cálculo">
                 <span class="form-error" id="mev-title-error" style="display:none;font-size:11px;color:#ef4444;margin-top:2px"></span>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Fecha</label>
+                    <label for="mev-date">Fecha</label>
                     <input type="date" class="form-input" id="mev-date">
                 </div>
                 <div class="form-group">
-                    <label>Hora</label>
+                    <label for="mev-time">Hora</label>
                     <input type="time" class="form-input" id="mev-time">
                 </div>
             </div>
             <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
-                <label style="margin:0">Todo el día</label>
+                <label for="mev-allday" style="margin:0">Todo el día</label>
                 <input type="checkbox" id="mev-allday" style="cursor:pointer">
             </div>
             <div class="form-group">
-                <label>Color</label>
+                <span class="form-label">Color</span>
                 <div class="color-swatches" id="mev-swatches">
                     <span class="swatch active" data-color="#7c3aed" style="background:#7c3aed"></span>
                     <span class="swatch" data-color="#ec4899" style="background:#ec4899"></span>

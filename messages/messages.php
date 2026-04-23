@@ -3,7 +3,6 @@ require_once '../config/db.php';
 require_once '../Models/MessageModel.php';
 
 $activePage = 'messages';
-include '../includes/sidebar.php';
 
 $database = new Database();
 $pdo = $database->connect();

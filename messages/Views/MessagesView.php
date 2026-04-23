@@ -14,6 +14,7 @@
 </head>
 <body>
 
+<?php include '../includes/sidebar.php'; ?>
 <div class="main messages-main">
     <div class="msg-layout">
 

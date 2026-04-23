@@ -3,8 +3,6 @@ require_once '../config/db.php';
 require_once '../Models/EventModel.php';
 
 $activePage = 'calendar';
-include '../includes/sidebar.php';
-
 
 $database = new Database();
 $pdo = $database->connect();
