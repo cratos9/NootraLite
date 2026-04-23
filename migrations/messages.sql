@@ -34,3 +34,16 @@ ALTER TABLE conversations
 ALTER TABLE messages
   ADD COLUMN reply_to_id INT NULL AFTER is_read,
   ADD CONSTRAINT fk_reply_to FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL;
+
+# Marcar no leído forzado y tabla de bloqueos, 23/04/2026
+ALTER TABLE conversations
+  ADD COLUMN force_unread_u1 TINYINT(1) DEFAULT 0,
+  ADD COLUMN force_unread_u2 TINYINT(1) DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS blocked_users (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  blocker_id INT NOT NULL,
+  blocked_id INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_block (blocker_id, blocked_id)
+);
