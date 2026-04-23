@@ -103,7 +103,11 @@ function openConversation(convId, name) {
     });
 
     for (var i = 0; i < conversations.length; i++) {
-        if (conversations[i].id == convId) conversations[i].unread = 0;
+        if (conversations[i].id == convId) {
+            conversations[i].unread = 0;
+            conversations[i].force_unread = 0;
+            break;
+        }
     }
 
     var mrFd = new FormData();
@@ -130,6 +134,7 @@ function openConversation(convId, name) {
     for (var ci = 0; ci < conversations.length; ci++) {
         if (conversations[ci].id == convId) {
             updateStatusUI(parseInt(conversations[ci].is_online));
+            updateBlockedNotice(conversations[ci].is_blocked == 1, name);
             break;
         }
     }
@@ -260,6 +265,37 @@ function sendMessage() {
             renderConvList(convSearch.value);
             loadConversations();
         });
+}
+
+function updateBlockedNotice(isBlocked, name) {
+    var notice   = document.getElementById('blockedNotice');
+    var inputBar = document.querySelector('.chat-input-bar');
+    if (!notice) return;
+    if (isBlocked) {
+        var ini   = initials(name || '?');
+        var color = avatarColor(name || '');
+        notice.innerHTML =
+            '<div class="blocked-avatar-wrap">'
+          +   '<div class="blocked-avatar-initials" style="background:' + color + '">' + ini + '</div>'
+          +   '<div class="blocked-avatar-badge"><i data-lucide="shield-off"></i></div>'
+          + '</div>'
+          + '<div class="blocked-info">'
+          +   '<span class="blocked-title">Bloqueaste a <strong>' + escapeHtml(name || '') + '</strong></span>'
+          +   '<span class="blocked-sub">No pueden enviarse mensajes</span>'
+          + '</div>'
+          + '<button id="btnUnblock" class="btn-unblock">'
+          +   '<i data-lucide="shield-check"></i>Desbloquear'
+          + '</button>';
+        notice.style.display = 'flex';
+        inputBar.style.display = 'none';
+        lucide.createIcons({ nodes: [notice] });
+        document.getElementById('btnUnblock').addEventListener('click', function() {
+            blockUser(activeConvId, true);
+        });
+    } else {
+        notice.style.display = 'none';
+        inputBar.style.display = '';
+    }
 }
 
 btnSend.addEventListener('click', sendMessage);

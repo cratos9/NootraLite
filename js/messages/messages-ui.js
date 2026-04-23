@@ -166,34 +166,42 @@ function getConvMenuItems(convId) {
     for (var i = 0; i < conversations.length; i++) {
         if (conversations[i].id == convId) { conv = conversations[i]; break; }
     }
-    var pinned = conv && conv.is_pinned == 1;
-    var muted  = conv && conv.is_muted  == 1;
-    var fav    = conv && conv.is_favorite == 1;
+    var pinned      = conv && conv.is_pinned == 1;
+    var muted       = conv && conv.is_muted  == 1;
+    var fav         = conv && conv.is_favorite == 1;
+    var forceUnread = conv && conv.force_unread == 1;
+    var blocked     = conv && conv.is_blocked == 1;
     return [
-        { icon: 'pin',      label: pinned ? 'Quitar fijado'   : 'Fijar',     action: function() { toggleConvMeta(convId, 'pinned'); } },
-        { icon: 'bell-off', label: muted  ? 'Activar sonido'  : 'Silenciar', action: function() { toggleConvMeta(convId, 'muted'); } },
-        { icon: 'mail',     label: 'Marcar no leído',                         action: function() { message.tip('Próximamente'); } },
-        { icon: 'star',     label: fav    ? 'Quitar favorito' : 'Favorito',  action: function() { toggleConvMeta(convId, 'favorite'); } },
+        { icon: 'pin',      label: pinned      ? 'Quitar fijado'   : 'Fijar',           action: function() { toggleConvMeta(convId, 'pinned'); } },
+        { icon: 'bell-off', label: muted       ? 'Activar sonido'  : 'Silenciar',        action: function() { toggleConvMeta(convId, 'muted'); } },
+        { icon: 'mail',     label: forceUnread ? 'Marcar leído'    : 'Marcar no leído',  action: function() { markConvUnread(convId, forceUnread); } },
+        { icon: 'star',     label: fav         ? 'Quitar favorito' : 'Favorito',         action: function() { toggleConvMeta(convId, 'favorite'); } },
         { divider: true },
-        { icon: 'x',        label: 'Cerrar chat',                             action: function() { closeChatPanel(); } },
-        { icon: 'shield',   label: 'Bloquear',   cls: 'danger',              action: function() { message.tip('Próximamente'); } },
-        { icon: 'trash-2',  label: 'Eliminar',   cls: 'danger',              action: function() { message.tip('Próximamente'); } }
+        { icon: 'x',        label: 'Cerrar chat',                                        action: function() { closeChatPanel(); } },
+        { icon: 'shield',   label: blocked     ? 'Desbloquear'     : 'Bloquear', cls: 'danger', action: function() { blockUser(convId, blocked); } },
+        { icon: 'trash-2',  label: 'Eliminar', cls: 'danger',                            action: function() { deleteConv(convId); } }
     ];
 }
 
 function getHeaderMenuItems() {
+    var conv = null;
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == activeConvId) { conv = conversations[i]; break; }
+    }
+    var muted   = conv && conv.is_muted   == 1;
+    var blocked = conv && conv.is_blocked == 1;
     return [
         { icon: 'bookmark',     label: 'Mensajes destacados',  action: function() { message.tip('Próximamente'); } },
         { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
-        { icon: 'bell-off',     label: 'Silenciar',            action: function() { message.tip('Próximamente'); } },
+        { icon: 'bell-off',     label: muted ? 'Activar sonido' : 'Silenciar', action: function() { toggleConvMeta(activeConvId, 'muted'); } },
         { icon: 'user',         label: 'Info contacto',        action: function() { message.tip('Próximamente'); } },
         { divider: true },
         { icon: 'x',            label: 'Cerrar chat',          action: function() { closeChatPanel(); } },
         { icon: 'flag',         label: 'Reportar',             action: function() { message.tip('Próximamente'); } },
-        { icon: 'shield',       label: 'Bloquear', cls: 'danger', action: function() { message.tip('Próximamente'); } },
+        { icon: 'shield',       label: blocked ? 'Desbloquear' : 'Bloquear', cls: 'danger', action: function() { blockUser(activeConvId, blocked); } },
         { divider: true },
         { icon: 'trash',        label: 'Vaciar chat',   cls: 'danger', action: function() { message.tip('Próximamente'); } },
-        { icon: 'trash-2',      label: 'Eliminar chat', cls: 'danger', action: function() { message.tip('Próximamente'); } }
+        { icon: 'trash-2',      label: 'Eliminar chat', cls: 'danger', action: function() { deleteConv(activeConvId); } }
     ];
 }
 

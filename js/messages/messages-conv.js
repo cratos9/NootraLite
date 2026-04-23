@@ -14,6 +14,7 @@ var userResults     = document.getElementById('userResults');
 
 var ncpTimer = null;
 var searchTimer = null;
+var convListInitted = false;
 
 function toggleConvMeta(convId, meta) {
     var fd = new FormData();
@@ -51,7 +52,7 @@ function renderConvList(filter) {
     });
 
     if (activeFilter === 'unread') {
-        filtered = filtered.filter(function(c) { return parseInt(c.unread) > 0; });
+        filtered = filtered.filter(function(c) { return parseInt(c.unread) > 0 || c.force_unread == 1; });
     } else if (activeFilter === 'favorites') {
         filtered = filtered.filter(function(c) { return c.is_favorite == 1; });
     }
@@ -87,12 +88,18 @@ function renderConvList(filter) {
             shownRegSep = true;
         }
 
+        var forceUnread = c.force_unread == 1;
+        var isUnread    = unread > 0 || forceUnread;
+        var unreadCls   = isUnread ? ' conv-unread' : '';
+        var enterCls    = !convListInitted ? ' conv-entering' : '';
+        var delayStyle  = !convListInitted ? ' style="animation-delay:' + (Math.min(i, 8) * 42) + 'ms"' : '';
+
         var flags = '';
         if (c.is_pinned == 1)   flags += '<i data-lucide="pin" class="conv-flag"></i>';
         if (c.is_favorite == 1) flags += '<i data-lucide="star" class="conv-flag fav"></i>';
         if (c.is_muted == 1)    flags += '<i data-lucide="bell-off" class="conv-flag muted"></i>';
 
-        html += '<div class="conv-item' + isActive + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '">';
+        html += '<div class="conv-item' + isActive + unreadCls + enterCls + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '"' + delayStyle + '>';
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
         html += '<div class="conv-name">' + escapeHtml(name) + (flags ? '<span class="conv-flags">' + flags + '</span>' : '') + '</div>';
@@ -101,11 +108,13 @@ function renderConvList(filter) {
         html += '<div class="conv-meta">';
         if (time) html += '<span class="conv-time">' + time + '</span>';
         if (unread > 0) html += '<span class="conv-badge">' + unread + '</span>';
+        else if (forceUnread) html += '<span class="conv-badge-dot"></span>';
         html += '</div>';
         html += '<button class="conv-actions-trigger" aria-label="Acciones"><i data-lucide="chevron-down"></i></button>';
         html += '</div>';
     }
     convList.innerHTML = html;
+    convListInitted = true;
 
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.addEventListener('click', function(e) {
@@ -248,6 +257,76 @@ btnCloseModal.addEventListener('click', closeModal);
 newConvBackdrop.addEventListener('click', function(e) {
     if (e.target === newConvBackdrop) closeModal();
 });
+
+function markConvUnread(convId, isCurrentlyForced) {
+    var fd = new FormData();
+    fd.append('conv_id', convId);
+    if (isCurrentlyForced) fd.append('action', 'reset');
+    fetch('../messages/mark_unread.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            for (var i = 0; i < conversations.length; i++) {
+                if (conversations[i].id == convId) {
+                    conversations[i].force_unread = res.force_unread;
+                    break;
+                }
+            }
+            renderConvList(convSearch.value);
+            message.success(res.force_unread ? 'Marcado como no leído' : 'Marcado como leído');
+        });
+}
+
+function blockUser(convId, isCurrentlyBlocked) {
+    var conv = null;
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == convId) { conv = conversations[i]; break; }
+    }
+    if (!conv) return;
+    var otherId = (conv.user1_id == currentUid) ? conv.user2_id : conv.user1_id;
+    var fd = new FormData();
+    fd.append('target_id', otherId);
+    fd.append('action', isCurrentlyBlocked ? 'unblock' : 'block');
+    fetch('../messages/block_user.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            for (var i = 0; i < conversations.length; i++) {
+                if (conversations[i].id == convId) {
+                    conversations[i].is_blocked = res.blocked ? 1 : 0;
+                    break;
+                }
+            }
+            if (convId == activeConvId) updateBlockedNotice(res.blocked, activeConvName);
+            message.success(res.blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado');
+        });
+}
+
+function deleteConv(convId) {
+    if (!window.confirm('¿Eliminar esta conversación? No se puede deshacer.')) return;
+    var fd = new FormData();
+    fd.append('conv_id', convId);
+    fetch('../messages/delete_conversation.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('No se pudo eliminar'); return; }
+            conversations = conversations.filter(function(c) { return c.id != convId; });
+            var item = convList.querySelector('[data-id="' + convId + '"]');
+            if (item) {
+                item.style.transition = 'opacity 0.2s, max-height 0.25s, padding 0.25s';
+                item.style.overflow = 'hidden';
+                item.style.maxHeight = item.offsetHeight + 'px';
+                item.style.opacity = '0';
+                setTimeout(function() {
+                    item.style.maxHeight = '0';
+                    item.style.padding = '0';
+                    setTimeout(function() { if (item.parentNode) item.remove(); }, 260);
+                }, 50);
+            }
+            if (convId == activeConvId) closeChatPanel();
+            message.success('Conversación eliminada');
+        });
+}
 
 userSearch.addEventListener('input', function() {
     clearTimeout(searchTimer);

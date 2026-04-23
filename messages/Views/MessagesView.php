@@ -81,6 +81,8 @@
                     </button>
                 </div>
 
+                <div id="blockedNotice" class="blocked-notice" style="display:none"></div>
+
                 <div class="chat-input-bar">
                     <button class="btn-attach" id="btnAttach" aria-label="Adjuntar">
                         <i data-lucide="paperclip"></i>
