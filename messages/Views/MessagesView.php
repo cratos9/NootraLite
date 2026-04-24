@@ -126,6 +126,123 @@
     </div>
 </div>
 
+<!-- modal vaciar chat -->
+<div class="modal-backdrop" id="clearChatModal">
+    <div class="modal-box clear-chat-box">
+        <button class="btn-modal-close cc-close-btn" id="btnCloseClearChat" aria-label="Cerrar">
+            <i data-lucide="x"></i>
+        </button>
+        <div class="cc-icon-wrap">
+            <div class="cc-icon-inner">
+                <i data-lucide="trash-2"></i>
+            </div>
+        </div>
+        <h3 class="cc-title">Vaciar chat</h3>
+        <p class="cc-desc">Se eliminarán <strong>todos los mensajes</strong> de esta conversación para siempre.</p>
+        <div class="cc-alert">
+            <i data-lucide="alert-triangle"></i>
+            <span>Esta acción es irreversible y no se puede deshacer</span>
+        </div>
+        <div class="cc-actions">
+            <button class="btn-cc-cancel" id="btnCancelClear">Cancelar</button>
+            <button class="btn-cc-confirm" id="btnConfirmClear">
+                <i data-lucide="trash-2"></i>
+                Vaciar chat
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- modal reportar -->
+<div class="modal-backdrop" id="reportModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>Reportar</span>
+            <button class="btn-modal-close" id="btnCloseReport" aria-label="Cerrar">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-sub">¿Por qué reportas esto?</p>
+            <div class="report-options">
+                <label class="report-option">
+                    <input type="radio" name="report-reason" value="Spam o publicidad">
+                    <span>Spam o publicidad</span>
+                </label>
+                <label class="report-option">
+                    <input type="radio" name="report-reason" value="Contenido inapropiado">
+                    <span>Contenido inapropiado</span>
+                </label>
+                <label class="report-option">
+                    <input type="radio" name="report-reason" value="Acoso o amenazas">
+                    <span>Acoso o amenazas</span>
+                </label>
+                <label class="report-option">
+                    <input type="radio" name="report-reason" value="Otro">
+                    <span>Otro</span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" id="btnCancelReport">Cancelar</button>
+                <button class="btn-modal-confirm" id="btnConfirmReport" disabled>Reportar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- modal info contacto -->
+<div class="modal-backdrop" id="contactInfoModal">
+    <div class="modal-box ci-box">
+        <button class="btn-modal-close ci-close-btn" id="btnCloseContact" aria-label="Cerrar">
+            <i data-lucide="x"></i>
+        </button>
+        <div class="ci-header">
+            <div class="ci-avatar-ring">
+                <div class="ci-avatar-inner" id="contactInfoAvatar"></div>
+            </div>
+            <div class="ci-name" id="contactInfoName"></div>
+            <div class="ci-status-row">
+                <span class="ci-status-dot" id="contactInfoDot"></span>
+                <span class="ci-status-text" id="contactInfoStatus">Cargando...</span>
+            </div>
+        </div>
+        <div class="ci-divider"></div>
+        <div class="ci-footer">
+            <button class="btn-ci-block" id="btnContactBlock">
+                <i data-lucide="shield-off"></i>
+                <span id="btnContactBlockLabel">Bloquear usuario</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- modal eliminar conversación -->
+<div class="modal-backdrop" id="deleteConvModal">
+    <div class="modal-box clear-chat-box">
+        <button class="btn-modal-close cc-close-btn" id="btnCloseDeleteConv" aria-label="Cerrar">
+            <i data-lucide="x"></i>
+        </button>
+        <div class="cc-icon-wrap">
+            <div class="cc-icon-inner">
+                <i data-lucide="trash-2"></i>
+            </div>
+        </div>
+        <h3 class="cc-title">Eliminar conversación</h3>
+        <p class="cc-desc">Se eliminará la conversación con <strong id="deleteConvName"></strong> y todos sus mensajes.</p>
+        <div class="cc-alert">
+            <i data-lucide="alert-triangle"></i>
+            <span>Esta acción es irreversible y no se puede deshacer</span>
+        </div>
+        <div class="cc-actions">
+            <button class="btn-cc-cancel" id="btnCancelDeleteConv">Cancelar</button>
+            <button class="btn-cc-confirm" id="btnConfirmDeleteConv">
+                <i data-lucide="trash-2"></i>
+                Eliminar conversación
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- modal nueva conversación -->
 <div class="modal-backdrop" id="newConvBackdrop">
     <div class="modal-box">
