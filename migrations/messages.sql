@@ -47,3 +47,14 @@ CREATE TABLE IF NOT EXISTS blocked_users (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY unique_block (blocker_id, blocked_id)
 );
+
+# Tabla de reportes para mensajes y conversaciones, 24/04/2026
+CREATE TABLE IF NOT EXISTS reports (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  reporter_id INT NOT NULL,
+  target_type ENUM('message','conversation') NOT NULL,
+  target_id   INT NOT NULL,
+  reason      VARCHAR(255) DEFAULT NULL,
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_reporter (reporter_id)
+);
