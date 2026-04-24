@@ -298,6 +298,223 @@ function updateBlockedNotice(isBlocked, name) {
     }
 }
 
+var reportedItems = {};
+
+var clearChatModal   = document.getElementById('clearChatModal');
+var reportModal      = document.getElementById('reportModal');
+var contactInfoModal = document.getElementById('contactInfoModal');
+
+function closeModalAnimated(el) {
+    var box = el.querySelector('.modal-box');
+    if (!box) return;
+    box.classList.add('closing');
+    box.addEventListener('animationend', function h() {
+        box.removeEventListener('animationend', h);
+        box.classList.remove('closing');
+        el.classList.remove('open');
+    });
+}
+
+function clearChat() {
+    if (!activeConvId) return;
+    clearChatModal.classList.add('open');
+    lucide.createIcons({ nodes: [clearChatModal] });
+}
+
+document.getElementById('btnCloseClearChat').addEventListener('click', function() { closeModalAnimated(clearChatModal); });
+document.getElementById('btnCancelClear').addEventListener('click', function() { closeModalAnimated(clearChatModal); });
+clearChatModal.addEventListener('click', function(e) { if (e.target === clearChatModal) closeModalAnimated(clearChatModal); });
+
+document.getElementById('btnConfirmClear').addEventListener('click', function() {
+    closeModalAnimated(clearChatModal);
+    var fd = new FormData();
+    fd.append('conv_id', activeConvId);
+    fetch('../messages/clear_chat.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al vaciar el chat'); return; }
+            var rows = Array.from(chatMessages.querySelectorAll('.msg-row, .msg-date-sep'));
+            var delay = rows.length > 20 ? 15 : 28;
+            rows.reverse().forEach(function(el, idx) {
+                setTimeout(function() {
+                    el.style.transition = 'opacity 0.18s, transform 0.18s';
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-7px)';
+                    setTimeout(function() { if (el.parentNode) el.remove(); }, 185);
+                }, idx * delay);
+            });
+            var total = rows.length * delay + 220;
+            setTimeout(function() {
+                chatMessages.innerHTML = '<div class="msgs-empty"><i data-lucide="message-circle-dashed"></i><p>No hay mensajes aún</p></div>';
+                lucide.createIcons({ nodes: [chatMessages] });
+            }, total);
+            lastMsgId = 0;
+            for (var i = 0; i < conversations.length; i++) {
+                if (conversations[i].id == activeConvId) {
+                    conversations[i].last_msg = '';
+                    conversations[i].last_time = null;
+                    break;
+                }
+            }
+            renderConvList(convSearch.value);
+            message.success('Chat vaciado');
+        })
+        .catch(function() { message.error('Error de conexión'); });
+});
+
+var reportTargetType = null, reportTargetId = null;
+
+function openReportModal(type, targetId) {
+    reportTargetType = type;
+    reportTargetId   = targetId;
+    reportModal.querySelectorAll('input[name="report-reason"]').forEach(function(r) { r.checked = false; });
+    document.getElementById('btnConfirmReport').disabled = true;
+    reportModal.classList.add('open');
+}
+
+reportModal.querySelectorAll('input[name="report-reason"]').forEach(function(r) {
+    r.addEventListener('change', function() {
+        document.getElementById('btnConfirmReport').disabled = false;
+    });
+});
+
+document.getElementById('btnCloseReport').addEventListener('click', function() { closeModalAnimated(reportModal); });
+document.getElementById('btnCancelReport').addEventListener('click', function() { closeModalAnimated(reportModal); });
+reportModal.addEventListener('click', function(e) { if (e.target === reportModal) closeModalAnimated(reportModal); });
+
+document.getElementById('btnConfirmReport').addEventListener('click', function() {
+    var reason = '';
+    reportModal.querySelectorAll('input[name="report-reason"]').forEach(function(r) {
+        if (r.checked) reason = r.value;
+    });
+    if (!reason) return;
+    closeModalAnimated(reportModal);
+    var fd = new FormData();
+    fd.append('target_type', reportTargetType);
+    fd.append('target_id', reportTargetId);
+    fd.append('reason', reason);
+    fetch('../messages/report.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al enviar reporte'); return; }
+            reportedItems[reportTargetType + ':' + reportTargetId] = true;
+            message.success('Reporte enviado. Gracias por avisar.');
+        })
+        .catch(function() { message.error('Error de conexión'); });
+});
+
+function formatLastSeen(str) {
+    if (!str) return 'Desconectado';
+    var d = new Date(str), now = new Date();
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 120) return 'Hace un momento';
+    if (diff < 3600) return 'Hace ' + Math.floor(diff / 60) + ' min';
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var yest  = new Date(today); yest.setDate(yest.getDate() - 1);
+    var t = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    if (d >= today) return 'Hoy a las ' + t;
+    if (d >= yest)  return 'Ayer a las ' + t;
+    var days = Math.floor((now - d) / 86400000);
+    return days < 30 ? 'Hace ' + days + ' días' : 'Hace tiempo';
+}
+
+function openContactInfo() {
+    if (!activeConvId) return;
+    var conv = null;
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == activeConvId) { conv = conversations[i]; break; }
+    }
+    if (!conv) return;
+    var otherId   = parseInt(conv.user1_id) === currentUid ? conv.user2_id : conv.user1_id;
+    var name      = activeConvName || 'Usuario';
+    var color     = avatarColor(name);
+    var ini       = initials(name);
+    var isBlocked = conv.is_blocked == 1;
+    var avatarEl  = document.getElementById('contactInfoAvatar');
+    var nameEl    = document.getElementById('contactInfoName');
+    var statusEl  = document.getElementById('contactInfoStatus');
+    var dotEl     = document.getElementById('contactInfoDot');
+    var blockBtn  = document.getElementById('btnContactBlock');
+    var blockLbl  = document.getElementById('btnContactBlockLabel');
+    avatarEl.style.background = color;
+    avatarEl.textContent = ini;
+    nameEl.textContent   = name;
+    statusEl.textContent = 'Cargando...';
+    dotEl.className      = 'ci-status-dot';
+    blockLbl.textContent = isBlocked ? 'Desbloquear usuario' : 'Bloquear usuario';
+    blockBtn.className   = isBlocked ? 'btn-ci-block unblock' : 'btn-ci-block';
+    blockBtn.onclick = function() {
+        closeModalAnimated(contactInfoModal);
+        blockUser(activeConvId, isBlocked);
+    };
+    contactInfoModal.classList.add('open');
+    lucide.createIcons({ nodes: [contactInfoModal] });
+    fetch('../messages/get_contact_info.php?user_id=' + otherId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { statusEl.textContent = 'Desconectado'; return; }
+            if (res.is_online) {
+                dotEl.className      = 'ci-status-dot online';
+                statusEl.textContent = 'En línea';
+            } else {
+                dotEl.className      = 'ci-status-dot';
+                statusEl.textContent = formatLastSeen(res.last_seen);
+            }
+        })
+        .catch(function() { statusEl.textContent = 'Desconectado'; });
+}
+
+document.getElementById('btnCloseContact').addEventListener('click', function() { closeModalAnimated(contactInfoModal); });
+contactInfoModal.addEventListener('click', function(e) { if (e.target === contactInfoModal) closeModalAnimated(contactInfoModal); });
+
+var deleteConvModal    = document.getElementById('deleteConvModal');
+var pendingDeleteConvId = null;
+
+function openDeleteConvModal(convId) {
+    pendingDeleteConvId = convId;
+    var name = '';
+    for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id == convId) { name = conversations[i].name || ''; break; }
+    }
+    document.getElementById('deleteConvName').textContent = name;
+    deleteConvModal.classList.add('open');
+    lucide.createIcons({ nodes: [deleteConvModal] });
+}
+
+document.getElementById('btnCloseDeleteConv').addEventListener('click', function() { closeModalAnimated(deleteConvModal); });
+document.getElementById('btnCancelDeleteConv').addEventListener('click', function() { closeModalAnimated(deleteConvModal); });
+deleteConvModal.addEventListener('click', function(e) { if (e.target === deleteConvModal) closeModalAnimated(deleteConvModal); });
+
+document.getElementById('btnConfirmDeleteConv').addEventListener('click', function() {
+    var convId = pendingDeleteConvId;
+    if (!convId) return;
+    pendingDeleteConvId = null;
+    closeModalAnimated(deleteConvModal);
+    var fd = new FormData();
+    fd.append('conv_id', convId);
+    fetch('../messages/delete_conversation.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('No se pudo eliminar'); return; }
+            conversations = conversations.filter(function(c) { return c.id != convId; });
+            var item = convList.querySelector('[data-id="' + convId + '"]');
+            if (item) {
+                item.style.transition = 'opacity 0.2s, max-height 0.25s, padding 0.25s';
+                item.style.overflow = 'hidden';
+                item.style.maxHeight = item.offsetHeight + 'px';
+                item.style.opacity = '0';
+                setTimeout(function() {
+                    item.style.maxHeight = '0';
+                    item.style.padding = '0';
+                    setTimeout(function() { if (item.parentNode) item.remove(); }, 260);
+                }, 50);
+            }
+            if (convId == activeConvId) closeChatPanel();
+            message.success('Conversación eliminada');
+        })
+        .catch(function() { message.error('Error de conexión'); });
+});
+
 btnSend.addEventListener('click', sendMessage);
 msgInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -377,12 +594,16 @@ document.addEventListener('keydown', function(e) {
         }
         return;
     }
-    if (attachPopup.classList.contains('show')) { closeAttachPopup(); return; }
-    if (replyBar.style.display !== 'none') { cancelReply(); return; }
-    if (msgDropdown.classList.contains('show')) { closeDropdown(); return; }
-    if (newConvBackdrop.classList.contains('open')) { closeModal(); return; }
-    if (activeConvId && window.innerWidth <= 480) { closeMobileChat(); return; }
-    if (activeConvId) { closeChatPanel(); }
+    if (clearChatModal.classList.contains('open'))    { closeModalAnimated(clearChatModal);    return; }
+    if (reportModal.classList.contains('open'))        { closeModalAnimated(reportModal);        return; }
+    if (contactInfoModal.classList.contains('open'))   { closeModalAnimated(contactInfoModal);   return; }
+    if (deleteConvModal.classList.contains('open'))    { closeModalAnimated(deleteConvModal);    return; }
+    if (attachPopup.classList.contains('show'))       { closeAttachPopup();                    return; }
+    if (replyBar.style.display !== 'none')            { cancelReply();                         return; }
+    if (msgDropdown.classList.contains('show'))        { closeDropdown();                       return; }
+    if (newConvBackdrop.classList.contains('open'))   { closeModal();                          return; }
+    if (activeConvId && window.innerWidth <= 480)     { closeMobileChat();                     return; }
+    if (activeConvId)                                  { closeChatPanel(); }
 });
 
 document.addEventListener('click', function(e) {

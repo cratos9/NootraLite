@@ -303,29 +303,7 @@ function blockUser(convId, isCurrentlyBlocked) {
 }
 
 function deleteConv(convId) {
-    if (!window.confirm('¿Eliminar esta conversación? No se puede deshacer.')) return;
-    var fd = new FormData();
-    fd.append('conv_id', convId);
-    fetch('../messages/delete_conversation.php', { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (!res.ok) { message.error('No se pudo eliminar'); return; }
-            conversations = conversations.filter(function(c) { return c.id != convId; });
-            var item = convList.querySelector('[data-id="' + convId + '"]');
-            if (item) {
-                item.style.transition = 'opacity 0.2s, max-height 0.25s, padding 0.25s';
-                item.style.overflow = 'hidden';
-                item.style.maxHeight = item.offsetHeight + 'px';
-                item.style.opacity = '0';
-                setTimeout(function() {
-                    item.style.maxHeight = '0';
-                    item.style.padding = '0';
-                    setTimeout(function() { if (item.parentNode) item.remove(); }, 260);
-                }, 50);
-            }
-            if (convId == activeConvId) closeChatPanel();
-            message.success('Conversación eliminada');
-        });
+    openDeleteConvModal(convId);
 }
 
 userSearch.addEventListener('input', function() {
