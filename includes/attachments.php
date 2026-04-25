@@ -2,17 +2,13 @@
 
 class Attachments
 {
+    private $imagesDir;
+    private $docsDir;
+
     public function __construct()
     {
-        $this ->db = new Database();
-        try {
-            $conn = $this->db->connect();
-        } catch (Exception $e) {
-            die('Error en la conexión a la base de datos');
-        }
-        $this->conn = $conn;
-        $images = __DIR__ . '/../files/images';
-        $docs = __DIR__ . '/../files/docs';
+        $this->imagesDir = __DIR__ . '/../files/images';
+        $this->docsDir = __DIR__ . '/../files/documents';
     }
 
     public function uploadAttachment($file)
@@ -25,11 +21,11 @@ class Attachments
         $name = uniqid() . '_' . basename($file['name']);
         $this->SecurityCheck($file, $type);
         if ($type === 'image/jpeg' || $type === 'image/png') {
-            move_uploaded_file($tmp, __DIR__ . '/../files/images/' . $name);
-            $destination = __DIR__ . '/../files/images/' . $name;
+            move_uploaded_file($tmp, $this->imagesDir . '/' . $name);
+            $destination = $this->imagesDir . '/' . $name;
         } else {
-            move_uploaded_file($tmp, __DIR__ . '/../files/docs/' . $name);
-            $destination = __DIR__ . '/../files/docs/' . $name;
+            move_uploaded_file($tmp, $this->docsDir . '/' . $name);
+            $destination = $this->docsDir . '/' . $name;
         }
         return [$destination, $name];
     }
@@ -47,9 +43,9 @@ class Attachments
     public function deleteAttachment($fileName, $type)
     {
         if ($type === 'image/jpeg' || $type === 'image/png') {
-            $filePath = __DIR__ . '/../files/images/' . $fileName;
+            $filePath = $this->imagesDir . '/' . $fileName;
         } else {
-            $filePath = __DIR__ . '/../files/docs/' . $fileName;
+            $filePath = $this->docsDir . '/' . $fileName;
         }
         if (file_exists($filePath)) {
             unlink($filePath);
@@ -58,10 +54,35 @@ class Attachments
         }
     }
 
+    public function deleteAttachmentByPath($filePath)
+    {
+        if (!is_string($filePath) || $filePath === '') {
+            throw new Exception('Ruta de archivo inválida');
+        }
+
+        $realFilePath = realpath($filePath);
+        $realImages = realpath($this->imagesDir);
+        $realDocs = realpath($this->docsDir);
+
+        $isInImages = $realFilePath && $realImages && strpos($realFilePath, $realImages) === 0;
+        $isInDocs = $realFilePath && $realDocs && strpos($realFilePath, $realDocs) === 0;
+
+        if (!$isInImages && !$isInDocs) {
+            throw new Exception('Ruta de archivo no permitida');
+        }
+
+        if (file_exists($realFilePath)) {
+            unlink($realFilePath);
+            return;
+        }
+
+        throw new Exception('Archivo no encontrado');
+    }
+
     private function SecurityCheck($file, $type)
     {
-        if ($type === 'image/jpeg' || $type === 'image/png') {
-            $allowedTypes = ['image/jpeg', 'image/png'];
+        if ($type === 'image/jpeg' || $type === 'image/png' || $type === 'application/pdf' || $type === 'application/msword' || $type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
             if (!in_array($file['type'], $allowedTypes)) {
                 throw new Exception('Tipo de archivo no permitido');
             }

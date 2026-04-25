@@ -89,7 +89,7 @@ h3{
     background-color: var(--bg-secondary);
 }
 
-.note-card{
+.card{
     border: 1px solid var(--accent-purple);
     padding: 10px;
     border-radius: 5px;
@@ -104,21 +104,21 @@ h3{
     align-items: start;
 }
 
-.note-title{
+.title{
     grid-area: title;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.note-card p{
+.card p{
     grid-area: content;
     margin: 0;
     color: var(--text-secondary);
     line-height: 1.5;
 }
 
-.note-options{
+.options{
     grid-area: actions;
     display: flex;
     align-self: center;
@@ -128,9 +128,7 @@ h3{
     flex-wrap: wrap;
 }
 
-.view-note,
-.edit-note,
-.delete-note{
+.view, .edit, .delete{
     border: 1px solid var(--border);
     padding: 5px 10px;
     border-radius: 5px;
@@ -139,16 +137,15 @@ h3{
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-.view-note:hover,
-.edit-note:hover{
+.view:hover, .edit:hover{
     background-color: var(--bg-secondary);
 }
 
-.delete-note{
+.delete{
     border-color: red;
     color: red;
 }
 
-.delete-note:hover{
+.delete:hover{
     background-color: rgba(255, 0, 0, 0.1);
 }

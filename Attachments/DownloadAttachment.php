@@ -1,0 +1,61 @@
+<?php
+
+require_once '../includes/Remember.php';
+require_once '../config/encrypt.php';
+require_once '../Models/AttachmentModel.php';
+
+$userID = $_SESSION['user']['id'] ?? 0;
+$attachmentId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$bookId = isset($_GET['book_id']) ? (int) $_GET['book_id'] : 0;
+
+if ($attachmentId <= 0 || $userID <= 0) {
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('Adjunto inválido') . '&attachment_type=error');
+    exit;
+}
+
+$database = new Database();
+try {
+    $conn = $database->connect();
+} catch (Exception $e) {
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('Error en la conexión a la base de datos') . '&attachment_type=error');
+    exit;
+}
+
+$attachmentModel = new AttachmentModel($conn);
+$attachment = $attachmentModel->getAttachmentById($attachmentId, $userID);
+
+if (empty($attachment)) {
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('Adjunto no encontrado') . '&attachment_type=error');
+    exit;
+}
+
+$filePath = isset($attachment['file_path']) ? decrypt_data($attachment['file_path']) : '';
+$realFilePath = is_string($filePath) ? realpath($filePath) : false;
+$realImages = realpath(__DIR__ . '/../files/images');
+$realDocs = realpath(__DIR__ . '/../files/documents');
+
+$isInImages = $realFilePath && $realImages && strpos($realFilePath, $realImages) === 0;
+$isInDocs = $realFilePath && $realDocs && strpos($realFilePath, $realDocs) === 0;
+
+if (!$realFilePath || !is_file($realFilePath) || (!$isInImages && !$isInDocs)) {
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('Archivo no encontrado en el servidor') . '&attachment_type=error');
+    exit;
+}
+
+$downloadName = isset($attachment['original_filename']) ? decrypt_data($attachment['original_filename']) : '';
+if ($downloadName === '') {
+    $downloadName = isset($attachment['filename']) ? decrypt_data($attachment['filename']) : basename($realFilePath);
+}
+$downloadName = str_replace('"', '', $downloadName);
+$mimeType = isset($attachment['file_type']) ? decrypt_data($attachment['file_type']) : 'application/octet-stream';
+
+header('Content-Description: File Transfer');
+header('Content-Type: ' . $mimeType);
+header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"; filename*=UTF-8\'\'' . rawurlencode($downloadName));
+header('Content-Length: ' . filesize($realFilePath));
+header('Cache-Control: no-cache, must-revalidate');
+header('Pragma: public');
+readfile($realFilePath);
+exit;
+
+?>
