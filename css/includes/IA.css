@@ -1,0 +1,35 @@
+.ia-card{
+    position: absolute;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    width: 500px;
+    left: 120%;
+}
+
+#ia-panel.in_ia-card .ia-card{
+    animation: slideIn 0.5s forwards;
+}
+
+#ia-panel.out_ia-card .ia-card{
+    animation: slideOut 0.5s forwards;
+}
+
+@keyframes slideIn {
+    from {
+        left: calc(100% + 500px);
+    }
+    to {
+        left: calc(100% - 500px);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        left: calc(100% - 500px);
+    }
+    to {
+        left: calc(100% + 500px);
+    }
+}
