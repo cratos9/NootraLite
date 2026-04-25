@@ -50,9 +50,9 @@
                         ?>
                         <p><?= htmlspecialchars($noteExcerpt) ?></p>
                         <div class="note-options">
-                            <a href="../Notes/ViewNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="view-note">Ver</a>
-                            <a href="../Notes/EditNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="edit-note">Editar</a>
-                            <a href="../Notes/DeleteNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="delete-note" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
+                            <a href="../Notes/Note.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="view-note">Ver</a>
+                            <a href="../Notes/EditNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit-note">Editar</a>
+                            <a href="../Notes/DeleteNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete-note" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
                         </div>
                     </article>
                 <?php endforeach; ?>
