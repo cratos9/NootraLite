@@ -2,7 +2,11 @@
 
 include_once '../includes/Remember.php';
 include_once '../config/encrypt.php';
+include_once '../includes/lightMode.php';
 include_once '../Models/NoteModel.php';
+
+$activePage = 'notebooks';
+include '../includes/sidebar.php';
 
 $errors = [];
 

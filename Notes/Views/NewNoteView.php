@@ -18,6 +18,7 @@
     <body>
         <?php
             include_once '../includes/lightMode.php';
+            $activePage = 'notebooks';
             include_once '../includes/sidebar.php';
             if (!empty($errors)) {
                 foreach ($errors as $error) {

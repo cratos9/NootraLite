@@ -12,13 +12,15 @@ try {
 
 $note = new Note($conn);
 
-$note -> deleteNote($_GET['note_id'] ?? 0, $_SESSION['user']['id']);
+$deleted = $note->deleteNote($_GET['note_id'] ?? 0, $_SESSION['user']['id']);
+$bookId = (int) ($_GET['book_id'] ?? 0);
 
-if ($note) {
-    header("Location: ../Books/Book.php?id=" . urlencode((string)($_GET['book_id'] ?? '')));
-    exit();
+if ($deleted) {
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('Nota eliminada correctamente') . '&attachment_type=success');
+    exit;
 } else {
-    die('Error al eliminar la nota. Por favor, inténtalo de nuevo.');
+    header('Location: ../Books/Book.php?id=' . $bookId . '&attachment_msg=' . urlencode('No se pudo eliminar la nota') . '&attachment_type=error');
+    exit;
 }
 
 ?>
