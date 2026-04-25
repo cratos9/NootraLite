@@ -474,7 +474,7 @@ function openDeleteConvModal(convId) {
     pendingDeleteConvId = convId;
     var name = '';
     for (var i = 0; i < conversations.length; i++) {
-        if (conversations[i].id == convId) { name = conversations[i].name || ''; break; }
+        if (conversations[i].id == convId) { name = conversations[i].other_name || ''; break; }
     }
     document.getElementById('deleteConvName').textContent = name;
     deleteConvModal.classList.add('open');
