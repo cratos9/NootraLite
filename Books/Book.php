@@ -25,6 +25,7 @@ $notes = [];
 if ($bookId > 0) {
     $bookData = $book->getBookById($bookId, $_SESSION['user']['id']);
     $notes = $note->getNotes($bookId, $_SESSION['user']['id']);
+    $booksChildren = $book->getBooksByParentId($bookId, $_SESSION['user']['id']);
 }
 
 include 'Views/BookView.php';
