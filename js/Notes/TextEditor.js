@@ -42,7 +42,7 @@ tinymce.init({
     forecolor backcolor |
     alignleft aligncenter alignright alignjustify |
     bullist numlist outdent indent |
-    link image media |
+    link  |
     table |
     searchreplace |
     code fullscreen |
