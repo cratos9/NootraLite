@@ -192,7 +192,7 @@ function getHeaderMenuItems() {
     var blocked      = conv && conv.is_blocked == 1;
     var convReported = reportedItems && reportedItems['conversation:' + activeConvId];
     return [
-        { icon: 'bookmark',     label: 'Mensajes destacados',  action: function() { message.tip('Próximamente'); } },
+        { icon: 'bookmark',     label: 'Mensajes destacados',  action: function() { openBookmarksDrawer(); } },
         { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
         { icon: 'bell-off',     label: muted ? 'Activar sonido' : 'Silenciar', action: function() { toggleConvMeta(activeConvId, 'muted'); } },
         { icon: 'user',         label: 'Info contacto',        action: function() { openContactInfo(); } },
@@ -210,13 +210,17 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
         navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
-    var msgReported = reportedItems && reportedItems['message:' + msgId];
+    var msgReported  = reportedItems && reportedItems['message:' + msgId];
+    var isThisPinned = pinnedMsgId && parseInt(pinnedMsgId) === msgId;
+    var isBookmarked  = bookmarkedIds && bookmarkedIds.indexOf(msgId) >= 0;
     var base = [
         { icon: 'reply',    label: 'Responder', action: function() { activateReply(msgId, text, senderName); } },
         copy,
         { icon: 'forward',  label: 'Reenviar',  action: function() { message.tip('Próximamente'); } },
-        { icon: 'pin',      label: 'Fijar',     action: function() { message.tip('Próximamente'); } },
-        { icon: 'bookmark', label: 'Destacar',  action: function() { message.tip('Próximamente'); } },
+        { icon: 'pin',      label: isThisPinned ? 'Desfijar' : 'Fijar',
+          action: isThisPinned ? function() { unpinMessage(); } : function() { pinMessage(msgId); } },
+        { icon: 'bookmark', label: isBookmarked ? 'Quitar destacado' : 'Destacar',
+          action: function() { toggleBookmark(msgId); } },
         { divider: true }
     ];
     if (isMine) {

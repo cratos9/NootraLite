@@ -14,6 +14,8 @@ var pendingAttSize = 0;
 var pollInterval = null;
 var lastMsgId    = 0;
 var replyToId = null, replyToBody = null, replyToSender = null;
+var pinnedMsgId   = null;
+var bookmarkedIds = [];
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -48,7 +50,9 @@ function renderMessages(msgs) {
             lastDate = dateStr;
         }
 
+        var isPinned = pinnedMsgId && parseInt(m.id) === parseInt(pinnedMsgId);
         var cls = isMine ? 'msg-row mine' : 'msg-row theirs';
+        if (isPinned) cls += ' is-pinned';
         html += '<div class="' + cls + '" data-msg-id="' + m.id + '">';
         if (isMine) html += '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>';
         html += '<div class="msg-bubble">';
@@ -81,7 +85,12 @@ function renderMessages(msgs) {
                 html += '</div></div>';
             }
         }
+        var isBookmarked = bookmarkedIds.indexOf(parseInt(m.id)) >= 0;
+        html += '<div class="msg-footer">';
+        html += '<button class="msg-bookmark-btn' + (isBookmarked ? ' bookmarked' : '') + '" data-msg-id="' + m.id + '" aria-label="Destacar"><i data-lucide="bookmark"></i></button>';
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
+        if (isPinned) html += '<span class="msg-pin-indicator" aria-label="Fijado"><i data-lucide="pin"></i></span>';
+        html += '</div>';
         html += '</div>';
         if (!isMine) html += '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>';
         html += '</div>';
@@ -166,7 +175,10 @@ function openConversation(convId, name) {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) { chatMessages.innerHTML = '<p style="color:var(--text-muted);text-align:center;font-size:12px;">Error al cargar</p>'; return; }
+            pinnedMsgId   = res.pinned_message_id || null;
+            bookmarkedIds = res.bookmarked_ids ? res.bookmarked_ids.map(Number) : [];
             renderMessages(res.messages);
+            updatePinnedBar(res.messages);
             scrollToBottom();
             updateStatusUI(res.is_online);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
@@ -236,7 +248,8 @@ function sendMessage() {
             html += '<div class="att-size">' + formatFileSize(snapAttSize) + '</div></div></div>';
         }
     }
-    html += '<span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span>';
+    html += '<div class="msg-footer"><button class="msg-bookmark-btn" data-msg-id="0" aria-label="Destacar"><i data-lucide="bookmark"></i></button>';
+    html += '<span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>';
     html += '</div></div>';
     chatMessages.insertAdjacentHTML('beforeend', html);
     lucide.createIcons({ nodes: [chatMessages.lastElementChild] });
@@ -552,6 +565,13 @@ chatMessages.addEventListener('dblclick', function(e) {
 });
 
 chatMessages.addEventListener('click', function(e) {
+    var bmBtn = e.target.closest('.msg-bookmark-btn');
+    if (bmBtn) {
+        e.stopPropagation();
+        var bmId = parseInt(bmBtn.getAttribute('data-msg-id'));
+        if (bmId) toggleBookmark(bmId);
+        return;
+    }
     var btn = e.target.closest('.msg-actions-btn');
     if (btn) {
         e.stopPropagation();
@@ -584,6 +604,9 @@ chatMessages.addEventListener('click', function(e) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (document.getElementById('bookmarksDrawer').classList.contains('open')) {
+        closeBookmarksDrawer(); return;
+    }
     if (newConvPanel.classList.contains('open')) {
         if (ncpScreen2.style.display !== 'none') {
             ncpScreen2.style.display = 'none';
@@ -665,6 +688,250 @@ fileInput.addEventListener('change', function() {
         })
         .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
 });
+
+function flashMessage(msgId) {
+    var row = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var bub = row.querySelector('.msg-bubble');
+    if (!bub) return;
+    bub.classList.remove('msg-highlight-flash');
+    void bub.offsetWidth;
+    bub.classList.add('msg-highlight-flash');
+    bub.addEventListener('animationend', function h() {
+        bub.removeEventListener('animationend', h);
+        bub.classList.remove('msg-highlight-flash');
+    });
+}
+
+function updatePinnedBar(msgs) {
+    var bar = document.getElementById('pinnedBar');
+    if (!pinnedMsgId) { hidePinnedBar(); return; }
+    var msg = null;
+    for (var i = 0; i < msgs.length; i++) {
+        if (parseInt(msgs[i].id) === parseInt(pinnedMsgId)) { msg = msgs[i]; break; }
+    }
+    if (!msg) { hidePinnedBar(); return; }
+    var isMine = parseInt(msg.sender_id) === currentUid;
+    document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
+    document.getElementById('pinnedBarBody').textContent   = msg.body || (msg.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+    bar.classList.remove('hiding');
+    if (!bar.classList.contains('show')) {
+        bar.classList.add('show');
+        lucide.createIcons({ nodes: [bar] });
+    }
+}
+
+function hidePinnedBar() {
+    var bar = document.getElementById('pinnedBar');
+    if (!bar.classList.contains('show')) return;
+    bar.classList.add('hiding');
+    bar.addEventListener('animationend', function h() {
+        bar.removeEventListener('animationend', h);
+        bar.classList.remove('show', 'hiding');
+    });
+}
+
+function pinMessage(msgId) {
+    var fd = new FormData();
+    fd.append('conv_id', activeConvId);
+    fd.append('msg_id', msgId);
+    fd.append('action', 'pin');
+    fetch('../messages/pin_message.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al fijar'); return; }
+            var old = pinnedMsgId;
+            pinnedMsgId = msgId;
+            if (old) {
+                var oldRow = chatMessages.querySelector('[data-msg-id="' + old + '"]');
+                if (oldRow) {
+                    oldRow.classList.remove('is-pinned');
+                    var oldInd = oldRow.querySelector('.msg-pin-indicator');
+                    if (oldInd) oldInd.remove();
+                }
+            }
+            var newRow = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+            if (newRow) {
+                newRow.classList.add('is-pinned');
+                var footer = newRow.querySelector('.msg-footer');
+                if (footer && !footer.querySelector('.msg-pin-indicator')) {
+                    var ind = document.createElement('span');
+                    ind.className = 'msg-pin-indicator';
+                    ind.setAttribute('aria-label', 'Fijado');
+                    ind.innerHTML = '<i data-lucide="pin"></i>';
+                    footer.appendChild(ind);
+                    lucide.createIcons({ nodes: [ind] });
+                }
+            }
+            var bar     = document.getElementById('pinnedBar');
+            var bubble  = newRow ? newRow.querySelector('.msg-bubble') : null;
+            var isMine  = newRow ? newRow.classList.contains('mine') : false;
+            document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
+            document.getElementById('pinnedBarBody').textContent   = bubble ? getBubbleText(bubble) : '';
+            bar.classList.remove('hiding');
+            if (!bar.classList.contains('show')) {
+                bar.classList.add('show');
+                lucide.createIcons({ nodes: [bar] });
+            }
+            message.success('Mensaje fijado');
+        })
+        .catch(function() { message.error('Error de conexión'); });
+}
+
+function unpinMessage() {
+    var fd = new FormData();
+    fd.append('conv_id', activeConvId);
+    fd.append('action', 'unpin');
+    fetch('../messages/pin_message.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al desfijar'); return; }
+            var old = pinnedMsgId;
+            pinnedMsgId = null;
+            if (old) {
+                var oldRow = chatMessages.querySelector('[data-msg-id="' + old + '"]');
+                if (oldRow) {
+                    oldRow.classList.remove('is-pinned');
+                    var ind = oldRow.querySelector('.msg-pin-indicator');
+                    if (ind) ind.remove();
+                }
+            }
+            hidePinnedBar();
+            message.success('Mensaje desfijado');
+        })
+        .catch(function() { message.error('Error de conexión'); });
+}
+
+function toggleBookmark(msgId) {
+    var fd = new FormData();
+    fd.append('msg_id', msgId);
+    fetch('../messages/bookmark_message.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al destacar'); return; }
+            var btn = chatMessages.querySelector('.msg-bookmark-btn[data-msg-id="' + msgId + '"]');
+            if (res.bookmarked) {
+                if (bookmarkedIds.indexOf(msgId) < 0) bookmarkedIds.push(msgId);
+                if (btn) {
+                    btn.classList.add('bookmarked');
+                    btn.classList.remove('pop');
+                    void btn.offsetWidth;
+                    btn.classList.add('pop');
+                }
+                message.success('Guardado en destacados');
+            } else {
+                bookmarkedIds = bookmarkedIds.filter(function(id) { return id != msgId; });
+                if (btn) btn.classList.remove('bookmarked', 'pop');
+                message.success('Eliminado de destacados');
+            }
+        })
+        .catch(function() { message.error('Error de conexión'); });
+}
+
+function openBookmarksDrawer() {
+    var drawer  = document.getElementById('bookmarksDrawer');
+    var backdrop = document.getElementById('bookmarksBackdrop');
+    var bmList  = document.getElementById('bmList');
+    bmList.innerHTML = '<div class="bm-loading"><span></span><span></span><span></span></div>';
+    backdrop.classList.add('open');
+    drawer.classList.add('open');
+    fetch('../messages/get_bookmarks.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { bmList.innerHTML = '<div class="bm-empty"><p>Error al cargar</p></div>'; return; }
+            renderBookmarkItems(res.bookmarks);
+        })
+        .catch(function() { bmList.innerHTML = '<div class="bm-empty"><p>Error de conexión</p></div>'; });
+}
+
+function closeBookmarksDrawer() {
+    document.getElementById('bookmarksDrawer').classList.remove('open');
+    document.getElementById('bookmarksBackdrop').classList.remove('open');
+}
+
+function renderBookmarkItems(bookmarks) {
+    var bmList = document.getElementById('bmList');
+    if (!bookmarks || !bookmarks.length) {
+        bmList.innerHTML = '<div class="bm-empty"><i data-lucide="bookmark"></i><p>Aún no tienes mensajes destacados</p></div>';
+        lucide.createIcons({ nodes: [bmList] });
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < bookmarks.length; i++) {
+        var bm    = bookmarks[i];
+        var color = avatarColor(bm.sender_name || '');
+        var ini   = initials(bm.sender_name || '?');
+        var preview = bm.body || (bm.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+        var dateStr = formatTime(bm.bm_date);
+        html += '<div class="bm-item bm-item-in" data-msg-id="' + bm.message_id + '" data-conv-id="' + bm.conversation_id + '" style="animation-delay:' + (i * 45) + 'ms">';
+        html += '<div class="bm-item-header">';
+        html += '<div class="bm-avatar" style="background:' + color + '">' + escapeHtml(ini) + '</div>';
+        html += '<span class="bm-sender">' + escapeHtml(bm.sender_name || 'Usuario') + '</span>';
+        html += '<span class="bm-date">' + escapeHtml(dateStr) + '</span>';
+        html += '<button class="bm-remove-btn" aria-label="Quitar destacado"><i data-lucide="x"></i></button>';
+        html += '</div>';
+        html += '<div class="bm-preview">' + escapeHtml(preview) + '</div>';
+        html += '<button class="bm-goto-btn">Ir al mensaje <i data-lucide="arrow-right"></i></button>';
+        html += '</div>';
+    }
+    bmList.innerHTML = html;
+    lucide.createIcons({ nodes: [bmList] });
+
+    bmList.querySelectorAll('.bm-remove-btn').forEach(function(removeBtn) {
+        removeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var item  = removeBtn.closest('.bm-item');
+            var rmId  = parseInt(item.getAttribute('data-msg-id'));
+            var curH  = item.offsetHeight;
+            item.style.maxHeight = curH + 'px';
+            void item.offsetWidth;
+            item.classList.add('bm-removing');
+            item.addEventListener('transitionend', function done() {
+                item.removeEventListener('transitionend', done);
+                item.remove();
+                bookmarkedIds = bookmarkedIds.filter(function(id) { return id != rmId; });
+                var chatBtn = chatMessages.querySelector('.msg-bookmark-btn[data-msg-id="' + rmId + '"]');
+                if (chatBtn) chatBtn.classList.remove('bookmarked', 'pop');
+                var rmFd = new FormData(); rmFd.append('msg_id', rmId);
+                fetch('../messages/bookmark_message.php', { method: 'POST', body: rmFd });
+                if (!bmList.querySelector('.bm-item')) {
+                    bmList.innerHTML = '<div class="bm-empty"><i data-lucide="bookmark"></i><p>Aún no tienes mensajes destacados</p></div>';
+                    lucide.createIcons({ nodes: [bmList] });
+                }
+            });
+        });
+    });
+
+    bmList.querySelectorAll('.bm-goto-btn').forEach(function(gotoBtn) {
+        gotoBtn.addEventListener('click', function() {
+            var item   = gotoBtn.closest('.bm-item');
+            var gMsgId = parseInt(item.getAttribute('data-msg-id'));
+            var gConvId = parseInt(item.getAttribute('data-conv-id'));
+            closeBookmarksDrawer();
+            if (gConvId === activeConvId) {
+                setTimeout(function() { flashMessage(gMsgId); }, 60);
+            } else {
+                var convEl = convList.querySelector('[data-id="' + gConvId + '"]');
+                if (convEl) {
+                    convEl.click();
+                    setTimeout(function() { flashMessage(gMsgId); }, 700);
+                }
+            }
+        });
+    });
+}
+
+document.getElementById('btnUnpin').addEventListener('click', function(e) {
+    e.stopPropagation();
+    unpinMessage();
+});
+document.getElementById('pinnedBar').addEventListener('click', function(e) {
+    if (e.target.closest('#btnUnpin')) return;
+    if (pinnedMsgId) flashMessage(pinnedMsgId);
+});
+document.getElementById('btnCloseBookmarks').addEventListener('click', closeBookmarksDrawer);
+document.getElementById('bookmarksBackdrop').addEventListener('click', closeBookmarksDrawer);
 
 fetch('../messages/update_last_seen.php', { method: 'POST' });
 setInterval(function() {
