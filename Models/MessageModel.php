@@ -11,7 +11,7 @@ class MessageModel {
     public function getConversations($uid) {
         $sql = "SELECT c.id, c.user1_id, c.user2_id,
                        m.body AS last_msg, m.created_at AS last_time,
-                       u.username AS other_name,
+                       COALESCE(u.username, u.name) AS other_name,
                        u.id   AS other_user_id,
                        IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
