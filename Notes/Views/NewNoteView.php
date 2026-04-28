@@ -22,7 +22,11 @@
             $activePage = 'notebooks';
             include_once '../includes/sidebar.php';
         ?>
-        <div id="ia-panel" hidden>
+        <div
+            id="ia-panel"
+            data-book-id="<?= htmlspecialchars((string) ($_GET['book_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+            hidden
+        >
             <?php include_once '../includes/IA.php'; ?>
         </div>
         <?php
@@ -89,6 +93,7 @@
                 }, 500);
             }
         </script>
+        <script src="../js/includes/IA.js" defer></script>
         <script src="../js/includes/sidebar.js"></script>
     </body>
 </html>
