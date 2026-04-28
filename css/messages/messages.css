@@ -1331,7 +1331,7 @@ body { height: 100vh; overflow: hidden; }
 .pinned-bar-close:hover { color: var(--text-primary); }
 .pinned-bar-close i { width: 13px; height: 13px; }
 
-/* ── msg-footer y bookmark button ── */
+/* ── msg-footer ── */
 .msg-footer {
     display: flex;
     align-items: center;
@@ -1339,32 +1339,24 @@ body { height: 100vh; overflow: hidden; }
     gap: 5px;
     margin-top: 2px;
 }
-@keyframes bookmarkPop {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(0.65); }
-    100% { transform: scale(1); }
+@keyframes bmIndIn {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    65%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-.msg-bookmark-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text-muted); padding: 0;
+@keyframes bmIndOut {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+.msg-bookmarked-indicator {
     display: flex; align-items: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.15s, color 0.15s;
-    line-height: 0;
+    color: #a78bfa; line-height: 0; flex-shrink: 0;
+    animation: bmIndIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-.msg-bookmark-btn i { width: 12px; height: 12px; }
-.msg-bookmark-btn.bookmarked {
-    opacity: 1; pointer-events: auto;
-    color: var(--accent-purple);
-}
-.msg-bookmark-btn.bookmarked i { fill: currentColor; }
-.msg-bookmark-btn.pop { animation: bookmarkPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-@media (hover: hover) {
-    .msg-row:hover .msg-bookmark-btn { opacity: 1; pointer-events: auto; }
-}
-@media (hover: none) {
-    .msg-bookmark-btn { opacity: 0.4; pointer-events: auto; }
-}
+.msg-bookmarked-indicator i { width: 11px; height: 11px; }
+.msg-bookmarked-indicator svg { fill: currentColor; }
+.msg-bookmarked-indicator.bm-ind-out { animation: bmIndOut 0.18s ease-in forwards; }
+
 .msg-pin-indicator {
     display: flex; align-items: center;
     color: rgba(167,139,250,0.7);

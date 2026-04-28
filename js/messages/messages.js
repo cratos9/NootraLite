@@ -87,7 +87,7 @@ function renderMessages(msgs) {
         }
         var isBookmarked = bookmarkedIds.indexOf(parseInt(m.id)) >= 0;
         html += '<div class="msg-footer">';
-        html += '<button class="msg-bookmark-btn' + (isBookmarked ? ' bookmarked' : '') + '" data-msg-id="' + m.id + '" aria-label="Destacar"><i data-lucide="bookmark"></i></button>';
+        if (isBookmarked) html += '<span class="msg-bookmarked-indicator" aria-label="Destacado"><i data-lucide="bookmark"></i></span>';
         html += '<span class="msg-time">' + formatMsgTime(m.created_at) + '</span>';
         if (isPinned) html += '<span class="msg-pin-indicator" aria-label="Fijado"><i data-lucide="pin"></i></span>';
         html += '</div>';
@@ -248,8 +248,7 @@ function sendMessage() {
             html += '<div class="att-size">' + formatFileSize(snapAttSize) + '</div></div></div>';
         }
     }
-    html += '<div class="msg-footer"><button class="msg-bookmark-btn" data-msg-id="0" aria-label="Destacar"><i data-lucide="bookmark"></i></button>';
-    html += '<span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>';
+    html += '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>';
     html += '</div></div>';
     chatMessages.insertAdjacentHTML('beforeend', html);
     lucide.createIcons({ nodes: [chatMessages.lastElementChild] });
@@ -565,13 +564,6 @@ chatMessages.addEventListener('dblclick', function(e) {
 });
 
 chatMessages.addEventListener('click', function(e) {
-    var bmBtn = e.target.closest('.msg-bookmark-btn');
-    if (bmBtn) {
-        e.stopPropagation();
-        var bmId = parseInt(bmBtn.getAttribute('data-msg-id'));
-        if (bmId) toggleBookmark(bmId);
-        return;
-    }
     var btn = e.target.closest('.msg-actions-btn');
     if (btn) {
         e.stopPropagation();
@@ -810,19 +802,28 @@ function toggleBookmark(msgId) {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) { message.error('Error al destacar'); return; }
-            var btn = chatMessages.querySelector('.msg-bookmark-btn[data-msg-id="' + msgId + '"]');
+            var row    = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+            var footer = row ? row.querySelector('.msg-footer') : null;
             if (res.bookmarked) {
                 if (bookmarkedIds.indexOf(msgId) < 0) bookmarkedIds.push(msgId);
-                if (btn) {
-                    btn.classList.add('bookmarked');
-                    btn.classList.remove('pop');
-                    void btn.offsetWidth;
-                    btn.classList.add('pop');
+                if (footer && !footer.querySelector('.msg-bookmarked-indicator')) {
+                    var ind = document.createElement('span');
+                    ind.className = 'msg-bookmarked-indicator';
+                    ind.setAttribute('aria-label', 'Destacado');
+                    ind.innerHTML = '<i data-lucide="bookmark"></i>';
+                    footer.insertBefore(ind, footer.firstChild);
+                    lucide.createIcons({ nodes: [ind] });
                 }
                 message.success('Guardado en destacados');
             } else {
                 bookmarkedIds = bookmarkedIds.filter(function(id) { return id != msgId; });
-                if (btn) btn.classList.remove('bookmarked', 'pop');
+                if (footer) {
+                    var indEl = footer.querySelector('.msg-bookmarked-indicator');
+                    if (indEl) {
+                        indEl.classList.add('bm-ind-out');
+                        indEl.addEventListener('animationend', function() { indEl.remove(); }, { once: true });
+                    }
+                }
                 message.success('Eliminado de destacados');
             }
         })
@@ -891,8 +892,11 @@ function renderBookmarkItems(bookmarks) {
                 item.removeEventListener('transitionend', done);
                 item.remove();
                 bookmarkedIds = bookmarkedIds.filter(function(id) { return id != rmId; });
-                var chatBtn = chatMessages.querySelector('.msg-bookmark-btn[data-msg-id="' + rmId + '"]');
-                if (chatBtn) chatBtn.classList.remove('bookmarked', 'pop');
+                var chatRow = chatMessages.querySelector('[data-msg-id="' + rmId + '"]');
+                if (chatRow) {
+                    var chatInd = chatRow.querySelector('.msg-bookmarked-indicator');
+                    if (chatInd) chatInd.remove();
+                }
                 var rmFd = new FormData(); rmFd.append('msg_id', rmId);
                 fetch('../messages/bookmark_message.php', { method: 'POST', body: rmFd });
                 if (!bmList.querySelector('.bm-item')) {
