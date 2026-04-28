@@ -69,6 +69,15 @@
 
             <div class="chat-active" id="chatActive">
                 <div class="chat-header" id="chatHeader"></div>
+                <div id="pinnedBar" aria-label="Mensaje fijado">
+                    <span class="pinned-bar-icon"><i data-lucide="pin"></i></span>
+                    <span class="pinned-bar-text">
+                        <span class="pinned-bar-sender" id="pinnedBarSender"></span><span id="pinnedBarBody"></span>
+                    </span>
+                    <button class="pinned-bar-close" id="btnUnpin" aria-label="Desfijar">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
                 <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="reply-bar" id="replyBar" style="display:none">
@@ -257,6 +266,16 @@
             <div class="user-results" id="userResults"></div>
         </div>
     </div>
+</div>
+
+<div id="bookmarksBackdrop"></div>
+<div id="bookmarksDrawer" role="dialog" aria-label="Mensajes destacados">
+    <div class="bm-header">
+        <i data-lucide="bookmark" style="width:16px;height:16px;color:#a78bfa;flex-shrink:0"></i>
+        <span class="bm-title">Mensajes destacados</span>
+        <button class="bm-close-btn" id="btnCloseBookmarks" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    </div>
+    <div class="bm-list" id="bmList"></div>
 </div>
 
 <script>
