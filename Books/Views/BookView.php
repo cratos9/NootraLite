@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="../css/Books/Book.css">
     <link rel="stylesheet" href="../css/includes/sidebar.css">
     <link rel="stylesheet" href="../css/includes/lightMode.css">
-    <title>Document</title>
+    <title>Libro <?= htmlspecialchars(isset($bookData['title']) ? decrypt_data($bookData['title']) : ' no encontrado') ?></title>
 </head>
 <body>
     <main>
         <section class="book-info" style="border-color: <?= htmlspecialchars($bookData['color'] ?? '#000') ?>">
-            <a href="../Books/Books.php" class="back">Regresar</a>
+            <a href="../Books/Books.php" class="back">Regresar a los libros</a>
             <h3 class="book-title">
                 <i data-lucide="book-open" class="icon-book" style="color: <?= htmlspecialchars($bookData['color'] ?? '#000000') ?>"></i>
                 <?= htmlspecialchars(isset($bookData['title']) ? decrypt_data($bookData['title']) : 'Libro no encontrado') ?>
@@ -30,8 +30,8 @@
             <?php endif; ?>
             <p>Etiquetas: <?= htmlspecialchars(isset($bookData['tags']) ? decrypt_data($bookData['tags']) : 'Sin etiquetas') ?></p>
             <div class="options">
-                <a href="../Books/EditBook.php?id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit-book">Editar</a>
-                <a href="../Books/DeleteBook.php?id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete-book" onclick="return confirm('¿Estás seguro de que quieres eliminar este libro?');">Eliminar</a>
+                <a href="../Books/EditBook.php?id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit">Editar</a>
+                <a href="../Books/DeleteBook.php?id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar este libro?');">Eliminar</a>
             </div>
         </section>
         <section class="notes">
@@ -40,8 +40,8 @@
                 <p class="no-notes">No hay notas disponibles.</p>
             <?php else: ?>
                 <?php foreach ($notes as $note): ?>
-                    <article class="note-card">
-                        <h4 class="note-title"><?= htmlspecialchars(decrypt_data($note['title'])) ?></h4>
+                    <article class="card">
+                        <h4 class="title"><?= htmlspecialchars(decrypt_data($note['title'])) ?></h4>
                         <?php
                         $noteContent = isset($note['content']) ? strip_tags(decrypt_data($note['content'])) : 'Sin contenido';
                         $noteExcerpt = (function_exists('mb_strlen') && function_exists('mb_substr'))
@@ -49,37 +49,65 @@
                             : (strlen($noteContent) > 50 ? substr($noteContent, 0, 50) . '...' : $noteContent);
                         ?>
                         <p><?= htmlspecialchars($noteExcerpt) ?></p>
-                        <div class="note-options">
-                            <a href="../Notes/ViewNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="view-note">Ver</a>
-                            <a href="../Notes/EditNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="edit-note">Editar</a>
-                            <a href="../Notes/DeleteNote.php?id=<?= htmlspecialchars($note['id'] ?? '') ?>" class="delete-note" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
+                        <div class="options">
+                            <a href="../Notes/Note.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="view">Ver</a>
+                            <a href="../Notes/EditNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit">Editar</a>
+                            <a href="../Notes/DeleteNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
                         </div>
                     </article>
                 <?php endforeach; ?>
             <?php endif; ?>
         </section>
         <section class="books-children">
-            <a href="../Books/AddBookChild.php?parent_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-book-child">Nuevo libro secundario</a>
-            <?php if (empty($booksChildren)): ?>
-                <p class="no-books-children">No hay libros secundarios disponibles.</p>
+            <?php if (!$IsVerified): ?>
+                <p class="verification-warning">Tu cuenta no está verificada. No puedes crear sublibros.</p>
             <?php else: ?>
-                <?php foreach ($booksChildren as $child): ?>
-                    <article class="book-child-card">
-                        <h4 class="book-title"><?= htmlspecialchars(decrypt_data($child['title'])) ?></h4>
-                    </article>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <a href="../Books/NewBook.php?parent_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-book-child">Nuevo sublibro</a>
+                <?php if (empty($booksChildren)): ?>
+                    <p class="no-books-children">No hay sublibros disponibles.</p>
+                    <?php else: ?>
+                        <?php foreach ($booksChildren as $child): ?>
+                            <article class="card" style="border-color: <?= htmlspecialchars($child['color'] ?? '#000') ?>">
+                                <h4 class="title"><?= htmlspecialchars(decrypt_data($child['title'])) ?></h4>
+                                <?php
+                            $bookDescription = isset($child['description']) ? strip_tags(decrypt_data($child['description'])) : 'Sin descripción';
+                            $bookDescriptionExcerpt = (function_exists('mb_strlen') && function_exists('mb_substr'))
+                            ? (mb_strlen($bookDescription) > 50 ? mb_substr($bookDescription, 0, 50) . '...' : $bookDescription)
+                            : (strlen($bookDescription) > 50 ? substr($bookDescription, 0, 50) . '...' : $bookDescription);
+                            ?>
+                            <p><?= htmlspecialchars($bookDescriptionExcerpt) ?></p>
+                            <div class="options">
+                                <a href="../Books/Book.php?id=<?= htmlspecialchars($child['id'] ?? '') ?>" class="view">Ver</a>
+                                <a href="../Books/EditBook.php?id=<?= htmlspecialchars($child['id'] ?? '') ?>" class="edit">Editar</a>
+                                <a href="../Books/DeleteBook.php?id=<?= htmlspecialchars($child['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar este libro?');">Eliminar</a>
+                            </div>
+                        </article>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                <?php endif; ?>
         </section>
         <section class="attachments">
-            <a href="../Attachments/AddAttachment.php?book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-attachment">Nuevo archivo adjunto</a>
-            <?php if (empty($attachments)): ?>
-                <p class="no-attachments">No hay archivos adjuntos disponibles.</p>
+            <?php if (!$IsVerified): ?>
+                <p class="verification-warning">Tu cuenta no está verificada. No puedes agregar archivos adjuntos.</p>
             <?php else: ?>
-                <?php foreach ($attachments as $attachment): ?>
-                    <article class="attachment-card">
-                        <h4 class="attachment-title"><?= htmlspecialchars(decrypt_data($attachment['title'])) ?></h4>
-                    </article>
-                <?php endforeach; ?>
+                <a href="../Attachments/NewAttachment.php?book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-attachment">Nuevo archivo adjunto</a>
+                <?php if (empty($attachments)): ?>
+                    <p class="no-attachments">No hay archivos adjuntos disponibles.</p>
+                <?php else: ?>
+                    <?php foreach ($attachments as $attachment): ?>
+                        <article class="card">
+                            <?php
+                            $attachmentOriginalName = decrypt_data($attachment['original_filename']);
+                            $attachmentFileName = decrypt_data($attachment['filename']);
+                            ?>
+                            <h4 class="title"><?= htmlspecialchars($attachmentOriginalName ?: $attachmentFileName) ?></h4>
+                            <div class="options">
+                                <a href="../Attachments/DownloadAttachment.php?id=<?= htmlspecialchars($attachment['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="view">Descargar</a>
+                                <a href="../Attachments/DeleteAttachment.php?id=<?= htmlspecialchars($attachment['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?');">Eliminar</a>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             <?php endif; ?>
         </section>
         <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>

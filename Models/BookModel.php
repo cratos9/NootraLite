@@ -11,7 +11,7 @@ class Book{
     }
 
     public function getBooks($userId){
-        $query = "SELECT * FROM notebooks WHERE user_id = :user_id";
+        $query = "SELECT * FROM notebooks WHERE user_id = :user_id AND parent_id IS NULL ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
         $stmt -> execute(['user_id' => $userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

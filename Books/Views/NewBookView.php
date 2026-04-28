@@ -15,8 +15,11 @@
 </head>
 <body>
     <main>
-        <a href="Books.php" class="cancel">Cancelar</a>
-        <form action="NewBook.php" method="post">
+        <a href="<?= $parentId ? 'Book.php?id=' . urlencode((string)$parentId) : 'Books.php' ?>" class="cancel">Cancelar</a>
+        <form action="NewBook.php<?= $parentId ? '?parent_id=' . urlencode((string)$parentId) : '' ?>" method="post">
+            <?php if ($parentId): ?>
+                <input type="hidden" name="parent_id" value="<?= htmlspecialchars((string)$parentId) ?>">
+            <?php endif; ?>
             <h1>Nuevo Libro <i data-lucide="book-open" class="icon-book"></i></h1>
             <div class="form-group">
                 <label for="title">Título:</label>
