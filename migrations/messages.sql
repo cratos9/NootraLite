@@ -58,3 +58,18 @@ CREATE TABLE IF NOT EXISTS reports (
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_reporter (reporter_id)
 );
+
+# Pin de mensaje en conversación y tabla de bookmarks, 28/04/2026
+ALTER TABLE conversations
+  ADD COLUMN pinned_message_id INT NULL,
+  ADD CONSTRAINT fk_pinned_msg FOREIGN KEY (pinned_message_id)
+    REFERENCES messages(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS message_bookmarks (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  message_id INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_bm (user_id, message_id),
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);

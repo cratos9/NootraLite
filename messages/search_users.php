@@ -14,9 +14,9 @@ try {
     $db = new Database();
     $pdo = $db->connect();
     $stmt = $pdo->prepare(
-        "SELECT id, username AS name FROM users WHERE username LIKE ? AND id != ? LIMIT 10"
+        "SELECT id, COALESCE(username, name) AS name FROM users WHERE (username LIKE ? OR name LIKE ?) AND id != ? LIMIT 10"
     );
-    $stmt->execute(['%' . $q . '%', $uid]);
+    $stmt->execute(['%' . $q . '%', '%' . $q . '%', $uid]);
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['ok' => true, 'users' => $users]);
 } catch (Exception $e) {

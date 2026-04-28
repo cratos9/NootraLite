@@ -24,7 +24,26 @@ try {
     $model->markRead($conv_id, $uid);
     $msgs = $model->getMessages($conv_id);
     $is_online = $model->getOtherUserStatus($conv_id, $uid);
-    echo json_encode(['ok' => true, 'messages' => $msgs, 'is_online' => $is_online]);
+
+    $pinStmt = $pdo->prepare('SELECT pinned_message_id FROM conversations WHERE id = ?');
+    $pinStmt->execute([$conv_id]);
+    $pinnedMsgId = $pinStmt->fetchColumn() ?: null;
+
+    $bmStmt = $pdo->prepare(
+        'SELECT mb.message_id FROM message_bookmarks mb
+         JOIN messages m ON m.id = mb.message_id
+         WHERE mb.user_id = ? AND m.conversation_id = ?'
+    );
+    $bmStmt->execute([$uid, $conv_id]);
+    $bookmarkedIds = array_values(array_map('intval', $bmStmt->fetchAll(PDO::FETCH_COLUMN)));
+
+    echo json_encode([
+        'ok'                => true,
+        'messages'          => $msgs,
+        'is_online'         => $is_online,
+        'pinned_message_id' => $pinnedMsgId ? (int)$pinnedMsgId : null,
+        'bookmarked_ids'    => $bookmarkedIds
+    ]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false, 'error' => 'error al obtener mensajes']);
 }
