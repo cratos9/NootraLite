@@ -117,3 +117,32 @@ h3{
     color: var(--text-primary);
     border-color: var(--accent-pink);
 }
+
+@media screen and (max-width:768px) {
+    main{
+        margin-top: 50px;
+        padding: 10px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .new-book{
+        width: 150px;
+    }
+
+    .books{
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media  screen and (max-width: 480px){
+    main{
+        padding: 10px;
+        padding-bottom: 55px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+}
