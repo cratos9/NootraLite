@@ -75,7 +75,7 @@ function renderMessages(msgs) {
         if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
         if (m.attachment_url) {
             if (m.attachment_type === 'image') {
-                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy">';
+                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
             } else {
                 var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
                 html += '<div class="msg-attachment">';
@@ -596,6 +596,9 @@ chatMessages.addEventListener('click', function(e) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (document.getElementById('forwardSheet').classList.contains('open')) {
+        closeForwardModal(); return;
+    }
     if (document.getElementById('bookmarksDrawer').classList.contains('open')) {
         closeBookmarksDrawer(); return;
     }
@@ -936,6 +939,21 @@ document.getElementById('pinnedBar').addEventListener('click', function(e) {
 });
 document.getElementById('btnCloseBookmarks').addEventListener('click', closeBookmarksDrawer);
 document.getElementById('bookmarksBackdrop').addEventListener('click', closeBookmarksDrawer);
+
+document.getElementById('btnCloseForward').addEventListener('click', closeForwardModal);
+document.getElementById('btnCancelForward').addEventListener('click', closeForwardModal);
+document.getElementById('btnConfirmForward').addEventListener('click', confirmForward);
+document.getElementById('forwardBackdrop').addEventListener('click', closeForwardModal);
+document.getElementById('forwardSearch').addEventListener('input', function() {
+    document.getElementById('fwSearchClear').classList.toggle('visible', this.value.length > 0);
+    renderForwardConvList(conversations);
+});
+document.getElementById('fwSearchClear').addEventListener('click', function() {
+    document.getElementById('forwardSearch').value = '';
+    this.classList.remove('visible');
+    renderForwardConvList(conversations);
+    document.getElementById('forwardSearch').focus();
+});
 
 fetch('../messages/update_last_seen.php', { method: 'POST' });
 setInterval(function() {

@@ -278,6 +278,49 @@
     <div class="bm-list" id="bmList"></div>
 </div>
 
+<div id="forwardBackdrop"></div>
+<div id="forwardSheet" role="dialog" aria-label="Reenviar mensaje">
+    <div class="fw-handle"></div>
+    <div class="fw-header">
+        <div class="fw-header-row">
+            <span class="fw-title">Reenviar mensaje</span>
+            <button class="fw-close-btn" id="btnCloseForward" aria-label="Cerrar">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="fw-msg-preview" id="fwMsgPreview">
+            <div class="fw-msg-preview-icon">
+                <i data-lucide="forward"></i>
+            </div>
+            <div class="fw-msg-preview-text">
+                <span class="fw-msg-preview-label">Mensaje a reenviar</span>
+                <span id="fwMsgPreviewText">—</span>
+            </div>
+        </div>
+    </div>
+    <div class="fw-search-wrap">
+        <i data-lucide="search" class="fw-search-icon"></i>
+        <input type="text" id="forwardSearch" class="fw-search" placeholder="Buscar conversación..." autocomplete="off">
+        <button class="fw-search-clear" id="fwSearchClear" aria-label="Limpiar" tabindex="-1">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="fw-conv-list" id="forwardConvList"></div>
+    <div class="fw-selection-pill-wrap">
+        <div class="fw-selection-pill" id="fwSelectionPill">
+            <span class="fw-pill-dot"></span>
+            <span id="fwSelectionPillText">1 seleccionada</span>
+        </div>
+    </div>
+    <div class="fw-actions">
+        <button class="btn-fw-cancel" id="btnCancelForward">Cancelar</button>
+        <button class="btn-fw-send" id="btnConfirmForward" disabled>
+            <i data-lucide="send"></i>
+            <span id="btnConfirmForwardLabel">Reenviar</span>
+        </button>
+    </div>
+</div>
+
 <script>
 var convData = <?= json_encode($conversations) ?>;
 var currentUid = <?= (int)$uid ?>;
