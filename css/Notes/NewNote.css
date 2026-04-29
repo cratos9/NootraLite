@@ -238,3 +238,28 @@ body.light-mode {
     50% { border-color: #ff00ee; }
     100% { border-color: var(--note-accent); }
 }
+
+@media screen and (max-width:768px) {
+    main{
+        margin-top: 50px;
+        padding: 10px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cancel{
+        width: fit-content;
+    }
+}
+
+@media  screen and (max-width: 480px){
+    main{
+        padding: 10px;
+        padding-bottom: 55px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+}
