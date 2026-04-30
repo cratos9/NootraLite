@@ -16,6 +16,8 @@ var lastMsgId    = 0;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
 var bookmarkedIds = [];
+var selectMode = false;
+var selectedMsgIds = [];
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -72,17 +74,21 @@ function renderMessages(msgs) {
             html += rBodyHtml;
             html += '</div>';
         }
-        if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
-        if (m.attachment_url) {
-            if (m.attachment_type === 'image') {
-                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
-            } else {
-                var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
-                html += '<div class="msg-attachment">';
-                html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
-                html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
-                html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
-                html += '</div></div>';
+        if (parseInt(m.deleted_for_all)) {
+            html += '<div class="msg-deleted">Mensaje eliminado</div>';
+        } else {
+            if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
+            if (m.attachment_url) {
+                if (m.attachment_type === 'image') {
+                    html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
+                } else {
+                    var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
+                    html += '<div class="msg-attachment">';
+                    html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+                    html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
+                    html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
+                    html += '</div></div>';
+                }
             }
         }
         var isBookmarked = bookmarkedIds.indexOf(parseInt(m.id)) >= 0;
@@ -101,6 +107,7 @@ function renderMessages(msgs) {
 }
 
 function openConversation(convId, name) {
+    if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     lastMsgId = 0;
     activeConvId = convId;
@@ -337,6 +344,10 @@ document.getElementById('btnCloseClearChat').addEventListener('click', function(
 document.getElementById('btnCancelClear').addEventListener('click', function() { closeModalAnimated(clearChatModal); });
 clearChatModal.addEventListener('click', function(e) { if (e.target === clearChatModal) closeModalAnimated(clearChatModal); });
 
+document.getElementById('deleteMessageModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModalAnimated(this);
+});
+
 document.getElementById('btnConfirmClear').addEventListener('click', function() {
     closeModalAnimated(clearChatModal);
     var fd = new FormData();
@@ -564,6 +575,14 @@ chatMessages.addEventListener('dblclick', function(e) {
 });
 
 chatMessages.addEventListener('click', function(e) {
+    if (selectMode) {
+        var row = e.target.closest('.msg-row');
+        if (row) {
+            var sid = parseInt(row.dataset.msgId);
+            if (sid) toggleMsgSelection(sid);
+        }
+        return;
+    }
     var btn = e.target.closest('.msg-actions-btn');
     if (btn) {
         e.stopPropagation();
@@ -596,6 +615,9 @@ chatMessages.addEventListener('click', function(e) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (selectMode) { exitSelectMode(); return; }
+    var delMsgModal = document.getElementById('deleteMessageModal');
+    if (delMsgModal && delMsgModal.classList.contains('open')) { closeModalAnimated(delMsgModal); return; }
     if (document.getElementById('forwardSheet').classList.contains('open')) {
         closeForwardModal(); return;
     }
@@ -928,6 +950,100 @@ function renderBookmarkItems(bookmarks) {
         });
     });
 }
+
+function enterSelectMode(initialMsgId) {
+    selectMode = true;
+    selectedMsgIds = [];
+    document.querySelector('.chat-messages').classList.add('select-mode');
+    document.getElementById('selectActionBar').classList.add('visible');
+    if (initialMsgId) toggleMsgSelection(initialMsgId);
+    closeDropdown();
+}
+
+function exitSelectMode() {
+    selectMode = false;
+    selectedMsgIds = [];
+    document.querySelector('.chat-messages').classList.remove('select-mode');
+    document.querySelectorAll('.msg-row.selected').forEach(function(r) { r.classList.remove('selected'); });
+    document.getElementById('selectActionBar').classList.remove('visible');
+}
+
+function toggleMsgSelection(msgId) {
+    var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
+    if (!row) return;
+    var idx = selectedMsgIds.indexOf(msgId);
+    if (idx >= 0) { selectedMsgIds.splice(idx, 1); row.classList.remove('selected'); }
+    else { selectedMsgIds.push(msgId); row.classList.add('selected'); }
+    updateSelectBar();
+}
+
+function updateSelectBar() {
+    var n = selectedMsgIds.length;
+    document.getElementById('selectCount').textContent = n + ' seleccionado' + (n !== 1 ? 's' : '');
+    document.getElementById('btnDeleteSelected').disabled = n === 0;
+    document.getElementById('btnForwardSelected').disabled = n === 0;
+}
+
+function deleteMessagePrompt(msgIds) {
+    var ids = msgIds || selectedMsgIds.slice();
+    if (!ids.length) return;
+    var allMine = ids.every(function(id) {
+        var row = document.querySelector('.msg-row[data-msg-id="' + id + '"]');
+        return row && row.classList.contains('mine');
+    });
+    document.getElementById('btnDelForAll').style.display = allMine ? '' : 'none';
+    document.getElementById('delModalDesc').textContent =
+        ids.length === 1 ? '¿Cómo quieres eliminar este mensaje?' : '¿Cómo quieres eliminar los ' + ids.length + ' mensajes?';
+    var modal = document.getElementById('deleteMessageModal');
+    modal.classList.add('open');
+    lucide.createIcons({ nodes: [modal] });
+    document.getElementById('btnDelForMe').onclick = function() {
+        closeModalAnimated(modal);
+        deleteMessages(ids, 'me');
+    };
+    document.getElementById('btnDelForAll').onclick = function() {
+        closeModalAnimated(modal);
+        deleteMessages(ids, 'all');
+    };
+    document.getElementById('btnCancelDel').onclick = function() { closeModalAnimated(modal); };
+    document.getElementById('btnCloseDel').onclick  = function() { closeModalAnimated(modal); };
+}
+
+function deleteMessages(ids, scope) {
+    Promise.all(ids.map(function(msgId) {
+        var fd = new FormData();
+        fd.append('msg_id', msgId);
+        fd.append('scope', scope);
+        return fetch('../messages/delete_message.php', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+    })).then(function() {
+        ids.forEach(function(msgId) {
+            var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
+            if (!row) return;
+            if (scope === 'me') {
+                row.style.transition = 'opacity 0.2s, transform 0.2s';
+                row.style.opacity = '0';
+                row.style.transform = 'scale(0.9)';
+                setTimeout(function() { if (row.parentNode) row.remove(); }, 220);
+            } else {
+                var bubble = row.querySelector('.msg-bubble');
+                if (bubble) bubble.innerHTML = '<div class="msg-deleted">Mensaje eliminado</div>';
+            }
+        });
+        if (selectMode) exitSelectMode();
+        showToast('Mensaje eliminado', 'success');
+    }).catch(function() { message.error('Error al eliminar'); });
+}
+
+document.getElementById('btnExitSelect').addEventListener('click', exitSelectMode);
+document.getElementById('btnDeleteSelected').addEventListener('click', function() {
+    deleteMessagePrompt(selectedMsgIds.slice());
+});
+document.getElementById('btnForwardSelected').addEventListener('click', function() {
+    if (!selectedMsgIds.length) return;
+    var ids = selectedMsgIds.slice();
+    exitSelectMode();
+    openForwardModal(ids, ids.length + ' mensajes seleccionados');
+});
 
 document.getElementById('btnUnpin').addEventListener('click', function(e) {
     e.stopPropagation();

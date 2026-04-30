@@ -196,7 +196,7 @@ function getHeaderMenuItems() {
     var convReported = reportedItems && reportedItems['conversation:' + activeConvId];
     return [
         { icon: 'bookmark',     label: 'Mensajes destacados',  action: function() { openBookmarksDrawer(); } },
-        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { enterSelectMode(); } },
         { icon: 'bell-off',     label: muted ? 'Activar sonido' : 'Silenciar', action: function() { toggleConvMeta(activeConvId, 'muted'); } },
         { icon: 'user',         label: 'Info contacto',        action: function() { openContactInfo(); } },
         { divider: true },
@@ -228,13 +228,13 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
     ];
     if (isMine) {
         base.push({ icon: 'info',         label: 'Info',        action: function() { message.tip('Próximamente'); } });
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
     } else {
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
         base.push({ icon: 'flag', label: msgReported ? 'Reportado ✓' : 'Reportar', cls: msgReported ? 'reported-done' : '', action: msgReported ? function(){} : function() { openReportModal('message', msgId); } });
     }
     base.push({ divider: true });
-    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { message.tip('Próximamente'); } });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { deleteMessagePrompt([msgId]); } });
     return base;
 }
 
@@ -245,7 +245,9 @@ function openForwardModal(msgId, msgText) {
     document.getElementById('fwSearchClear').classList.remove('visible');
     document.getElementById('btnConfirmForward').disabled = true;
     document.getElementById('btnConfirmForwardLabel').textContent = 'Reenviar';
-    var previewText = msgText || '—';
+    var previewText = Array.isArray(msgId)
+        ? (msgId.length + ' mensajes seleccionados')
+        : (msgText || '—');
     document.getElementById('fwMsgPreviewText').textContent = previewText.length > 60
         ? previewText.substring(0, 60) + '…' : previewText;
     var pill = document.getElementById('fwSelectionPill');
@@ -346,8 +348,8 @@ function renderForwardConvList(convs) {
 }
 
 function confirmForward() {
-    if (!forwardMsgId || forwardTargetConvIds.length === 0) return;
-    var mid   = forwardMsgId;
+    var mids = Array.isArray(forwardMsgId) ? forwardMsgId : (forwardMsgId ? [forwardMsgId] : []);
+    if (!mids.length || forwardTargetConvIds.length === 0) return;
     var tcids = forwardTargetConvIds.slice();
     var names = [];
     conversations.forEach(function(c) {
@@ -357,14 +359,17 @@ function confirmForward() {
     btn.disabled = true;
     btn.classList.add('sending');
     closeForwardModal();
-    var promises = tcids.map(function(tcid) {
-        var fd = new FormData();
-        fd.append('msg_id',         mid);
-        fd.append('target_conv_id', tcid);
-        return fetch('../messages/forward_message.php', { method: 'POST', body: fd })
-            .then(function(r) { return r.json(); });
+    var allPromises = [];
+    mids.forEach(function(mid) {
+        tcids.forEach(function(tcid) {
+            var fd = new FormData();
+            fd.append('msg_id',         mid);
+            fd.append('target_conv_id', tcid);
+            allPromises.push(fetch('../messages/forward_message.php', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); }));
+        });
     });
-    Promise.all(promises).then(function(results) {
+    Promise.all(allPromises).then(function(results) {
         btn.classList.remove('sending');
         var ok = results.every(function(r) { return r.ok; });
         if (ok) {
