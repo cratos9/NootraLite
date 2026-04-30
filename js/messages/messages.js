@@ -1030,7 +1030,7 @@ function deleteMessages(ids, scope) {
             }
         });
         if (selectMode) exitSelectMode();
-        showToast('Mensaje eliminado', 'success');
+        message.success('Mensaje eliminado');
     }).catch(function() { message.error('Error al eliminar'); });
 }
 
