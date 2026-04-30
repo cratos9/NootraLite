@@ -129,6 +129,18 @@
                         <i data-lucide="send"></i>
                     </button>
                 </div>
+
+                <div id="selectActionBar">
+                    <button class="btn-select-exit" id="btnExitSelect" aria-label="Salir"><i data-lucide="x"></i></button>
+                    <span id="selectCount" class="select-count-label">0 seleccionados</span>
+                    <div style="flex:1"></div>
+                    <button class="btn-select-action" id="btnForwardSelected" disabled aria-label="Reenviar">
+                        <i data-lucide="forward"></i>
+                    </button>
+                    <button class="btn-select-action danger" id="btnDeleteSelected" disabled aria-label="Eliminar">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -248,6 +260,24 @@
                 <i data-lucide="trash-2"></i>
                 Eliminar conversación
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- modal eliminar mensaje -->
+<div class="modal-backdrop" id="deleteMessageModal">
+    <div class="modal-box">
+        <button class="btn-modal-close" id="btnCloseDel" aria-label="Cerrar"><i data-lucide="x"></i></button>
+        <h3 class="cc-title">Eliminar mensaje</h3>
+        <p class="cc-desc" id="delModalDesc">¿Cómo quieres eliminar este mensaje?</p>
+        <div class="cc-actions" style="flex-direction:column;gap:8px">
+            <button class="btn-cc-confirm" id="btnDelForAll">
+                <i data-lucide="users"></i> Para todos
+            </button>
+            <button class="btn-cc-cancel" id="btnDelForMe">
+                Solo para mí
+            </button>
+            <button class="btn-modal-link" id="btnCancelDel">Cancelar</button>
         </div>
     </div>
 </div>
