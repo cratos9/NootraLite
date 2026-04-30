@@ -22,7 +22,7 @@ try {
     $model = new MessageModel($pdo);
     // marcar como leidos al abrir
     $model->markRead($conv_id, $uid);
-    $msgs = $model->getMessages($conv_id);
+    $msgs = $model->getMessages($conv_id, $uid);
     $is_online = $model->getOtherUserStatus($conv_id, $uid);
 
     $pinStmt = $pdo->prepare('SELECT pinned_message_id FROM conversations WHERE id = ?');

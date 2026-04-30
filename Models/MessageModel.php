@@ -34,19 +34,23 @@ class MessageModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getMessages($conv_id) {
+    public function getMessages($conv_id, $uid) {
         $stmt = $this->db->prepare(
             'SELECT m.id, m.conversation_id, m.sender_id, m.body,
                     m.attachment_url, m.attachment_type, m.is_read, m.created_at,
                     m.reply_to_id,
                     r.body AS reply_body,
                     r.sender_id AS reply_sender_id,
-                    r.attachment_type AS reply_attachment_type
+                    r.attachment_type AS reply_attachment_type,
+                    CASE WHEN m.deleted_for_sender = 1 AND m.deleted_for_receiver = 1 THEN 1 ELSE 0 END AS deleted_for_all
              FROM messages m
              LEFT JOIN messages r ON r.id = m.reply_to_id
-             WHERE m.conversation_id = ? ORDER BY m.created_at ASC'
+             WHERE m.conversation_id = ?
+               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1 AND m.deleted_for_receiver = 0)
+               AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_sender = 0)
+             ORDER BY m.created_at ASC'
         );
-        $stmt->execute([$conv_id]);
+        $stmt->execute([$conv_id, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
