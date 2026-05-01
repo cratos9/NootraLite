@@ -129,6 +129,18 @@
                         <i data-lucide="send"></i>
                     </button>
                 </div>
+
+                <div id="selectActionBar">
+                    <button class="btn-select-exit" id="btnExitSelect" aria-label="Salir"><i data-lucide="x"></i></button>
+                    <span id="selectCount" class="select-count-label">0 seleccionados</span>
+                    <div style="flex:1"></div>
+                    <button class="btn-select-action" id="btnForwardSelected" disabled aria-label="Reenviar">
+                        <i data-lucide="forward"></i>
+                    </button>
+                    <button class="btn-select-action danger" id="btnDeleteSelected" disabled aria-label="Eliminar">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -252,6 +264,31 @@
     </div>
 </div>
 
+<!-- modal eliminar mensaje -->
+<div class="modal-backdrop" id="deleteMessageModal">
+    <div class="modal-box clear-chat-box del-msg-box">
+        <button class="btn-modal-close cc-close-btn" id="btnCloseDel" aria-label="Cerrar"><i data-lucide="x"></i></button>
+        <div class="cc-icon-wrap">
+            <div class="cc-icon-inner">
+                <i data-lucide="trash-2"></i>
+            </div>
+        </div>
+        <h3 class="cc-title">Eliminar mensaje</h3>
+        <p class="cc-desc" id="delModalDesc">¿Cómo quieres eliminar este mensaje?</p>
+        <div class="cc-alert">
+            <i data-lucide="alert-triangle"></i>
+            <span>Esta acción es irreversible y no se puede deshacer</span>
+        </div>
+        <div class="cc-actions">
+            <button class="btn-cc-confirm" id="btnDelForAll">
+                <i data-lucide="users"></i> Eliminar para todos
+            </button>
+            <button class="btn-cc-cancel" id="btnDelForMe">Solo para mí</button>
+            <button class="btn-modal-link" id="btnCancelDel">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <!-- modal nueva conversación -->
 <div class="modal-backdrop" id="newConvBackdrop">
     <div class="modal-box">
@@ -278,8 +315,51 @@
     <div class="bm-list" id="bmList"></div>
 </div>
 
+<div id="forwardBackdrop"></div>
+<div id="forwardSheet" role="dialog" aria-label="Reenviar mensaje">
+    <div class="fw-handle"></div>
+    <div class="fw-header">
+        <div class="fw-header-row">
+            <span class="fw-title">Reenviar mensaje</span>
+            <button class="fw-close-btn" id="btnCloseForward" aria-label="Cerrar">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="fw-msg-preview" id="fwMsgPreview">
+            <div class="fw-msg-preview-icon">
+                <i data-lucide="forward"></i>
+            </div>
+            <div class="fw-msg-preview-text">
+                <span class="fw-msg-preview-label">Mensaje a reenviar</span>
+                <span id="fwMsgPreviewText">—</span>
+            </div>
+        </div>
+    </div>
+    <div class="fw-search-wrap">
+        <i data-lucide="search" class="fw-search-icon"></i>
+        <input type="text" id="forwardSearch" class="fw-search" placeholder="Buscar conversación..." autocomplete="off">
+        <button class="fw-search-clear" id="fwSearchClear" aria-label="Limpiar" tabindex="-1">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="fw-conv-list" id="forwardConvList"></div>
+    <div class="fw-selection-pill-wrap">
+        <div class="fw-selection-pill" id="fwSelectionPill">
+            <span class="fw-pill-dot"></span>
+            <span id="fwSelectionPillText">1 seleccionada</span>
+        </div>
+    </div>
+    <div class="fw-actions">
+        <button class="btn-fw-cancel" id="btnCancelForward">Cancelar</button>
+        <button class="btn-fw-send" id="btnConfirmForward" disabled>
+            <i data-lucide="send"></i>
+            <span id="btnConfirmForwardLabel">Reenviar</span>
+        </button>
+    </div>
+</div>
+
 <script>
-var convData = <?= json_encode($conversations) ?>;
+var convData = <?= json_encode($conversations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var currentUid = <?= (int)$uid ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>

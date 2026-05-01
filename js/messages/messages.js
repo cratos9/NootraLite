@@ -16,6 +16,8 @@ var lastMsgId    = 0;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
 var bookmarkedIds = [];
+var selectMode = false;
+var selectedMsgIds = [];
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -72,17 +74,21 @@ function renderMessages(msgs) {
             html += rBodyHtml;
             html += '</div>';
         }
-        if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
-        if (m.attachment_url) {
-            if (m.attachment_type === 'image') {
-                html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy">';
-            } else {
-                var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
-                html += '<div class="msg-attachment">';
-                html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
-                html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
-                html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
-                html += '</div></div>';
+        if (parseInt(m.deleted_for_all)) {
+            html += '<div class="msg-deleted">Mensaje eliminado</div>';
+        } else {
+            if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
+            if (m.attachment_url) {
+                if (m.attachment_type === 'image') {
+                    html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
+                } else {
+                    var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
+                    html += '<div class="msg-attachment">';
+                    html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
+                    html += '<div class="att-info"><div class="att-name">' + escapeHtml(fname) + '</div>';
+                    html += '<a class="att-size" href="' + m.attachment_url + '" target="_blank">Descargar</a>';
+                    html += '</div></div>';
+                }
             }
         }
         var isBookmarked = bookmarkedIds.indexOf(parseInt(m.id)) >= 0;
@@ -101,6 +107,7 @@ function renderMessages(msgs) {
 }
 
 function openConversation(convId, name) {
+    if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     lastMsgId = 0;
     activeConvId = convId;
@@ -337,6 +344,10 @@ document.getElementById('btnCloseClearChat').addEventListener('click', function(
 document.getElementById('btnCancelClear').addEventListener('click', function() { closeModalAnimated(clearChatModal); });
 clearChatModal.addEventListener('click', function(e) { if (e.target === clearChatModal) closeModalAnimated(clearChatModal); });
 
+document.getElementById('deleteMessageModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModalAnimated(this);
+});
+
 document.getElementById('btnConfirmClear').addEventListener('click', function() {
     closeModalAnimated(clearChatModal);
     var fd = new FormData();
@@ -564,6 +575,14 @@ chatMessages.addEventListener('dblclick', function(e) {
 });
 
 chatMessages.addEventListener('click', function(e) {
+    if (selectMode) {
+        var row = e.target.closest('.msg-row');
+        if (row) {
+            var sid = parseInt(row.dataset.msgId);
+            if (sid) toggleMsgSelection(sid);
+        }
+        return;
+    }
     var btn = e.target.closest('.msg-actions-btn');
     if (btn) {
         e.stopPropagation();
@@ -596,6 +615,12 @@ chatMessages.addEventListener('click', function(e) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
+    if (selectMode) { exitSelectMode(); return; }
+    var delMsgModal = document.getElementById('deleteMessageModal');
+    if (delMsgModal && delMsgModal.classList.contains('open')) { closeModalAnimated(delMsgModal); return; }
+    if (document.getElementById('forwardSheet').classList.contains('open')) {
+        closeForwardModal(); return;
+    }
     if (document.getElementById('bookmarksDrawer').classList.contains('open')) {
         closeBookmarksDrawer(); return;
     }
@@ -926,6 +951,145 @@ function renderBookmarkItems(bookmarks) {
     });
 }
 
+function enterSelectMode(initialMsgId) {
+    selectMode = true;
+    selectedMsgIds = [];
+    var chatEl = document.querySelector('.chat-messages');
+    chatEl.classList.add('select-mode');
+
+    var rows = chatEl.querySelectorAll('.msg-row');
+    rows.forEach(function(row, i) {
+        row.style.setProperty('--check-delay', Math.min(i, 8) * 18 + 'ms');
+    });
+
+    var bar = document.getElementById('selectActionBar');
+    bar.classList.remove('hiding');
+    bar.classList.add('visible');
+
+    if (initialMsgId) toggleMsgSelection(initialMsgId);
+    closeDropdown();
+}
+
+function exitSelectMode() {
+    selectMode = false;
+    selectedMsgIds = [];
+    var chatEl = document.querySelector('.chat-messages');
+    chatEl.classList.add('select-mode-out');
+
+    var bar = document.getElementById('selectActionBar');
+    bar.classList.add('hiding');
+
+    bar.addEventListener('animationend', function handler() {
+        bar.classList.remove('visible', 'hiding');
+        bar.removeEventListener('animationend', handler);
+    });
+
+    setTimeout(function() {
+        chatEl.classList.remove('select-mode', 'select-mode-out');
+        chatEl.querySelectorAll('.msg-row').forEach(function(r) {
+            r.classList.remove('selected');
+            r.style.removeProperty('--check-delay');
+            var icon = r.querySelector('.msg-check-icon');
+            if (icon) icon.remove();
+        });
+    }, 160);
+}
+
+function toggleMsgSelection(msgId) {
+    var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
+    if (!row) return;
+    var idx = selectedMsgIds.indexOf(msgId);
+    if (idx >= 0) {
+        selectedMsgIds.splice(idx, 1);
+        row.classList.remove('selected');
+        var icon = row.querySelector('.msg-check-icon');
+        if (icon) icon.remove();
+    } else {
+        selectedMsgIds.push(msgId);
+        row.classList.add('selected');
+        var icon = document.createElement('i');
+        icon.setAttribute('data-lucide', 'check');
+        icon.className = 'msg-check-icon';
+        row.appendChild(icon);
+        lucide.createIcons({ nodes: [row] });
+        row.classList.remove('select-bounce');
+        void row.offsetWidth;
+        row.classList.add('select-bounce');
+        setTimeout(function() { row.classList.remove('select-bounce'); }, 200);
+    }
+    updateSelectBar();
+}
+
+function updateSelectBar() {
+    var n = selectedMsgIds.length;
+    document.getElementById('selectCount').textContent = n + ' seleccionado' + (n !== 1 ? 's' : '');
+    document.getElementById('btnDeleteSelected').disabled = n === 0;
+    document.getElementById('btnForwardSelected').disabled = n === 0;
+}
+
+function deleteMessagePrompt(msgIds) {
+    var ids = msgIds || selectedMsgIds.slice();
+    if (!ids.length) return;
+    var allMine = ids.every(function(id) {
+        var row = document.querySelector('.msg-row[data-msg-id="' + id + '"]');
+        return row && row.classList.contains('mine');
+    });
+    document.getElementById('btnDelForAll').style.display = allMine ? '' : 'none';
+    document.getElementById('delModalDesc').textContent =
+        ids.length === 1 ? '¿Cómo quieres eliminar este mensaje?' : '¿Cómo quieres eliminar los ' + ids.length + ' mensajes?';
+    var modal = document.getElementById('deleteMessageModal');
+    modal.classList.add('open');
+    lucide.createIcons({ nodes: [modal] });
+    document.getElementById('btnDelForMe').onclick = function() {
+        closeModalAnimated(modal);
+        deleteMessages(ids, 'me');
+    };
+    document.getElementById('btnDelForAll').onclick = function() {
+        closeModalAnimated(modal);
+        deleteMessages(ids, 'all');
+    };
+    document.getElementById('btnCancelDel').onclick = function() { closeModalAnimated(modal); };
+    document.getElementById('btnCloseDel').onclick  = function() { closeModalAnimated(modal); };
+}
+
+function deleteMessages(ids, scope) {
+    Promise.all(ids.map(function(msgId) {
+        var fd = new FormData();
+        fd.append('msg_id', msgId);
+        fd.append('scope', scope);
+        return fetch('../messages/delete_message.php', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+    })).then(function() {
+        ids.forEach(function(msgId) {
+            var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
+            if (!row) return;
+            if (scope === 'me' || scope === 'all') {
+                row.style.height = row.offsetHeight + 'px';
+                row.style.overflow = 'hidden';
+                row.style.transition = 'height 0.25s ease, opacity 0.2s, margin-bottom 0.25s';
+                requestAnimationFrame(function() {
+                    row.style.height = '0';
+                    row.style.opacity = '0';
+                    row.style.marginBottom = '0';
+                });
+                setTimeout(function() { if (row.parentNode) row.remove(); }, 270);
+            }
+        });
+        if (selectMode) exitSelectMode();
+        message.success('Mensaje eliminado');
+    }).catch(function() { message.error('Error al eliminar'); });
+}
+
+document.getElementById('btnExitSelect').addEventListener('click', exitSelectMode);
+document.getElementById('btnDeleteSelected').addEventListener('click', function() {
+    deleteMessagePrompt(selectedMsgIds.slice());
+});
+document.getElementById('btnForwardSelected').addEventListener('click', function() {
+    if (!selectedMsgIds.length) return;
+    var ids = selectedMsgIds.slice();
+    exitSelectMode();
+    openForwardModal(ids, ids.length + ' mensajes seleccionados');
+});
+
 document.getElementById('btnUnpin').addEventListener('click', function(e) {
     e.stopPropagation();
     unpinMessage();
@@ -936,6 +1100,21 @@ document.getElementById('pinnedBar').addEventListener('click', function(e) {
 });
 document.getElementById('btnCloseBookmarks').addEventListener('click', closeBookmarksDrawer);
 document.getElementById('bookmarksBackdrop').addEventListener('click', closeBookmarksDrawer);
+
+document.getElementById('btnCloseForward').addEventListener('click', closeForwardModal);
+document.getElementById('btnCancelForward').addEventListener('click', closeForwardModal);
+document.getElementById('btnConfirmForward').addEventListener('click', confirmForward);
+document.getElementById('forwardBackdrop').addEventListener('click', closeForwardModal);
+document.getElementById('forwardSearch').addEventListener('input', function() {
+    document.getElementById('fwSearchClear').classList.toggle('visible', this.value.length > 0);
+    renderForwardConvList(conversations);
+});
+document.getElementById('fwSearchClear').addEventListener('click', function() {
+    document.getElementById('forwardSearch').value = '';
+    this.classList.remove('visible');
+    renderForwardConvList(conversations);
+    document.getElementById('forwardSearch').focus();
+});
 
 fetch('../messages/update_last_seen.php', { method: 'POST' });
 setInterval(function() {

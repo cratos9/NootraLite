@@ -16,6 +16,9 @@ var msgDropdown = document.createElement('div');
 msgDropdown.className = 'msg-dropdown';
 document.body.appendChild(msgDropdown);
 
+var forwardMsgId = null;
+var forwardTargetConvIds = [];
+
 function activateReply(msgId, body, senderName) {
     replyToId = msgId; replyToBody = body; replyToSender = senderName;
     replyBarSender.textContent = senderName;
@@ -193,7 +196,7 @@ function getHeaderMenuItems() {
     var convReported = reportedItems && reportedItems['conversation:' + activeConvId];
     return [
         { icon: 'bookmark',     label: 'Mensajes destacados',  action: function() { openBookmarksDrawer(); } },
-        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { message.tip('Próximamente'); } },
+        { icon: 'check-square', label: 'Seleccionar mensajes', action: function() { enterSelectMode(); } },
         { icon: 'bell-off',     label: muted ? 'Activar sonido' : 'Silenciar', action: function() { toggleConvMeta(activeConvId, 'muted'); } },
         { icon: 'user',         label: 'Info contacto',        action: function() { openContactInfo(); } },
         { divider: true },
@@ -216,7 +219,7 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
     var base = [
         { icon: 'reply',    label: 'Responder', action: function() { activateReply(msgId, text, senderName); } },
         copy,
-        { icon: 'forward',  label: 'Reenviar',  action: function() { message.tip('Próximamente'); } },
+        { icon: 'forward',  label: 'Reenviar',  action: function() { openForwardModal(msgId, text); } },
         { icon: 'pin',      label: isThisPinned ? 'Desfijar' : 'Fijar',
           action: isThisPinned ? function() { unpinMessage(); } : function() { pinMessage(msgId); } },
         { icon: 'bookmark', label: isBookmarked ? 'Quitar destacado' : 'Destacar',
@@ -225,14 +228,163 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
     ];
     if (isMine) {
         base.push({ icon: 'info',         label: 'Info',        action: function() { message.tip('Próximamente'); } });
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
     } else {
-        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
         base.push({ icon: 'flag', label: msgReported ? 'Reportado ✓' : 'Reportar', cls: msgReported ? 'reported-done' : '', action: msgReported ? function(){} : function() { openReportModal('message', msgId); } });
     }
     base.push({ divider: true });
-    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { message.tip('Próximamente'); } });
+    base.push({ icon: 'trash-2', label: 'Eliminar', cls: 'danger', action: function() { deleteMessagePrompt([msgId]); } });
     return base;
+}
+
+function openForwardModal(msgId, msgText) {
+    forwardMsgId = msgId;
+    forwardTargetConvIds = [];
+    document.getElementById('forwardSearch').value = '';
+    document.getElementById('fwSearchClear').classList.remove('visible');
+    document.getElementById('btnConfirmForward').disabled = true;
+    document.getElementById('btnConfirmForwardLabel').textContent = 'Reenviar';
+    var previewText = Array.isArray(msgId)
+        ? (msgId.length + ' mensajes seleccionados')
+        : (msgText || '—');
+    document.getElementById('fwMsgPreviewText').textContent = previewText.length > 60
+        ? previewText.substring(0, 60) + '…' : previewText;
+    var pill = document.getElementById('fwSelectionPill');
+    pill.classList.remove('visible', 'hiding');
+    renderForwardConvList(conversations);
+    document.getElementById('forwardBackdrop').classList.add('open');
+    document.getElementById('forwardSheet').classList.add('open');
+    setTimeout(function() { document.getElementById('forwardSearch').focus(); }, 320);
+}
+
+function closeForwardModal() {
+    document.getElementById('forwardSheet').classList.remove('open');
+    document.getElementById('forwardBackdrop').classList.remove('open');
+    forwardMsgId = null;
+    forwardTargetConvIds = [];
+}
+
+function updateFwSelectionPill(n) {
+    var pill = document.getElementById('fwSelectionPill');
+    var btn  = document.getElementById('btnConfirmForward');
+    btn.disabled = n === 0;
+    document.getElementById('btnConfirmForwardLabel').textContent = n > 1 ? 'Reenviar (' + n + ')' : 'Reenviar';
+    if (n === 0) {
+        if (pill.classList.contains('visible')) {
+            pill.classList.add('hiding');
+            pill.addEventListener('animationend', function h() {
+                pill.removeEventListener('animationend', h);
+                pill.classList.remove('visible', 'hiding');
+            });
+        }
+    } else {
+        document.getElementById('fwSelectionPillText').textContent =
+            n === 1 ? '1 seleccionada' : n + ' seleccionadas';
+        if (!pill.classList.contains('visible')) {
+            pill.classList.add('visible');
+        }
+    }
+}
+
+function renderForwardConvList(convs) {
+    var list = document.getElementById('forwardConvList');
+    var q    = (document.getElementById('forwardSearch').value || '').toLowerCase().trim();
+    var filtered = convs.filter(function(c) {
+        return !q || ((c.other_name || '').toLowerCase().indexOf(q) >= 0);
+    });
+    if (filtered.length === 0) {
+        var isSearch = q.length > 0;
+        list.innerHTML = '<div class="fw-empty">'
+            + '<div class="fw-empty-icon"><i data-lucide="' + (isSearch ? 'search-x' : 'message-circle') + '"></i></div>'
+            + '<span class="fw-empty-title">' + (isSearch ? 'Sin resultados' : 'No hay conversaciones') + '</span>'
+            + '<span class="fw-empty-sub">' + (isSearch ? 'Intenta con otro nombre' : 'Inicia una conversación primero') + '</span>'
+            + '</div>';
+        lucide.createIcons({ nodes: [list] });
+        return;
+    }
+    list.innerHTML = '';
+    filtered.forEach(function(c, i) {
+        var name    = c.other_name || 'Usuario';
+        var ini     = initials(name);
+        var col     = avatarColor(name);
+        var last    = c.last_message ? escapeHtml(c.last_message).substring(0, 35) + (c.last_message.length > 35 ? '…' : '') : '';
+        var isSelected = forwardTargetConvIds.indexOf(parseInt(c.id)) >= 0;
+        var item = document.createElement('div');
+        item.className = 'fw-conv-item' + (isSelected ? ' selected' : '');
+        item.dataset.convId = c.id;
+        item.style.animationDelay = (i * 20) + 'ms';
+        item.innerHTML = '<div class="fw-conv-avatar" style="background:' + col + '">' + ini + '</div>'
+            + '<div class="fw-conv-info">'
+            +   '<span class="fw-conv-name">' + escapeHtml(name) + '</span>'
+            +   (last ? '<span class="fw-conv-last">' + last + '</span>' : '')
+            + '</div>'
+            + '<div class="fw-check-indicator' + (isSelected ? ' anim-in' : '') + '"><i data-lucide="check"></i></div>';
+        item.addEventListener('click', function() {
+            var cid = parseInt(c.id);
+            var idx = forwardTargetConvIds.indexOf(cid);
+            var ind = item.querySelector('.fw-check-indicator');
+            if (idx >= 0) {
+                forwardTargetConvIds.splice(idx, 1);
+                ind.classList.remove('anim-in');
+                ind.classList.add('anim-out');
+                ind.addEventListener('animationend', function h() {
+                    ind.removeEventListener('animationend', h);
+                    ind.classList.remove('anim-out');
+                    item.classList.remove('selected');
+                });
+            } else {
+                forwardTargetConvIds.push(cid);
+                item.classList.add('selected');
+                ind.classList.remove('anim-out');
+                ind.classList.add('anim-in');
+                lucide.createIcons({ nodes: [item] });
+            }
+            updateFwSelectionPill(forwardTargetConvIds.length);
+        });
+        list.appendChild(item);
+    });
+    lucide.createIcons({ nodes: [list] });
+}
+
+function confirmForward() {
+    var mids = Array.isArray(forwardMsgId) ? forwardMsgId : (forwardMsgId ? [forwardMsgId] : []);
+    if (!mids.length || forwardTargetConvIds.length === 0) return;
+    var tcids = forwardTargetConvIds.slice();
+    var names = [];
+    conversations.forEach(function(c) {
+        if (tcids.indexOf(parseInt(c.id)) >= 0) names.push(c.other_name || 'Usuario');
+    });
+    var btn = document.getElementById('btnConfirmForward');
+    btn.disabled = true;
+    btn.classList.add('sending');
+    closeForwardModal();
+    var allPromises = [];
+    mids.forEach(function(mid) {
+        tcids.forEach(function(tcid) {
+            var fd = new FormData();
+            fd.append('msg_id',         mid);
+            fd.append('target_conv_id', tcid);
+            allPromises.push(fetch('../messages/forward_message.php', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); }));
+        });
+    });
+    Promise.all(allPromises).then(function(results) {
+        btn.classList.remove('sending');
+        var ok = results.every(function(r) { return r.ok; });
+        if (ok) {
+            var toast = tcids.length === 1
+                ? 'Reenviado a ' + names[0]
+                : 'Reenviado a ' + tcids.length + ' conversaciones';
+            message.success(toast);
+            loadConversations();
+        } else {
+            message.error('Algunos reenvíos fallaron');
+        }
+    }).catch(function() {
+        btn.classList.remove('sending');
+        message.error('Error al reenviar');
+    });
 }
 
 function closeChatPanel() {

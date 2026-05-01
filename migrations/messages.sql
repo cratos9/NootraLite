@@ -73,3 +73,8 @@ CREATE TABLE IF NOT EXISTS message_bookmarks (
   UNIQUE KEY unique_bm (user_id, message_id),
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
 );
+
+# Eliminar mensaje para mí / para todos, 30/04/2026
+ALTER TABLE messages
+  ADD COLUMN deleted_for_sender   TINYINT(1) DEFAULT 0,
+  ADD COLUMN deleted_for_receiver TINYINT(1) DEFAULT 0;
