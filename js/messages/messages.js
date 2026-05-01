@@ -6,6 +6,8 @@ var activeConvName = null;
 var msgInput = document.getElementById('msgInput');
 var btnSend  = document.getElementById('btnSend');
 
+var currentMsgs = [];
+
 var pendingAttUrl  = null;
 var pendingAttType = null;
 var pendingAttName = null;
@@ -18,6 +20,7 @@ var pinnedMsgId   = null;
 var bookmarkedIds = [];
 var selectMode = false;
 var selectedMsgIds = [];
+var typingThrottle = null;
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -32,6 +35,7 @@ function getBubbleText(bubble) {
 }
 
 function renderMessages(msgs) {
+    currentMsgs = msgs || [];
     if (!msgs || msgs.length === 0) {
         chatMessages.innerHTML = '<div class="msgs-empty"><i data-lucide="message-circle-dashed"></i><p>No hay mensajes aún</p></div>';
         lucide.createIcons();
@@ -107,6 +111,8 @@ function renderMessages(msgs) {
 }
 
 function openConversation(convId, name) {
+    setTypingIndicator(false);
+    typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     lastMsgId = 0;
@@ -204,6 +210,9 @@ function pollMessages() {
         .then(function(res) {
             if (!res.ok) return;
             if (res.is_online !== undefined) updateStatusUI(res.is_online);
+            if (typeof res.other_typing !== 'undefined') {
+                setTypingIndicator(res.other_typing);
+            }
             if (!res.messages || !res.messages.length) return;
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
@@ -540,6 +549,15 @@ document.getElementById('btnConfirmDeleteConv').addEventListener('click', functi
 
 btnSend.addEventListener('click', sendMessage);
 msgInput.addEventListener('keydown', function(e) {
+    if (!activeConvId || typingThrottle) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        return;
+    }
+    fetch('../messages/typing.php', {
+        method: 'POST',
+        body: new URLSearchParams({ conv_id: activeConvId })
+    });
+    typingThrottle = setTimeout(function() { typingThrottle = null; }, 2000);
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
@@ -559,7 +577,8 @@ chatMessages.addEventListener('contextmenu', function(e) {
     var text = getBubbleText(bubble);
     var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
     var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-    openDropdown(bubble, getMsgMenuItems(isMine, text, msgId, senderName));
+    var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+    openDropdown(bubble, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
     posDropdownAt(e.clientX, e.clientY);
 });
 
@@ -592,7 +611,8 @@ chatMessages.addEventListener('click', function(e) {
         var text = getBubbleText(bubble);
         var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
         var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-        openDropdown(btn, getMsgMenuItems(isMine, text, msgId, senderName));
+        var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+        openDropdown(btn, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
         return;
     }
     var preview = e.target.closest('.reply-preview');
@@ -638,6 +658,7 @@ document.addEventListener('keydown', function(e) {
     if (reportModal.classList.contains('open'))        { closeModalAnimated(reportModal);        return; }
     if (contactInfoModal.classList.contains('open'))   { closeModalAnimated(contactInfoModal);   return; }
     if (deleteConvModal.classList.contains('open'))    { closeModalAnimated(deleteConvModal);    return; }
+    if (document.getElementById('infoModal').classList.contains('open')) { closeInfoModal(); return; }
     if (attachPopup.classList.contains('show'))       { closeAttachPopup();                    return; }
     if (replyBar.style.display !== 'none')            { cancelReply();                         return; }
     if (msgDropdown.classList.contains('show'))        { closeDropdown();                       return; }
@@ -1122,6 +1143,64 @@ setInterval(function() {
 }, 30000);
 
 setInterval(loadConversations, 10000);
+
+function openInfoModal(msg) {
+    var date = new Date(msg.created_at);
+    var formatted = date.toLocaleDateString('es-MX', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    }) + ', ' + date.toLocaleTimeString('es-MX', {
+        hour: '2-digit', minute: '2-digit'
+    });
+    var diff = Math.floor((Date.now() - date.getTime()) / 60000);
+    var relative = diff < 1    ? 'ahora mismo'
+                 : diff < 60   ? 'hace ' + diff + ' min'
+                 : diff < 1440 ? 'hace ' + Math.floor(diff / 60) + ' h'
+                 :               'hace ' + Math.floor(diff / 1440) + ' días';
+    var isRead = parseInt(msg.is_read) === 1;
+    var preview = '';
+    if (msg.body) {
+        preview = escapeHtml(msg.body).substring(0, 140);
+    } else if (msg.attachment_type === 'image')    { preview = '📷 Imagen'; }
+    else if (msg.attachment_type === 'file')        { preview = '📎 Archivo'; }
+    else if (msg.attachment_type === 'location')    { preview = '📍 Ubicación'; }
+    else if (msg.attachment_type === 'audio')       { preview = '🎵 Audio'; }
+    else if (msg.attachment_type === 'contact')     { preview = '👤 Contacto'; }
+    document.getElementById('infoMsgPreview').textContent = preview;
+    document.getElementById('infoDate').textContent = formatted;
+    document.getElementById('infoRelative').textContent = relative;
+    var statusIcon = document.getElementById('infoStatusIcon');
+    var statusText = document.getElementById('infoStatusText');
+    if (isRead) {
+        statusIcon.classList.add('read');
+        statusText.textContent = 'Leído ✓✓';
+        statusText.classList.add('read');
+    } else {
+        statusIcon.classList.remove('read');
+        statusText.textContent = 'Enviado ✓';
+        statusText.classList.remove('read');
+    }
+    var modal = document.getElementById('infoModal');
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    lucide.createIcons({ nodes: [modal] });
+}
+
+function closeInfoModal() {
+    var modal = document.getElementById('infoModal');
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+}
+
+function setTypingIndicator(active) {
+    var el = document.getElementById('typingIndicator');
+    if (!el) return;
+    if (active) {
+        el.classList.add('visible');
+        scrollToBottom();
+    } else {
+        el.classList.remove('visible');
+    }
+}
 
 renderConvList('');
 lucide.createIcons();

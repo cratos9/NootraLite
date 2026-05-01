@@ -78,3 +78,8 @@ CREATE TABLE IF NOT EXISTS message_bookmarks (
 ALTER TABLE messages
   ADD COLUMN deleted_for_sender   TINYINT(1) DEFAULT 0,
   ADD COLUMN deleted_for_receiver TINYINT(1) DEFAULT 0;
+
+# Columnas typing para indicador escribiendo..., 01/05/2026
+ALTER TABLE conversations
+  ADD COLUMN typing_u1_at DATETIME NULL,
+  ADD COLUMN typing_u2_at DATETIME NULL;

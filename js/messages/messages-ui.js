@@ -209,7 +209,7 @@ function getHeaderMenuItems() {
     ];
 }
 
-function getMsgMenuItems(isMine, text, msgId, senderName) {
+function getMsgMenuItems(isMine, text, msgId, senderName, msg) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
         navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
@@ -227,7 +227,7 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
         { divider: true }
     ];
     if (isMine) {
-        base.push({ icon: 'info',         label: 'Info',        action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'info',         label: 'Info',        action: function() { if (msg) openInfoModal(msg); } });
         base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
     } else {
         base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
@@ -388,6 +388,8 @@ function confirmForward() {
 }
 
 function closeChatPanel() {
+    setTypingIndicator(false);
+    typingThrottle = null;
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     activeConvId = null;
     convList.querySelectorAll('.conv-item').forEach(function(el) {
@@ -443,7 +445,8 @@ chatMessages.addEventListener('touchstart', function(e) {
         var text = srcBub ? getBubbleText(srcBub) : '';
         var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
         var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-        openDropdown(srcBub, getMsgMenuItems(isMine, text, msgId, senderName));
+        var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+        openDropdown(srcBub, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
         posDropdownAt(longPressX, longPressY);
     }, 500);
 }, { passive: true });

@@ -78,6 +78,13 @@
                         <i data-lucide="x"></i>
                     </button>
                 </div>
+                <div id="typingIndicator" class="typing-indicator-wrap">
+                  <div class="typing-bubble">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                  </div>
+                </div>
                 <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="reply-bar" id="replyBar" style="display:none">
@@ -287,6 +294,36 @@
             <button class="btn-modal-link" id="btnCancelDel">Cancelar</button>
         </div>
     </div>
+</div>
+
+<!-- modal info mensaje -->
+<div id="infoModal" class="modal-overlay" style="display:none">
+  <div class="info-box">
+    <button class="info-close-btn btn-icon" onclick="closeInfoModal()" aria-label="Cerrar">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="info-msg-preview" id="infoMsgPreview"></div>
+    <div class="info-body">
+      <div class="info-row">
+        <i data-lucide="clock" class="info-row-icon"></i>
+        <div class="info-row-content">
+          <span class="info-label">Enviado</span>
+          <span class="info-date" id="infoDate"></span>
+          <span class="info-relative" id="infoRelative"></span>
+        </div>
+      </div>
+      <div class="info-row">
+        <i data-lucide="check-check" class="info-row-icon" id="infoStatusIcon"></i>
+        <div class="info-row-content">
+          <span class="info-label">Estado</span>
+          <span class="info-status-text" id="infoStatusText"></span>
+        </div>
+      </div>
+    </div>
+    <div class="info-footer">
+      <button class="btn-info-close" onclick="closeInfoModal()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- modal nueva conversación -->
