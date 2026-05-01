@@ -78,13 +78,6 @@
                         <i data-lucide="x"></i>
                     </button>
                 </div>
-                <div id="typingIndicator" class="typing-indicator-wrap">
-                  <div class="typing-bubble">
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                  </div>
-                </div>
                 <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="reply-bar" id="replyBar" style="display:none">
