@@ -473,12 +473,16 @@
     }
 }
 
-@media (max-width: 540px){
+@media (max-width: 768px){
     .ia-card{
         width: 100vw;
         border-radius: 0;
     }
-
+    
+    .ia-header{
+        margin-left: 50px;
+    }
+    
     @keyframes slideIn {
         from {
             left: 100%;
@@ -487,7 +491,7 @@
             left: 0;
         }
     }
-
+    
     @keyframes slideOut {
         from {
             left: 0;
@@ -495,6 +499,15 @@
         to {
             left: 100%;
         }
+    }
+}
+
+@media  screen and (max-width: 480px){
+    .ia-header{
+        margin-left: 0;
+    }
+    .ia-card{
+        height: 95dvh;
     }
 }
 

@@ -91,3 +91,37 @@ label{
     background-color: var(--accent-purple);
     color: var(--text-primary);
 }
+
+@media screen and (max-width:768px) {
+    main{
+        margin-top: 50px;
+        padding: 10px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cancel{
+        width: 125px;
+        text-align: center;
+    }
+
+    .input-field{
+        width: 100%;
+    }
+
+    #color.input-field{
+        width: 100%;
+    }
+}
+
+@media  screen and (max-width: 480px){
+    main{
+        padding: 10px;
+        margin: 0;
+        padding-bottom: 55px;
+        display: flex;
+        flex-direction: column;
+    }
+
+}

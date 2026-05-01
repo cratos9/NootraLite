@@ -35,6 +35,7 @@
             <h1><?= htmlspecialchars($noteTitle) ?></h1><br>
             <hr><br>
             <article class="note-preview"><?= $noteContent ?></article>
+            <br>
         </main>
 
         <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
