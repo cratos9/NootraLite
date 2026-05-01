@@ -14,6 +14,7 @@ var pendingAttName = null;
 var pendingAttSize = 0;
 
 var pollInterval = null;
+var typingPollInterval = null;
 var lastMsgId    = 0;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
@@ -115,6 +116,7 @@ function openConversation(convId, name) {
     typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
     lastMsgId = 0;
     activeConvId = convId;
     activeConvName = name;
@@ -196,6 +198,8 @@ function openConversation(convId, name) {
             updateStatusUI(res.is_online);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
             pollInterval = setInterval(pollMessages, 5000);
+            if (typingPollInterval) clearInterval(typingPollInterval);
+            typingPollInterval = setInterval(pollTyping, 500);
             lucide.createIcons();
         })
         .catch(function() {
@@ -210,21 +214,35 @@ function pollMessages() {
         .then(function(res) {
             if (!res.ok) return;
             if (res.is_online !== undefined) updateStatusUI(res.is_online);
-            if (typeof res.other_typing !== 'undefined') {
-                setTypingIndicator(res.other_typing);
+            if (!res.messages || !res.messages.length) {
+                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                return;
             }
-            if (!res.messages || !res.messages.length) return;
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
-            if (newestId <= lastMsgId) return;
+            if (newestId <= lastMsgId) {
+                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                return;
+            }
             lastMsgId = newestId;
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
+            if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
             if (wasAtBottom) scrollToBottom();
             loadConversations();
             var fd = new FormData();
             fd.append('conv_id', activeConvId);
             fetch('../messages/mark_read.php', { method: 'POST', body: fd });
+        })
+        .catch(function() {});
+}
+
+function pollTyping() {
+    if (!activeConvId) return;
+    fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.ok) setTypingIndicator(res.other_typing);
         })
         .catch(function() {});
 }
@@ -557,7 +575,7 @@ msgInput.addEventListener('keydown', function(e) {
         method: 'POST',
         body: new URLSearchParams({ conv_id: activeConvId })
     });
-    typingThrottle = setTimeout(function() { typingThrottle = null; }, 2000);
+    typingThrottle = setTimeout(function() { typingThrottle = null; }, 1000);
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
@@ -1147,7 +1165,7 @@ setInterval(loadConversations, 10000);
 function openInfoModal(msg) {
     var date = new Date(msg.created_at);
     var formatted = date.toLocaleDateString('es-MX', {
-        day: 'numeric', month: 'short', year: 'numeric'
+        day: 'numeric', month: 'long', year: 'numeric'
     }) + ', ' + date.toLocaleTimeString('es-MX', {
         hour: '2-digit', minute: '2-digit'
     });
@@ -1157,48 +1175,76 @@ function openInfoModal(msg) {
                  : diff < 1440 ? 'hace ' + Math.floor(diff / 60) + ' h'
                  :               'hace ' + Math.floor(diff / 1440) + ' días';
     var isRead = parseInt(msg.is_read) === 1;
+
     var preview = '';
     if (msg.body) {
-        preview = escapeHtml(msg.body).substring(0, 140);
-    } else if (msg.attachment_type === 'image')    { preview = '📷 Imagen'; }
-    else if (msg.attachment_type === 'file')        { preview = '📎 Archivo'; }
-    else if (msg.attachment_type === 'location')    { preview = '📍 Ubicación'; }
-    else if (msg.attachment_type === 'audio')       { preview = '🎵 Audio'; }
-    else if (msg.attachment_type === 'contact')     { preview = '👤 Contacto'; }
+        preview = msg.body.substring(0, 140) + (msg.body.length > 140 ? '…' : '');
+    } else if (msg.attachment_type === 'image')    { preview = 'Imagen adjunta'; }
+    else if (msg.attachment_type === 'file')        { preview = 'Archivo adjunto'; }
+    else if (msg.attachment_type === 'location')    { preview = 'Ubicación compartida'; }
+    else if (msg.attachment_type === 'audio')       { preview = 'Mensaje de audio'; }
+    else if (msg.attachment_type === 'contact')     { preview = 'Contacto compartido'; }
+
+    var typeMap = {
+        'image':    { icon: 'image',     label: 'Imagen' },
+        'file':     { icon: 'paperclip', label: 'Archivo' },
+        'audio':    { icon: 'music',     label: 'Audio' },
+        'location': { icon: 'map-pin',   label: 'Ubicación' },
+        'contact':  { icon: 'user',      label: 'Contacto' }
+    };
+    var typeInfo = (msg.attachment_type && typeMap[msg.attachment_type])
+        ? typeMap[msg.attachment_type]
+        : { icon: 'message-square', label: 'Texto' };
+
     document.getElementById('infoMsgPreview').textContent = preview;
     document.getElementById('infoDate').textContent = formatted;
     document.getElementById('infoRelative').textContent = relative;
-    var statusIcon = document.getElementById('infoStatusIcon');
-    var statusText = document.getElementById('infoStatusText');
+
+    var statusIconWrap = document.getElementById('infoStatusIconWrap');
+    var statusText     = document.getElementById('infoStatusText');
     if (isRead) {
-        statusIcon.classList.add('read');
-        statusText.textContent = 'Leído ✓✓';
+        statusIconWrap.classList.add('read');
+        statusText.textContent = 'Leído';
         statusText.classList.add('read');
     } else {
-        statusIcon.classList.remove('read');
-        statusText.textContent = 'Enviado ✓';
+        statusIconWrap.classList.remove('read');
+        statusText.textContent = 'Enviado';
         statusText.classList.remove('read');
     }
+
+    var typeIconWrap = document.getElementById('infoTypeIconWrap');
+    var typeIcon     = document.getElementById('infoTypeIcon');
+    var typeText     = document.getElementById('infoTypeText');
+    typeIcon.setAttribute('data-lucide', typeInfo.icon);
+    typeText.textContent = typeInfo.label;
+    typeIconWrap.className = 'info-row-icon-wrap';
+
     var modal = document.getElementById('infoModal');
-    modal.style.display = 'flex';
     modal.classList.add('open');
     lucide.createIcons({ nodes: [modal] });
 }
 
 function closeInfoModal() {
-    var modal = document.getElementById('infoModal');
-    modal.classList.remove('open');
-    modal.style.display = 'none';
+    closeModalAnimated(document.getElementById('infoModal'));
 }
+document.getElementById('btnCloseInfo').addEventListener('click', closeInfoModal);
+document.getElementById('btnCloseInfo2').addEventListener('click', closeInfoModal);
+document.getElementById('infoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeInfoModal();
+});
 
 function setTypingIndicator(active) {
-    var el = document.getElementById('typingIndicator');
-    if (!el) return;
+    var existing = chatMessages.querySelector('.typing-indicator-row');
     if (active) {
-        el.classList.add('visible');
-        scrollToBottom();
+        if (!existing) {
+            var el = document.createElement('div');
+            el.className = 'typing-indicator-row';
+            el.innerHTML = '<div class="typing-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+            chatMessages.appendChild(el);
+            scrollToBottom();
+        }
     } else {
-        el.classList.remove('visible');
+        if (existing) existing.remove();
     }
 }
 

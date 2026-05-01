@@ -297,31 +297,49 @@
 </div>
 
 <!-- modal info mensaje -->
-<div id="infoModal" class="modal-overlay" style="display:none">
-  <div class="info-box">
-    <button class="info-close-btn btn-icon" onclick="closeInfoModal()" aria-label="Cerrar">
+<div id="infoModal" class="modal-backdrop">
+  <div class="modal-box info-box">
+    <div class="info-handle"></div>
+    <button class="btn-modal-close info-close-btn" id="btnCloseInfo" aria-label="Cerrar">
       <i data-lucide="x"></i>
     </button>
-    <div class="info-msg-preview" id="infoMsgPreview"></div>
+    <div class="info-header">
+      <div class="info-icon-wrap">
+        <i data-lucide="info"></i>
+      </div>
+      <span class="info-title">Información</span>
+    </div>
+    <div class="info-preview" id="infoMsgPreview"></div>
     <div class="info-body">
-      <div class="info-row">
-        <i data-lucide="clock" class="info-row-icon"></i>
+      <div class="info-row" id="infoRowDate">
+        <div class="info-row-icon-wrap"><i data-lucide="clock"></i></div>
         <div class="info-row-content">
           <span class="info-label">Enviado</span>
           <span class="info-date" id="infoDate"></span>
           <span class="info-relative" id="infoRelative"></span>
         </div>
       </div>
-      <div class="info-row">
-        <i data-lucide="check-check" class="info-row-icon" id="infoStatusIcon"></i>
+      <div class="info-row" id="infoRowStatus">
+        <div class="info-row-icon-wrap" id="infoStatusIconWrap">
+          <i data-lucide="check-check" id="infoStatusIcon"></i>
+        </div>
         <div class="info-row-content">
           <span class="info-label">Estado</span>
           <span class="info-status-text" id="infoStatusText"></span>
         </div>
       </div>
+      <div class="info-row" id="infoRowType">
+        <div class="info-row-icon-wrap" id="infoTypeIconWrap">
+          <i data-lucide="message-square" id="infoTypeIcon"></i>
+        </div>
+        <div class="info-row-content">
+          <span class="info-label">Tipo</span>
+          <span class="info-type-text" id="infoTypeText"></span>
+        </div>
+      </div>
     </div>
     <div class="info-footer">
-      <button class="btn-info-close" onclick="closeInfoModal()">Cerrar</button>
+      <button class="btn-info-close" id="btnCloseInfo2">Cerrar</button>
     </div>
   </div>
 </div>
