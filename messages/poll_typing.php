@@ -11,7 +11,7 @@ $conv_id = (int)($_GET['conv_id'] ?? 0);
 if (!$conv_id) { echo json_encode(['ok' => false]); exit; }
 
 $db  = new Database();
-$pdo = $db->getConnection();
+$pdo = $db->connect();
 
 $stmt = $pdo->prepare(
     'SELECT IF(user1_id = ?,
