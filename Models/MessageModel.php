@@ -24,13 +24,17 @@ class MessageModel {
                         WHERE blocker_id = ? AND blocked_id = u.id)                AS is_blocked
                 FROM conversations c
                 LEFT JOIN messages m ON m.id = (
-                    SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1
+                    SELECT id FROM messages
+                    WHERE conversation_id = c.id
+                      AND NOT (sender_id = ? AND deleted_for_sender = 1)
+                      AND NOT (sender_id != ? AND deleted_for_receiver = 1 AND deleted_for_sender = 0)
+                    ORDER BY created_at DESC LIMIT 1
                 )
                 LEFT JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
                 WHERE c.user1_id = ? OR c.user2_id = ?
                 ORDER BY last_time DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
+        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -46,7 +50,7 @@ class MessageModel {
              FROM messages m
              LEFT JOIN messages r ON r.id = m.reply_to_id
              WHERE m.conversation_id = ?
-               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1 AND m.deleted_for_receiver = 0)
+               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1)
                AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_sender = 0)
              ORDER BY m.created_at ASC'
         );

@@ -6,7 +6,7 @@ $msg_id = intval($_POST['msg_id'] ?? 0);
 $scope  = $_POST['scope'] ?? 'me';
 if (!$msg_id) { echo json_encode(['ok' => false]); exit; }
 
-$db = Database::getInstance()->getConnection();
+$db = (new Database())->connect();
 
 if ($scope === 'me') {
     $m = $db->prepare('SELECT sender_id FROM messages WHERE id = ?');
