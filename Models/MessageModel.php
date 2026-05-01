@@ -13,7 +13,7 @@ class MessageModel {
                        m.body AS last_msg, m.created_at AS last_time,
                        COALESCE(u.username, u.name) AS other_name,
                        u.id   AS other_user_id,
-                       IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online,
+                       IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
                         WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread,
                        IF(c.user1_id = ?, c.is_favorite_u1, c.is_favorite_u2)     AS is_favorite,
@@ -92,7 +92,7 @@ class MessageModel {
     // retorna is_online (1/0) del otro usuario en una conv
     public function getOtherUserStatus($conv_id, $uid) {
         $stmt = $this->db->prepare(
-            'SELECT IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online
+            'SELECT IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online
              FROM conversations c
              JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
              WHERE c.id = ?'

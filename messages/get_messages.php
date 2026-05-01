@@ -26,6 +26,14 @@ try {
     $msgs = $model->getMessages($conv_id, $uid);
     $is_online = $model->getOtherUserStatus($conv_id, $uid);
 
+    $lsStmt = $pdo->prepare(
+        'SELECT u.last_seen FROM conversations c
+         JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
+         WHERE c.id = ?'
+    );
+    $lsStmt->execute([$uid, $conv_id]);
+    $otherLastSeen = $lsStmt->fetchColumn() ?: null;
+
     $pinStmt = $pdo->prepare('SELECT pinned_message_id FROM conversations WHERE id = ?');
     $pinStmt->execute([$conv_id]);
     $pinnedMsgId = $pinStmt->fetchColumn() ?: null;
@@ -52,6 +60,7 @@ try {
         'ok'                => true,
         'messages'          => $msgs,
         'is_online'         => $is_online,
+        'last_seen'         => $otherLastSeen,
         'pinned_message_id' => $pinnedMsgId ? (int)$pinnedMsgId : null,
         'bookmarked_ids'    => $bookmarkedIds,
         'other_typing'      => $otherTyping
