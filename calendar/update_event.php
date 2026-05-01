@@ -20,6 +20,9 @@ if (!$id || $title === '' || $date === '') {
     exit;
 }
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+$uid = $_SESSION['user']['id'] ?? 1;
+
 $start_dt = $date . ' ' . ($all_day || $time === '' ? '00:00:00' : $time . ':00');
 
 try {
@@ -27,7 +30,7 @@ try {
     $pdo = $database->connect();
     $model = new EventModel($pdo);
 
-    $ok = $model->update($id, 1, $title, $start_dt, $all_day, $color);
+    $ok = $model->update($id, $uid, $title, $start_dt, $all_day, $color);
 
     if (!$ok) {
         echo json_encode(['ok' => false, 'error' => 'no se pudo actualizar']);
