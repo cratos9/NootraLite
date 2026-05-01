@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once '../Models/MessageModel.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $conv_id = (int)($_POST['conv_id'] ?? 0);
-$uid = 1;
+$uid = $_SESSION['user']['id'] ?? 1;
 
 if (!$conv_id) {
     echo json_encode(['ok' => false]);

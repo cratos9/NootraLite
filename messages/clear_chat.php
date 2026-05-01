@@ -1,7 +1,7 @@
 <?php
 require_once '../config/db.php';
 session_start();
-$uid     = $_SESSION['user_id'] ?? 1;
+$uid     = $_SESSION['user']['id'] ?? 1;
 $conv_id = intval($_POST['conv_id'] ?? 0);
 $db      = (new Database())->connect();
 $check   = $db->prepare("SELECT id FROM conversations WHERE id = ? AND (user1_id = ? OR user2_id = ?)");

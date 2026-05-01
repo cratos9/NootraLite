@@ -1,7 +1,7 @@
 <?php
 require_once '../config/db.php';
 session_start();
-$uid    = $_SESSION['user_id'] ?? 1;
+$uid    = $_SESSION['user']['id'] ?? 1;
 $target = intval($_GET['user_id'] ?? 0);
 if (!$target) { echo json_encode(['ok' => false]); exit; }
 $db   = Database::getInstance()->getConnection();

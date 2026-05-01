@@ -8,8 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+if (session_status() === PHP_SESSION_NONE) session_start();
 $other_id = (int)($_POST['user_id'] ?? 0);
-$uid = 1;
+$uid = $_SESSION['user']['id'] ?? 1;
 
 if (!$other_id || $other_id === $uid) {
     echo json_encode(['ok' => false, 'error' => 'usuario inválido']);

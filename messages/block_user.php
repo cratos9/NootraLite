@@ -1,10 +1,11 @@
 <?php
 require_once '../config/db.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['ok' => false]); exit; }
 
-$uid    = 1;
+$uid    = $_SESSION['user']['id'] ?? 1;
 $tid    = (int)($_POST['target_id'] ?? 0);
 $action = $_POST['action'] ?? 'block'; // block | unblock
 

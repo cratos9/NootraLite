@@ -1,8 +1,9 @@
 <?php
 require_once '../config/db.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
-$uid     = 1;
+$uid     = $_SESSION['user']['id'] ?? 1;
 $conv_id = (int)($_POST['conv_id'] ?? 0);
 $action  = $_POST['action'] ?? 'pin';
 $msg_id  = (int)($_POST['msg_id'] ?? 0);

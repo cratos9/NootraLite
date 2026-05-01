@@ -1,7 +1,7 @@
 <?php
 require_once '../config/db.php';
 session_start();
-$uid    = $_SESSION['user_id'] ?? 1;
+$uid    = $_SESSION['user']['id'] ?? 1;
 $msg_id = intval($_POST['msg_id'] ?? 0);
 $scope  = $_POST['scope'] ?? 'me';
 if (!$msg_id) { echo json_encode(['ok' => false]); exit; }

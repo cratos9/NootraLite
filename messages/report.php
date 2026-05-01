@@ -1,7 +1,7 @@
 <?php
 require_once '../config/db.php';
 session_start();
-$uid    = $_SESSION['user_id'] ?? 1;
+$uid    = $_SESSION['user']['id'] ?? 1;
 $type   = in_array($_POST['target_type'] ?? '', ['message', 'conversation']) ? $_POST['target_type'] : null;
 $tid    = intval($_POST['target_id'] ?? 0);
 $reason = trim(substr($_POST['reason'] ?? '', 0, 255));
