@@ -1848,18 +1848,40 @@ body { height: 100vh; overflow: hidden; }
 /* ── select mode ── */
 .msg-row { position: relative; }
 
+@keyframes selectBarIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes selectBarOut {
+    from { transform: translateY(0);    opacity: 1; }
+    to   { transform: translateY(100%); opacity: 0; }
+}
+
 #selectActionBar {
     display: none;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border);
+    padding: 11px 14px;
+    background: color-mix(in srgb, var(--bg-secondary) 96%, var(--accent-purple) 4%);
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(135deg,#7c3aed,#ec4899) 1;
     flex-shrink: 0;
 }
-#selectActionBar.visible { display: flex; }
+#selectActionBar.visible {
+    display: flex;
+    animation: selectBarIn 0.22s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+#selectActionBar.hiding {
+    animation: selectBarOut 0.18s cubic-bezier(0.4,0,0.2,1) forwards;
+}
 
-.select-count-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.select-count-label {
+    font-size: 14px; font-weight: 700;
+    background: linear-gradient(135deg,#7c3aed,#ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
 .btn-select-exit {
     width: 32px; height: 32px; border-radius: 50%;
@@ -1872,15 +1894,15 @@ body { height: 100vh; overflow: hidden; }
 .btn-select-exit i { width: 14px; height: 14px; }
 
 .btn-select-action {
-    width: 36px; height: 36px; border-radius: 8px;
+    width: 40px; height: 40px; border-radius: 9px;
     background: var(--bg-tertiary); border: 1px solid var(--border);
     color: var(--text-secondary); cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, transform 0.12s;
 }
-.btn-select-action i { width: 15px; height: 15px; }
-.btn-select-action:not(:disabled):hover { background: rgba(124,58,237,0.15); color: var(--accent-purple); }
-.btn-select-action.danger:not(:disabled):hover { background: rgba(239,68,68,0.12); color: var(--danger); }
+.btn-select-action i { width: 16px; height: 16px; }
+.btn-select-action:not(:disabled):hover { background: rgba(124,58,237,0.15); color: var(--accent-purple); transform: scale(1.06); }
+.btn-select-action.danger:not(:disabled):hover { background: rgba(239,68,68,0.12); color: var(--danger); transform: scale(1.06); }
 .btn-select-action:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .chat-messages.select-mode .msg-row {
@@ -1901,7 +1923,8 @@ body { height: 100vh; overflow: hidden; }
     border: 2px solid var(--border);
     background: var(--bg-tertiary);
     transition: background 0.15s, border-color 0.15s;
-    animation: checkIn 0.18s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    animation: checkIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation-delay: var(--check-delay, 0ms);
     z-index: 1;
 }
 .chat-messages.select-mode .msg-row.mine::before {
@@ -1914,15 +1937,52 @@ body { height: 100vh; overflow: hidden; }
     to   { transform: translateY(-50%) scale(1); opacity: 1; }
 }
 
+@keyframes checkOut {
+    from { transform: translateY(-50%) scale(1); opacity: 1; }
+    to   { transform: translateY(-50%) scale(0); opacity: 0; }
+}
+
+.chat-messages.select-mode-out .msg-row::before {
+    animation: checkOut 0.14s ease forwards;
+    animation-delay: var(--check-delay, 0ms);
+}
+
+@keyframes msgSelectPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.035); }
+    100% { transform: scale(1); }
+}
+
+.msg-row.select-bounce .msg-bubble {
+    animation: msgSelectPop 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+
 .chat-messages.select-mode .msg-row.selected::before {
     background: var(--accent-purple);
     border-color: var(--accent-purple);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
-    background-size: 13px; background-repeat: no-repeat; background-position: center;
 }
+
+.msg-check-icon {
+    position: absolute;
+    top: 50%; left: 8px;
+    width: 20px; height: 20px;
+    transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    z-index: 2;
+    pointer-events: none;
+}
+.msg-row.mine .msg-check-icon { left: auto; right: 8px; }
+.msg-check-icon svg { width: 13px; height: 13px; }
 
 .chat-messages.select-mode .msg-row:hover::before {
     border-color: var(--accent-purple);
+}
+
+.chat-messages.select-mode .msg-row.selected {
+    background: rgba(124,58,237,0.07);
+    border-radius: 10px;
+    transition: background 0.15s;
 }
 
 /* burbuja eliminada */
@@ -1950,8 +2010,10 @@ body { height: 100vh; overflow: hidden; }
 .btn-modal-link:hover { color: var(--text-primary); }
 
 /* light mode — select mode */
-.light-mode #selectActionBar { background: #fff; border-color: #e2e8f0; }
+.light-mode #selectActionBar { background: #f8f6ff; }
 .light-mode .btn-select-exit { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
 .light-mode .btn-select-action { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
 .light-mode .chat-messages.select-mode .msg-row::before { background: #f1f5f9; border-color: #cbd5e1; }
+.light-mode .chat-messages.select-mode .msg-row.selected::before { background: var(--accent-purple); border-color: var(--accent-purple); }
+.light-mode .chat-messages.select-mode .msg-row.selected { background: rgba(124,58,237,0.05); }
 .light-mode .msg-deleted { background: #f1f5f9; border-color: #e2e8f0; }

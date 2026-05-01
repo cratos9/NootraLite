@@ -266,17 +266,24 @@
 
 <!-- modal eliminar mensaje -->
 <div class="modal-backdrop" id="deleteMessageModal">
-    <div class="modal-box">
-        <button class="btn-modal-close" id="btnCloseDel" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    <div class="modal-box clear-chat-box del-msg-box">
+        <button class="btn-modal-close cc-close-btn" id="btnCloseDel" aria-label="Cerrar"><i data-lucide="x"></i></button>
+        <div class="cc-icon-wrap">
+            <div class="cc-icon-inner">
+                <i data-lucide="trash-2"></i>
+            </div>
+        </div>
         <h3 class="cc-title">Eliminar mensaje</h3>
         <p class="cc-desc" id="delModalDesc">¿Cómo quieres eliminar este mensaje?</p>
-        <div class="cc-actions" style="flex-direction:column;gap:8px">
+        <div class="cc-alert">
+            <i data-lucide="alert-triangle"></i>
+            <span>Esta acción es irreversible y no se puede deshacer</span>
+        </div>
+        <div class="cc-actions">
             <button class="btn-cc-confirm" id="btnDelForAll">
-                <i data-lucide="users"></i> Para todos
+                <i data-lucide="users"></i> Eliminar para todos
             </button>
-            <button class="btn-cc-cancel" id="btnDelForMe">
-                Solo para mí
-            </button>
+            <button class="btn-cc-cancel" id="btnDelForMe">Solo para mí</button>
             <button class="btn-modal-link" id="btnCancelDel">Cancelar</button>
         </div>
     </div>

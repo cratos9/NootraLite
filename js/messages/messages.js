@@ -954,8 +954,18 @@ function renderBookmarkItems(bookmarks) {
 function enterSelectMode(initialMsgId) {
     selectMode = true;
     selectedMsgIds = [];
-    document.querySelector('.chat-messages').classList.add('select-mode');
-    document.getElementById('selectActionBar').classList.add('visible');
+    var chatEl = document.querySelector('.chat-messages');
+    chatEl.classList.add('select-mode');
+
+    var rows = chatEl.querySelectorAll('.msg-row');
+    rows.forEach(function(row, i) {
+        row.style.setProperty('--check-delay', Math.min(i, 8) * 18 + 'ms');
+    });
+
+    var bar = document.getElementById('selectActionBar');
+    bar.classList.remove('hiding');
+    bar.classList.add('visible');
+
     if (initialMsgId) toggleMsgSelection(initialMsgId);
     closeDropdown();
 }
@@ -963,17 +973,50 @@ function enterSelectMode(initialMsgId) {
 function exitSelectMode() {
     selectMode = false;
     selectedMsgIds = [];
-    document.querySelector('.chat-messages').classList.remove('select-mode');
-    document.querySelectorAll('.msg-row.selected').forEach(function(r) { r.classList.remove('selected'); });
-    document.getElementById('selectActionBar').classList.remove('visible');
+    var chatEl = document.querySelector('.chat-messages');
+    chatEl.classList.add('select-mode-out');
+
+    var bar = document.getElementById('selectActionBar');
+    bar.classList.add('hiding');
+
+    bar.addEventListener('animationend', function handler() {
+        bar.classList.remove('visible', 'hiding');
+        bar.removeEventListener('animationend', handler);
+    });
+
+    setTimeout(function() {
+        chatEl.classList.remove('select-mode', 'select-mode-out');
+        chatEl.querySelectorAll('.msg-row').forEach(function(r) {
+            r.classList.remove('selected');
+            r.style.removeProperty('--check-delay');
+            var icon = r.querySelector('.msg-check-icon');
+            if (icon) icon.remove();
+        });
+    }, 160);
 }
 
 function toggleMsgSelection(msgId) {
     var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
     if (!row) return;
     var idx = selectedMsgIds.indexOf(msgId);
-    if (idx >= 0) { selectedMsgIds.splice(idx, 1); row.classList.remove('selected'); }
-    else { selectedMsgIds.push(msgId); row.classList.add('selected'); }
+    if (idx >= 0) {
+        selectedMsgIds.splice(idx, 1);
+        row.classList.remove('selected');
+        var icon = row.querySelector('.msg-check-icon');
+        if (icon) icon.remove();
+    } else {
+        selectedMsgIds.push(msgId);
+        row.classList.add('selected');
+        var icon = document.createElement('i');
+        icon.setAttribute('data-lucide', 'check');
+        icon.className = 'msg-check-icon';
+        row.appendChild(icon);
+        lucide.createIcons({ nodes: [row] });
+        row.classList.remove('select-bounce');
+        void row.offsetWidth;
+        row.classList.add('select-bounce');
+        setTimeout(function() { row.classList.remove('select-bounce'); }, 200);
+    }
     updateSelectBar();
 }
 
@@ -1019,14 +1062,16 @@ function deleteMessages(ids, scope) {
         ids.forEach(function(msgId) {
             var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
             if (!row) return;
-            if (scope === 'me') {
-                row.style.transition = 'opacity 0.2s, transform 0.2s';
-                row.style.opacity = '0';
-                row.style.transform = 'scale(0.9)';
-                setTimeout(function() { if (row.parentNode) row.remove(); }, 220);
-            } else {
-                var bubble = row.querySelector('.msg-bubble');
-                if (bubble) bubble.innerHTML = '<div class="msg-deleted">Mensaje eliminado</div>';
+            if (scope === 'me' || scope === 'all') {
+                row.style.height = row.offsetHeight + 'px';
+                row.style.overflow = 'hidden';
+                row.style.transition = 'height 0.25s ease, opacity 0.2s, margin-bottom 0.25s';
+                requestAnimationFrame(function() {
+                    row.style.height = '0';
+                    row.style.opacity = '0';
+                    row.style.marginBottom = '0';
+                });
+                setTimeout(function() { if (row.parentNode) row.remove(); }, 270);
             }
         });
         if (selectMode) exitSelectMode();
