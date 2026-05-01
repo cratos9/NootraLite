@@ -1,7 +1,7 @@
 <?php
 require_once '../config/db.php';
-session_start();
-$uid   = $_SESSION['user_id'] ?? 1;
+if (session_status() === PHP_SESSION_NONE) session_start();
+$uid   = $_SESSION['user']['id'] ?? 1;
 $ev_id = intval($_POST['event_id'] ?? 0);
 $done  = intval($_POST['done'] ?? 0);
 $db    = (new Database())->connect();

@@ -6,11 +6,11 @@ $activePage = 'calendar';
 include '../includes/sidebar.php';
 
 
+if (session_status() === PHP_SESSION_NONE) session_start();
 $database = new Database();
 $pdo = $database->connect();
 
-// por ahora user_id fijo hasta que haya sesion
-$uid = 1;
+$uid = $_SESSION['user']['id'] ?? 1;
 $model = new EventModel($pdo);
 $rows = $model->getAll($uid);
 

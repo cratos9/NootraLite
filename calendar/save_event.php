@@ -8,6 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+$uid = $_SESSION['user']['id'] ?? 1;
+
 $title   = trim($_POST['title'] ?? '');
 $date    = trim($_POST['date'] ?? '');
 $time    = trim($_POST['time'] ?? '');
@@ -31,7 +34,7 @@ try {
     $pdo = $database->connect();
     $model = new EventModel($pdo);
 
-    $newId = $model->create(1, $title, $start_dt, $all_day, $color);
+    $newId = $model->create($uid, $title, $start_dt, $all_day, $color);
 
     $dt = new DateTime($start_dt);
     echo json_encode([

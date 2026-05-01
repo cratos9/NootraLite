@@ -15,12 +15,15 @@ if ($id <= 0) {
   exit;
 }
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+$uid = $_SESSION['user']['id'] ?? 1;
+
 try {
     $database = new Database();
     $pdo = $database->connect();
     $model = new EventModel($pdo);
 
-    $model->delete($id, 1);
+    $model->delete($id, $uid);
     echo json_encode(['ok' => true]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false, 'error' => 'error al eliminar']);
