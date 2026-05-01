@@ -224,7 +224,7 @@
             <div class="ci-name" id="contactInfoName"></div>
             <div class="ci-status-row">
                 <span class="ci-status-dot" id="contactInfoDot"></span>
-                <span class="ci-status-text" id="contactInfoStatus">Cargando...</span>
+                <span class="ci-status-text" id="contactInfoStatus"></span>
             </div>
         </div>
         <div class="ci-divider"></div>
