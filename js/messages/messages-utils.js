@@ -1,9 +1,6 @@
-function avatarColor(name) {
-    var colors = ['#7c3aed','#ec4899','#2563eb','#059669','#d97706','#dc2626'];
-    var i = 0;
-    if (name) for (var c = 0; c < name.length; c++) i += name.charCodeAt(c);
-    return colors[i % colors.length];
-}
+var _avColors = ['#7c3aed','#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#3b82f6','#8b5cf6'];
+function _avHash(n) { var i=0; if(n) for(var c=0;c<n.length;c++) i+=n.charCodeAt(c); return i; }
+function avatarColor(name) { return _avColors[_avHash(name) % _avColors.length]; }
 
 function initials(name) {
     if (!name) return '?';
