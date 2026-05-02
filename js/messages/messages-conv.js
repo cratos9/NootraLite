@@ -103,7 +103,11 @@ function renderConvList(filter) {
         html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
         html += '<div class="conv-name">' + escapeHtml(name) + (flags ? '<span class="conv-flags">' + flags + '</span>' : '') + '</div>';
-        html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
+        if (c.is_typing == 1) {
+            html += '<div class="conv-last conv-typing"><span class="conv-typing-dots"><span></span><span></span><span></span></span><span>Escribiendo...</span></div>';
+        } else {
+            html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
+        }
         html += '</div>';
         html += '<div class="conv-meta">';
         if (time) html += '<span class="conv-time">' + time + '</span>';
@@ -147,6 +151,41 @@ convList.addEventListener('contextmenu', function(e) {
 convSearch.addEventListener('input', function() {
     renderConvList(this.value);
 });
+
+var convTypingActive = {};
+
+function pollConvTyping() {
+    fetch('../messages/poll_conv_typing.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) return;
+            var newTyping = {};
+            res.typing.forEach(function(id) { newTyping[id] = true; });
+
+            document.querySelectorAll('#convList .conv-item').forEach(function(el) {
+                var id = parseInt(el.getAttribute('data-id'));
+                var lastEl = el.querySelector('.conv-last');
+                if (!lastEl) return;
+
+                if (newTyping[id] && !convTypingActive[id]) {
+                    lastEl.className = 'conv-last conv-typing';
+                    lastEl.innerHTML = '<span class="conv-typing-dots"><span></span><span></span><span></span></span><span>Escribiendo...</span>';
+                } else if (!newTyping[id] && convTypingActive[id]) {
+                    var conv = null;
+                    for (var i = 0; i < conversations.length; i++) {
+                        if (conversations[i].id == id) { conv = conversations[i]; break; }
+                    }
+                    var txt = conv && conv.last_msg ? conv.last_msg.slice(0, 36) + (conv.last_msg.length > 36 ? '…' : '') : 'Sin mensajes';
+                    lastEl.className = 'conv-last';
+                    lastEl.textContent = txt;
+                }
+            });
+            convTypingActive = newTyping;
+        })
+        .catch(function() {});
+}
+
+setInterval(pollConvTyping, 500);
 
 document.querySelectorAll('.filter-chip').forEach(function(chip) {
     chip.addEventListener('click', function() {
@@ -224,24 +263,40 @@ document.querySelector('[data-ncp="search"]').addEventListener('click', function
     ncpScreen1.style.display = 'none';
     ncpScreen2.style.display = '';
     document.getElementById('ncpTitle').textContent = 'Buscar usuario';
+    ncpUserSearch.value = '';
+    ncpResults.innerHTML = '<div class="ncp-hint"><i data-lucide="user-round-search"></i><span>Escribe para buscar</span></div>';
+    lucide.createIcons({ nodes: [ncpResults] });
     setTimeout(function() { ncpUserSearch.focus(); }, 50);
 });
 
 ncpUserSearch.addEventListener('input', function() {
     clearTimeout(ncpTimer);
     var q = this.value.trim();
-    if (q.length < 2) { ncpResults.innerHTML = ''; return; }
+    if (q.length < 2) {
+        ncpResults.innerHTML = '<div class="ncp-hint"><i data-lucide="user-round-search"></i><span>Escribe para buscar</span></div>';
+        lucide.createIcons({ nodes: [ncpResults] });
+        return;
+    }
+    ncpResults.innerHTML = '<div class="ncp-loading"><span></span><span></span><span></span></div>';
     ncpTimer = setTimeout(function() {
         fetch('../messages/search_users.php?q=' + encodeURIComponent(q))
             .then(function(r) { return r.json(); })
             .then(function(res) {
                 if (!res.ok || !res.users.length) {
-                    ncpResults.innerHTML = '<div class="ncp-user-item" style="color:var(--text-muted)">Sin resultados</div>';
+                    ncpResults.innerHTML = '<div class="ncp-hint"><i data-lucide="user-x"></i><span>Sin resultados para "' + escapeHtml(q) + '"</span></div>';
+                    lucide.createIcons({ nodes: [ncpResults] });
                     return;
                 }
-                ncpResults.innerHTML = res.users.map(function(u) {
-                    return '<div class="ncp-user-item" data-uid="' + u.id + '">' + escapeHtml(u.name) + '</div>';
+                ncpResults.innerHTML = res.users.map(function(u, idx) {
+                    var col = avatarColor(u.name);
+                    var ini = initials(u.name);
+                    return '<div class="ncp-user-item" data-uid="' + u.id + '" style="animation-delay:' + (idx * 40) + 'ms">' +
+                        '<div class="ncp-user-avatar" style="background:' + col + '">' + escapeHtml(ini) + '</div>' +
+                        '<span class="ncp-user-name">' + escapeHtml(u.name) + '</span>' +
+                        '<i data-lucide="chevron-right" class="ncp-user-arrow"></i>' +
+                    '</div>';
                 }).join('');
+                lucide.createIcons({ nodes: [ncpResults] });
             });
     }, 250);
 });

@@ -26,18 +26,29 @@
                     <span class="ncp-title" id="ncpTitle">Nueva conversación</span>
                 </div>
                 <div class="ncp-screen" id="ncpScreen1">
+                    <p class="ncp-desc">¿A quién quieres escribirle?</p>
                     <div class="ncp-options">
                         <div class="ncp-option" data-ncp="search">
                             <span class="ncp-opt-icon" style="background:#7c3aed"><i data-lucide="user-search"></i></span>
-                            <span class="ncp-opt-label">Buscar usuario</span>
+                            <div class="ncp-opt-text">
+                                <span class="ncp-opt-label">Buscar usuario</span>
+                                <span class="ncp-opt-sub">Encuentra a cualquier persona</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="ncp-opt-arrow"></i>
                         </div>
                     </div>
                 </div>
                 <div class="ncp-screen" id="ncpScreen2" style="display:none">
                     <div class="ncp-search-wrap">
-                        <input type="text" id="ncpUserSearch" placeholder="Buscar usuario..." autocomplete="off">
+                        <i data-lucide="search" class="ncp-search-icon"></i>
+                        <input type="text" id="ncpUserSearch" placeholder="Nombre de usuario..." autocomplete="off">
                     </div>
-                    <div class="ncp-results" id="ncpResults"></div>
+                    <div class="ncp-results" id="ncpResults">
+                        <div class="ncp-hint">
+                            <i data-lucide="user-round-search"></i>
+                            <span>Escribe para buscar</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="conv-header">
