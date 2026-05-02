@@ -298,11 +298,18 @@
     </button>
     <div class="info-header">
       <div class="info-icon-wrap">
-        <i data-lucide="info"></i>
+        <div class="info-icon-inner">
+          <i data-lucide="info"></i>
+        </div>
       </div>
-      <span class="info-title">Información</span>
+      <h3 class="info-title">Información del mensaje</h3>
+      <div class="info-preview-wrap">
+        <div class="info-bubble-preview">
+          <div class="info-bubble-text" id="infoMsgPreview"></div>
+          <span class="info-bubble-time" id="infoMsgTime"></span>
+        </div>
+      </div>
     </div>
-    <div class="info-preview" id="infoMsgPreview"></div>
     <div class="info-body">
       <div class="info-row" id="infoRowDate">
         <div class="info-row-icon-wrap"><i data-lucide="clock"></i></div>
@@ -332,7 +339,7 @@
       </div>
     </div>
     <div class="info-footer">
-      <button class="btn-info-close" id="btnCloseInfo2">Cerrar</button>
+      <button class="btn-info-cancel" id="btnCloseInfo2">Cerrar</button>
     </div>
   </div>
 </div>
@@ -409,6 +416,7 @@
 <script>
 var convData = <?= json_encode($conversations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var currentUid = <?= (int)$uid ?>;
+var currentUsername = <?= json_encode($_SESSION['user']['username'] ?? 'yo') ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>

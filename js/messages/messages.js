@@ -1166,6 +1166,7 @@ function openInfoModal(msg) {
     }) + ', ' + date.toLocaleTimeString('es-MX', {
         hour: '2-digit', minute: '2-digit'
     });
+    var timeShort = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
     var diff = Math.floor((Date.now() - date.getTime()) / 60000);
     var relative = diff < 1    ? 'ahora mismo'
                  : diff < 60   ? 'hace ' + diff + ' min'
@@ -1194,19 +1195,24 @@ function openInfoModal(msg) {
         : { icon: 'message-square', label: 'Texto' };
 
     document.getElementById('infoMsgPreview').textContent = preview;
+    var msgTimeEl = document.getElementById('infoMsgTime');
+    if (msgTimeEl) msgTimeEl.textContent = timeShort;
     document.getElementById('infoDate').textContent = formatted;
     document.getElementById('infoRelative').textContent = relative;
 
     var statusIconWrap = document.getElementById('infoStatusIconWrap');
     var statusText     = document.getElementById('infoStatusText');
+    var statusRow      = document.getElementById('infoRowStatus');
     if (isRead) {
         statusIconWrap.classList.add('read');
         statusText.textContent = 'Leído';
         statusText.classList.add('read');
+        if (statusRow) statusRow.classList.add('read-row');
     } else {
         statusIconWrap.classList.remove('read');
         statusText.textContent = 'Enviado';
         statusText.classList.remove('read');
+        if (statusRow) statusRow.classList.remove('read-row');
     }
 
     var typeIconWrap = document.getElementById('infoTypeIconWrap');
@@ -1243,15 +1249,18 @@ function _refreshInfoStatus(isRead) {
     var iconWrap   = document.getElementById('infoStatusIconWrap');
     var statusText = document.getElementById('infoStatusText');
     if (!iconWrap || !statusText) return;
+    var statusRow = document.getElementById('infoRowStatus');
     if (isRead) {
         iconWrap.classList.add('read', 'info-status-flash');
         statusText.classList.add('read');
         statusText.textContent = 'Leído';
+        if (statusRow) statusRow.classList.add('read-row');
     } else {
         iconWrap.classList.remove('read');
         iconWrap.classList.add('info-status-flash');
         statusText.classList.remove('read');
         statusText.textContent = 'Enviado';
+        if (statusRow) statusRow.classList.remove('read-row');
     }
     setTimeout(function() { iconWrap.classList.remove('info-status-flash'); }, 500);
 }
