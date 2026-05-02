@@ -1,3 +1,30 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+$_su = $_SESSION['user'] ?? [];
+$_sidebarUsername = $_su['username'] ?? 'Usuario';
+$_sidebarAvatar = !empty($_su['avatar_url']) ? htmlspecialchars($_su['avatar_url']) : '';
+$_sidebarInitials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $_sidebarUsername), 0, 2)) ?: 'U';
+
+// Leer plan fresco de la DB para que siempre esté actualizado
+$_sidebarPlan = $_su['plan'] ?? 'free';
+if (!empty($_su['id'])) {
+    require_once __DIR__ . '/../config/db.php';
+    $_db = (new Database())->connect();
+    $__s = $_db->prepare('SELECT plan FROM users WHERE id = ? LIMIT 1');
+    $__s->execute([$_su['id']]);
+    $__row = $__s->fetch(PDO::FETCH_ASSOC);
+    if ($__row) {
+        $_sidebarPlan = $__row['plan'];
+        $_SESSION['user']['plan'] = $__row['plan'];
+    }
+}
+
+$_planLabels = ['free' => 'Gratis', 'pro' => 'Pro', 'mega' => 'Mega'];
+$_sidebarPlanLabel = $_planLabels[$_sidebarPlan] ?? 'Gratis';
+$_avColors = ['#7c3aed','#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#3b82f6','#8b5cf6'];
+$_acSum = 0; foreach (str_split($_sidebarUsername) as $c) $_acSum += ord($c);
+$_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
+?>
 <script>if(localStorage.getItem('theme')==='light')(document.body||document.documentElement).classList.add('light-mode')</script>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
@@ -27,15 +54,91 @@
             <i data-lucide="notepad-text"></i> <span>Notas rápidas</span>
         </a>
     </nav>
-    <nav class="sidebar-nav sidebar-nav-bottom">
-        <a class="nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="../User/profile.php" data-tooltip="Perfil">
-            <i data-lucide="user"></i> <span>Perfil</span>
-        </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'settings' ? 'active' : '' ?>" href="#" data-tooltip="Configuración">
-            <i data-lucide="settings"></i> <span>Configuración</span>
-        </a>
-    </nav>
+    <div class="sidebar-user-widget" id="sidebarUserBtn" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="Cuenta de <?= htmlspecialchars($_sidebarUsername) ?>">
+        <div class="sidebar-user-avatar"<?= !$_sidebarAvatar ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
+            <?php if ($_sidebarAvatar): ?>
+                <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
+            <?php else: ?>
+                <span><?= htmlspecialchars($_sidebarInitials) ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="sidebar-user-info">
+            <span class="sidebar-user-name"><?= htmlspecialchars($_sidebarUsername) ?></span>
+            <span class="sidebar-plan-badge plan-<?= htmlspecialchars($_sidebarPlan) ?>"><?= htmlspecialchars($_sidebarPlanLabel) ?></span>
+        </div>
+        <?php if ($_sidebarPlan === 'free'): ?>
+        <span class="sidebar-upgrade-btn">Mejorar</span>
+        <?php endif; ?>
+    </div>
 </aside>
+
+<div id="accountModal" class="account-modal" role="dialog" aria-modal="true" aria-label="Cuenta">
+    <div class="acm-header">
+        <div class="acm-avatar" id="acmAvatar"<?= !$_sidebarAvatar ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
+            <?php if ($_sidebarAvatar): ?>
+                <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
+            <?php else: ?>
+                <span><?= htmlspecialchars($_sidebarInitials) ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="acm-header-info">
+            <span class="acm-username"><?= htmlspecialchars($_sidebarUsername) ?></span>
+            <span class="acm-plan-badge plan-<?= htmlspecialchars($_sidebarPlan) ?>"><?= htmlspecialchars($_sidebarPlanLabel) ?></span>
+        </div>
+    </div>
+
+    <?php if ($_sidebarPlan === 'free'): ?>
+    <div class="acm-section" style="--i:0">
+        <a href="#" class="acm-upgrade-row" id="acmUpgradeBtn">
+            <div class="acm-upgrade-icon"><i data-lucide="zap"></i></div>
+            <div class="acm-upgrade-text">
+                <span>Mejorar Plan</span>
+                <small>Desbloquea todas las funciones</small>
+            </div>
+            <i data-lucide="chevron-right" class="acm-upgrade-arrow"></i>
+        </a>
+    </div>
+    <?php endif; ?>
+
+    <div class="acm-separator"></div>
+
+    <div class="acm-section" style="--i:<?= $_sidebarPlan === 'free' ? 1 : 0 ?>">
+        <a class="acm-item" href="../User/profile.php">
+            <div class="acm-item-icon"><i data-lucide="user"></i></div>
+            <span>Perfil</span>
+        </a>
+        <a class="acm-item" href="#">
+            <div class="acm-item-icon"><i data-lucide="settings"></i></div>
+            <span>Configuración</span>
+        </a>
+    </div>
+
+    <div class="acm-separator"></div>
+
+    <div class="acm-section" style="--i:<?= $_sidebarPlan === 'free' ? 2 : 1 ?>">
+        <div class="acm-toggle-row" id="acmThemeRow" role="button" tabindex="0" aria-label="Cambiar tema">
+            <div class="acm-toggle-left">
+                <div class="acm-theme-icon" id="acmThemeIcon">
+                    <i data-lucide="moon" class="acm-icon-moon"></i>
+                    <i data-lucide="sun" class="acm-icon-sun"></i>
+                </div>
+                <span class="acm-toggle-label">Modo oscuro</span>
+            </div>
+            <div class="acm-switch" id="acmSwitch" aria-checked="true" role="switch">
+                <div class="acm-switch-thumb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="acm-separator"></div>
+
+    <div class="acm-section acm-section-danger" style="--i:<?= $_sidebarPlan === 'free' ? 3 : 2 ?>">
+        <a class="acm-item acm-item-danger" href="../User/Logout.php">
+            <div class="acm-item-icon acm-item-icon-danger"><i data-lucide="log-out"></i></div>
+            <span>Cerrar sesión</span>
+        </a>
+    </div>
+</div>
 
 <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
 
@@ -53,7 +156,14 @@
         <i data-lucide="message-circle"></i><span>Mensajes</span>
         <span class="bottom-msg-badge" id="bottomMsgBadge" style="display:none"></span>
     </a>
-    <a class="bottom-nav-item <?= ($activePage ?? '') === 'profile' ? 'active' : '' ?>" href="../User/profile.php">
-        <i data-lucide="user"></i><span>Perfil</span>
-    </a>
+    <button class="bottom-nav-item bottom-nav-avatar" id="bottomNavAvatarBtn" aria-label="Cuenta" aria-haspopup="true">
+        <div class="bottom-nav-avatar-circle">
+            <?php if ($_sidebarAvatar): ?>
+                <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
+            <?php else: ?>
+                <span><?= htmlspecialchars($_sidebarInitials) ?></span>
+            <?php endif; ?>
+        </div>
+        <span>Cuenta</span>
+    </button>
 </nav>
