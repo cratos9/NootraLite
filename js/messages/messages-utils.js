@@ -49,3 +49,18 @@ function formatFileSize(bytes) {
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+function formatLastSeen(str) {
+    if (!str) return 'Desconectado';
+    var d = new Date(str), now = new Date();
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 120) return 'Hace un momento';
+    if (diff < 3600) return 'Hace ' + Math.floor(diff / 60) + ' min';
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var yest  = new Date(today); yest.setDate(yest.getDate() - 1);
+    var t = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    if (d >= today) return 'Hoy a las ' + t;
+    if (d >= yest)  return 'Ayer a las ' + t;
+    var days = Math.floor((now - d) / 86400000);
+    return days < 30 ? 'Hace ' + days + ' días' : 'Hace tiempo';
+}

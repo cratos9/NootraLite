@@ -6,18 +6,25 @@ var activeConvName = null;
 var msgInput = document.getElementById('msgInput');
 var btnSend  = document.getElementById('btnSend');
 
+var currentMsgs = [];
+
 var pendingAttUrl  = null;
 var pendingAttType = null;
 var pendingAttName = null;
 var pendingAttSize = 0;
 
 var pollInterval = null;
+var typingPollInterval = null;
+var statusPollInterval = null;
+var infoMsgCurrent  = null;
+var infoRelInterval = null;
 var lastMsgId    = 0;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
 var bookmarkedIds = [];
 var selectMode = false;
 var selectedMsgIds = [];
+var typingThrottle = null;
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -32,6 +39,7 @@ function getBubbleText(bubble) {
 }
 
 function renderMessages(msgs) {
+    currentMsgs = msgs || [];
     if (!msgs || msgs.length === 0) {
         chatMessages.innerHTML = '<div class="msgs-empty"><i data-lucide="message-circle-dashed"></i><p>No hay mensajes aún</p></div>';
         lucide.createIcons();
@@ -107,8 +115,12 @@ function renderMessages(msgs) {
 }
 
 function openConversation(convId, name) {
+    setTypingIndicator(false);
+    typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
+    if (statusPollInterval) { clearInterval(statusPollInterval); statusPollInterval = null; }
     lastMsgId = 0;
     activeConvId = convId;
     activeConvName = name;
@@ -187,9 +199,13 @@ function openConversation(convId, name) {
             renderMessages(res.messages);
             updatePinnedBar(res.messages);
             scrollToBottom();
-            updateStatusUI(res.is_online);
+            updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
             pollInterval = setInterval(pollMessages, 5000);
+            if (typingPollInterval) clearInterval(typingPollInterval);
+            typingPollInterval = setInterval(pollTyping, 500);
+            if (statusPollInterval) clearInterval(statusPollInterval);
+            statusPollInterval = setInterval(pollStatus, 8000);
             lucide.createIcons();
         })
         .catch(function() {
@@ -203,19 +219,57 @@ function pollMessages() {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (!res.ok) return;
-            if (res.is_online !== undefined) updateStatusUI(res.is_online);
-            if (!res.messages || !res.messages.length) return;
+            if (res.is_online !== undefined) updateStatusUI(res.is_online, res.last_seen);
+            if (infoMsgCurrent && res.messages) {
+                var _im = document.getElementById('infoModal');
+                if (_im && _im.classList.contains('open')) {
+                    for (var _k = 0; _k < res.messages.length; _k++) {
+                        if (res.messages[_k].id == infoMsgCurrent.id) {
+                            _refreshInfoStatus(parseInt(res.messages[_k].is_read) === 1);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!res.messages || !res.messages.length) {
+                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                return;
+            }
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
-            if (newestId <= lastMsgId) return;
+            if (newestId <= lastMsgId) {
+                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                return;
+            }
             lastMsgId = newestId;
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
+            if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
             if (wasAtBottom) scrollToBottom();
             loadConversations();
             var fd = new FormData();
             fd.append('conv_id', activeConvId);
             fetch('../messages/mark_read.php', { method: 'POST', body: fd });
+        })
+        .catch(function() {});
+}
+
+function pollTyping() {
+    if (!activeConvId) return;
+    fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.ok) setTypingIndicator(res.other_typing);
+        })
+        .catch(function() {});
+}
+
+function pollStatus() {
+    if (!activeConvId) return;
+    fetch('../messages/poll_status.php?conv_id=' + activeConvId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.ok) updateStatusUI(res.is_online, res.last_seen);
         })
         .catch(function() {});
 }
@@ -426,21 +480,6 @@ document.getElementById('btnConfirmReport').addEventListener('click', function()
         .catch(function() { message.error('Error de conexión'); });
 });
 
-function formatLastSeen(str) {
-    if (!str) return 'Desconectado';
-    var d = new Date(str), now = new Date();
-    var diff = Math.floor((now - d) / 1000);
-    if (diff < 120) return 'Hace un momento';
-    if (diff < 3600) return 'Hace ' + Math.floor(diff / 60) + ' min';
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var yest  = new Date(today); yest.setDate(yest.getDate() - 1);
-    var t = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-    if (d >= today) return 'Hoy a las ' + t;
-    if (d >= yest)  return 'Ayer a las ' + t;
-    var days = Math.floor((now - d) / 86400000);
-    return days < 30 ? 'Hace ' + days + ' días' : 'Hace tiempo';
-}
-
 function openContactInfo() {
     if (!activeConvId) return;
     var conv = null;
@@ -448,43 +487,26 @@ function openContactInfo() {
         if (conversations[i].id == activeConvId) { conv = conversations[i]; break; }
     }
     if (!conv) return;
-    var otherId   = parseInt(conv.user1_id) === currentUid ? conv.user2_id : conv.user1_id;
     var name      = activeConvName || 'Usuario';
     var color     = avatarColor(name);
     var ini       = initials(name);
     var isBlocked = conv.is_blocked == 1;
     var avatarEl  = document.getElementById('contactInfoAvatar');
     var nameEl    = document.getElementById('contactInfoName');
-    var statusEl  = document.getElementById('contactInfoStatus');
-    var dotEl     = document.getElementById('contactInfoDot');
     var blockBtn  = document.getElementById('btnContactBlock');
     var blockLbl  = document.getElementById('btnContactBlockLabel');
     avatarEl.style.background = color;
     avatarEl.textContent = ini;
     nameEl.textContent   = name;
-    statusEl.textContent = 'Cargando...';
-    dotEl.className      = 'ci-status-dot';
     blockLbl.textContent = isBlocked ? 'Desbloquear usuario' : 'Bloquear usuario';
     blockBtn.className   = isBlocked ? 'btn-ci-block unblock' : 'btn-ci-block';
     blockBtn.onclick = function() {
         closeModalAnimated(contactInfoModal);
         blockUser(activeConvId, isBlocked);
     };
+    _syncCiStatus(lastKnownStatus.isOnline, lastKnownStatus.lastSeen);
     contactInfoModal.classList.add('open');
     lucide.createIcons({ nodes: [contactInfoModal] });
-    fetch('../messages/get_contact_info.php?user_id=' + otherId)
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (!res.ok) { statusEl.textContent = 'Desconectado'; return; }
-            if (res.is_online) {
-                dotEl.className      = 'ci-status-dot online';
-                statusEl.textContent = 'En línea';
-            } else {
-                dotEl.className      = 'ci-status-dot';
-                statusEl.textContent = formatLastSeen(res.last_seen);
-            }
-        })
-        .catch(function() { statusEl.textContent = 'Desconectado'; });
 }
 
 document.getElementById('btnCloseContact').addEventListener('click', function() { closeModalAnimated(contactInfoModal); });
@@ -540,6 +562,15 @@ document.getElementById('btnConfirmDeleteConv').addEventListener('click', functi
 
 btnSend.addEventListener('click', sendMessage);
 msgInput.addEventListener('keydown', function(e) {
+    if (!activeConvId || typingThrottle) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        return;
+    }
+    fetch('../messages/typing.php', {
+        method: 'POST',
+        body: new URLSearchParams({ conv_id: activeConvId })
+    });
+    typingThrottle = setTimeout(function() { typingThrottle = null; }, 1000);
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
@@ -559,7 +590,8 @@ chatMessages.addEventListener('contextmenu', function(e) {
     var text = getBubbleText(bubble);
     var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
     var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-    openDropdown(bubble, getMsgMenuItems(isMine, text, msgId, senderName));
+    var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+    openDropdown(bubble, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
     posDropdownAt(e.clientX, e.clientY);
 });
 
@@ -592,7 +624,8 @@ chatMessages.addEventListener('click', function(e) {
         var text = getBubbleText(bubble);
         var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
         var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-        openDropdown(btn, getMsgMenuItems(isMine, text, msgId, senderName));
+        var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+        openDropdown(btn, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
         return;
     }
     var preview = e.target.closest('.reply-preview');
@@ -638,6 +671,7 @@ document.addEventListener('keydown', function(e) {
     if (reportModal.classList.contains('open'))        { closeModalAnimated(reportModal);        return; }
     if (contactInfoModal.classList.contains('open'))   { closeModalAnimated(contactInfoModal);   return; }
     if (deleteConvModal.classList.contains('open'))    { closeModalAnimated(deleteConvModal);    return; }
+    if (document.getElementById('infoModal').classList.contains('open')) { closeInfoModal(); return; }
     if (attachPopup.classList.contains('show'))       { closeAttachPopup();                    return; }
     if (replyBar.style.display !== 'none')            { cancelReply();                         return; }
     if (msgDropdown.classList.contains('show'))        { closeDropdown();                       return; }
@@ -1122,6 +1156,155 @@ setInterval(function() {
 }, 30000);
 
 setInterval(loadConversations, 10000);
+
+function openInfoModal(msg) {
+    infoMsgCurrent = msg;
+    if (infoRelInterval) { clearInterval(infoRelInterval); infoRelInterval = null; }
+    var date = new Date(msg.created_at);
+    var formatted = date.toLocaleDateString('es-MX', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    }) + ', ' + date.toLocaleTimeString('es-MX', {
+        hour: '2-digit', minute: '2-digit'
+    });
+    var timeShort = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    var diff = Math.floor((Date.now() - date.getTime()) / 60000);
+    var relative = diff < 1    ? 'ahora mismo'
+                 : diff < 60   ? 'hace ' + diff + ' min'
+                 : diff < 1440 ? 'hace ' + Math.floor(diff / 60) + ' h'
+                 :               'hace ' + Math.floor(diff / 1440) + ' días';
+    var isRead = parseInt(msg.is_read) === 1;
+
+    var preview = '';
+    if (msg.body) {
+        preview = msg.body.substring(0, 140) + (msg.body.length > 140 ? '…' : '');
+    } else if (msg.attachment_type === 'image')    { preview = 'Imagen adjunta'; }
+    else if (msg.attachment_type === 'file')        { preview = 'Archivo adjunto'; }
+    else if (msg.attachment_type === 'location')    { preview = 'Ubicación compartida'; }
+    else if (msg.attachment_type === 'audio')       { preview = 'Mensaje de audio'; }
+    else if (msg.attachment_type === 'contact')     { preview = 'Contacto compartido'; }
+
+    var typeMap = {
+        'image':    { icon: 'image',     label: 'Imagen' },
+        'file':     { icon: 'paperclip', label: 'Archivo' },
+        'audio':    { icon: 'music',     label: 'Audio' },
+        'location': { icon: 'map-pin',   label: 'Ubicación' },
+        'contact':  { icon: 'user',      label: 'Contacto' }
+    };
+    var typeInfo = (msg.attachment_type && typeMap[msg.attachment_type])
+        ? typeMap[msg.attachment_type]
+        : { icon: 'message-square', label: 'Texto' };
+
+    document.getElementById('infoMsgPreview').textContent = preview;
+    var msgTimeEl = document.getElementById('infoMsgTime');
+    if (msgTimeEl) msgTimeEl.textContent = timeShort;
+    document.getElementById('infoDate').textContent = formatted;
+    document.getElementById('infoRelative').textContent = relative;
+
+    var statusIconWrap = document.getElementById('infoStatusIconWrap');
+    var statusText     = document.getElementById('infoStatusText');
+    var statusRow      = document.getElementById('infoRowStatus');
+    if (isRead) {
+        statusIconWrap.classList.add('read');
+        statusText.textContent = 'Leído';
+        statusText.classList.add('read');
+        if (statusRow) statusRow.classList.add('read-row');
+    } else {
+        statusIconWrap.classList.remove('read');
+        statusText.textContent = 'Enviado';
+        statusText.classList.remove('read');
+        if (statusRow) statusRow.classList.remove('read-row');
+    }
+
+    var typeIconWrap = document.getElementById('infoTypeIconWrap');
+    var typeIcon     = document.getElementById('infoTypeIcon');
+    var typeText     = document.getElementById('infoTypeText');
+    typeIcon.setAttribute('data-lucide', typeInfo.icon);
+    typeText.textContent = typeInfo.label;
+    typeIconWrap.className = 'info-row-icon-wrap';
+
+    infoRelInterval = setInterval(_refreshInfoRelative, 30000);
+    var modal = document.getElementById('infoModal');
+    modal.classList.add('open');
+    lucide.createIcons({ nodes: [modal] });
+}
+
+function _refreshInfoRelative() {
+    if (!infoMsgCurrent) return;
+    var d = new Date(infoMsgCurrent.created_at);
+    var diff = Math.floor((Date.now() - d.getTime()) / 60000);
+    var txt = diff < 1    ? 'ahora mismo'
+            : diff < 60   ? 'hace ' + diff + ' min'
+            : diff < 1440 ? 'hace ' + Math.floor(diff / 60) + ' h'
+            :               'hace ' + Math.floor(diff / 1440) + ' días';
+    var el = document.getElementById('infoRelative');
+    if (!el || el.textContent === txt) return;
+    el.classList.add('refreshing');
+    setTimeout(function() { el.textContent = txt; el.classList.remove('refreshing'); }, 180);
+}
+
+function _refreshInfoStatus(isRead) {
+    if (!infoMsgCurrent) return;
+    if ((parseInt(infoMsgCurrent.is_read) === 1) === !!isRead) return;
+    infoMsgCurrent.is_read = isRead ? 1 : 0;
+    var iconWrap   = document.getElementById('infoStatusIconWrap');
+    var statusText = document.getElementById('infoStatusText');
+    if (!iconWrap || !statusText) return;
+    var statusRow = document.getElementById('infoRowStatus');
+    if (isRead) {
+        iconWrap.classList.add('read', 'info-status-flash');
+        statusText.classList.add('read');
+        statusText.textContent = 'Leído';
+        if (statusRow) statusRow.classList.add('read-row');
+    } else {
+        iconWrap.classList.remove('read');
+        iconWrap.classList.add('info-status-flash');
+        statusText.classList.remove('read');
+        statusText.textContent = 'Enviado';
+        if (statusRow) statusRow.classList.remove('read-row');
+    }
+    setTimeout(function() { iconWrap.classList.remove('info-status-flash'); }, 500);
+}
+
+function closeInfoModal() {
+    if (infoRelInterval) { clearInterval(infoRelInterval); infoRelInterval = null; }
+    infoMsgCurrent = null;
+    closeModalAnimated(document.getElementById('infoModal'));
+}
+document.getElementById('btnCloseInfo').addEventListener('click', closeInfoModal);
+document.getElementById('btnCloseInfo2').addEventListener('click', closeInfoModal);
+document.getElementById('infoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeInfoModal();
+});
+
+function setTypingIndicator(active) {
+    var existing = chatMessages.querySelector('.typing-indicator-row');
+    if (active) {
+        if (!existing) {
+            var el = document.createElement('div');
+            el.className = 'typing-indicator-row';
+            el.innerHTML = '<div class="typing-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+            chatMessages.appendChild(el);
+            scrollToBottom();
+        }
+    } else {
+        if (existing) existing.remove();
+    }
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!statusEl) return;
+    if (active) {
+        if (!statusEl.classList.contains('typing')) {
+            statusEl.dataset.prev = statusEl.textContent;
+            statusEl.classList.add('typing');
+            statusEl.innerHTML = '<span class="header-typing-dots"><span></span><span></span><span></span></span>Escribiendo...';
+        }
+    } else {
+        if (statusEl.classList.contains('typing')) {
+            statusEl.classList.remove('typing');
+            statusEl.textContent = statusEl.dataset.prev || 'Desconectado';
+            delete statusEl.dataset.prev;
+        }
+    }
+}
 
 renderConvList('');
 lucide.createIcons();

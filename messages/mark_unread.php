@@ -2,11 +2,12 @@
 require_once '../config/db.php';
 header('Content-Type: application/json');
 
+if (session_status() === PHP_SESSION_NONE) session_start();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['ok' => false]); exit; }
 
 $conv_id = (int)($_POST['conv_id'] ?? 0);
 $action  = $_POST['action'] ?? 'mark'; // mark | reset
-$uid     = 1;
+$uid     = $_SESSION['user']['id'] ?? 1;
 
 if (!$conv_id) { echo json_encode(['ok' => false]); exit; }
 

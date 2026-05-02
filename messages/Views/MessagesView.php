@@ -26,18 +26,29 @@
                     <span class="ncp-title" id="ncpTitle">Nueva conversación</span>
                 </div>
                 <div class="ncp-screen" id="ncpScreen1">
+                    <p class="ncp-desc">¿A quién quieres escribirle?</p>
                     <div class="ncp-options">
                         <div class="ncp-option" data-ncp="search">
                             <span class="ncp-opt-icon" style="background:#7c3aed"><i data-lucide="user-search"></i></span>
-                            <span class="ncp-opt-label">Buscar usuario</span>
+                            <div class="ncp-opt-text">
+                                <span class="ncp-opt-label">Buscar usuario</span>
+                                <span class="ncp-opt-sub">Encuentra a cualquier persona</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="ncp-opt-arrow"></i>
                         </div>
                     </div>
                 </div>
                 <div class="ncp-screen" id="ncpScreen2" style="display:none">
                     <div class="ncp-search-wrap">
-                        <input type="text" id="ncpUserSearch" placeholder="Buscar usuario..." autocomplete="off">
+                        <i data-lucide="search" class="ncp-search-icon"></i>
+                        <input type="text" id="ncpUserSearch" placeholder="Nombre de usuario..." autocomplete="off">
                     </div>
-                    <div class="ncp-results" id="ncpResults"></div>
+                    <div class="ncp-results" id="ncpResults">
+                        <div class="ncp-hint">
+                            <i data-lucide="user-round-search"></i>
+                            <span>Escribe para buscar</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="conv-header">
@@ -224,7 +235,7 @@
             <div class="ci-name" id="contactInfoName"></div>
             <div class="ci-status-row">
                 <span class="ci-status-dot" id="contactInfoDot"></span>
-                <span class="ci-status-text" id="contactInfoStatus">Cargando...</span>
+                <span class="ci-status-text" id="contactInfoStatus"></span>
             </div>
         </div>
         <div class="ci-divider"></div>
@@ -287,6 +298,61 @@
             <button class="btn-modal-link" id="btnCancelDel">Cancelar</button>
         </div>
     </div>
+</div>
+
+<!-- modal info mensaje -->
+<div id="infoModal" class="modal-backdrop">
+  <div class="modal-box info-box">
+    <div class="info-handle"></div>
+    <button class="btn-modal-close info-close-btn" id="btnCloseInfo" aria-label="Cerrar">
+      <i data-lucide="x"></i>
+    </button>
+    <div class="info-header">
+      <div class="info-icon-wrap">
+        <div class="info-icon-inner">
+          <i data-lucide="info"></i>
+        </div>
+      </div>
+      <h3 class="info-title">Información del mensaje</h3>
+      <div class="info-preview-wrap">
+        <div class="info-bubble-preview">
+          <div class="info-bubble-text" id="infoMsgPreview"></div>
+          <span class="info-bubble-time" id="infoMsgTime"></span>
+        </div>
+      </div>
+    </div>
+    <div class="info-body">
+      <div class="info-row" id="infoRowDate">
+        <div class="info-row-icon-wrap"><i data-lucide="clock"></i></div>
+        <div class="info-row-content">
+          <span class="info-label">Enviado</span>
+          <span class="info-date" id="infoDate"></span>
+          <span class="info-relative" id="infoRelative"></span>
+        </div>
+      </div>
+      <div class="info-row" id="infoRowStatus">
+        <div class="info-row-icon-wrap" id="infoStatusIconWrap">
+          <i data-lucide="check-check" id="infoStatusIcon"></i>
+        </div>
+        <div class="info-row-content">
+          <span class="info-label">Estado</span>
+          <span class="info-status-text" id="infoStatusText"></span>
+        </div>
+      </div>
+      <div class="info-row" id="infoRowType">
+        <div class="info-row-icon-wrap" id="infoTypeIconWrap">
+          <i data-lucide="message-square" id="infoTypeIcon"></i>
+        </div>
+        <div class="info-row-content">
+          <span class="info-label">Tipo</span>
+          <span class="info-type-text" id="infoTypeText"></span>
+        </div>
+      </div>
+    </div>
+    <div class="info-footer">
+      <button class="btn-info-cancel" id="btnCloseInfo2">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- modal nueva conversación -->
@@ -361,6 +427,7 @@
 <script>
 var convData = <?= json_encode($conversations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var currentUid = <?= (int)$uid ?>;
+var currentUsername = <?= json_encode($_SESSION['user']['username'] ?? 'yo') ?>;
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>

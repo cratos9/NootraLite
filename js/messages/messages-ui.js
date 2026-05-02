@@ -9,6 +9,8 @@ var chatActive     = document.getElementById('chatActive');
 var chatHeader     = document.getElementById('chatHeader');
 var chatMessages   = document.getElementById('chatMessages');
 
+var lastKnownStatus = { isOnline: null, lastSeen: null };
+
 var swipeRow = null, swipeX = 0, swipeY = 0, swipeDone = false;
 var longPressTimer = null, longPressRow = null, longPressX = 0, longPressY = 0;
 
@@ -64,19 +66,51 @@ function cancelReply() {
 
 replyBarClose.addEventListener('click', cancelReply);
 
-function updateStatusUI(isOnline) {
+function _syncCiStatus(isOnline, lastSeen) {
+    var ciDot  = document.getElementById('contactInfoDot');
+    var ciText = document.getElementById('contactInfoStatus');
+    if (!ciDot || !ciText) return;
+    var ciAvatar = document.getElementById('contactInfoAvatar');
+    var ciRing   = ciAvatar ? ciAvatar.parentElement : null;
+    var ciRow    = ciDot.parentElement;
+    var txt = isOnline ? 'En línea' : formatLastSeen(lastSeen || null);
+    if (isOnline) {
+        ciDot.classList.add('online');
+        ciText.classList.add('online');
+        if (ciRow)  ciRow.classList.add('online');
+        if (ciRing) ciRing.classList.add('online');
+    } else {
+        ciDot.classList.remove('online');
+        ciText.classList.remove('online');
+        if (ciRow)  ciRow.classList.remove('online');
+        if (ciRing) ciRing.classList.remove('online');
+    }
+    ciText.textContent = txt;
+}
+
+function updateStatusUI(isOnline, lastSeen) {
+    lastKnownStatus.isOnline = !!isOnline;
+    lastKnownStatus.lastSeen = lastSeen || null;
     var dot = chatHeader.querySelector('.status-dot');
     var statusEl = chatHeader.querySelector('.chat-status');
     if (!dot || !statusEl) return;
+    var newText = isOnline ? 'En línea' : formatLastSeen(lastSeen || null);
+    var wasOnline = dot.classList.contains('online');
+    var changed = statusEl.textContent !== newText || wasOnline !== !!isOnline;
+    if (!changed) return;
     if (isOnline) {
         dot.classList.add('online');
         statusEl.classList.add('online');
-        statusEl.textContent = 'En línea';
     } else {
         dot.classList.remove('online');
         statusEl.classList.remove('online');
-        statusEl.textContent = 'Desconectado';
     }
+    statusEl.classList.add('status-fading');
+    setTimeout(function() {
+        statusEl.textContent = newText;
+        statusEl.classList.remove('status-fading');
+    }, 140);
+    _syncCiStatus(isOnline, lastSeen);
 }
 
 function posDropdown(anchor) {
@@ -209,7 +243,7 @@ function getHeaderMenuItems() {
     ];
 }
 
-function getMsgMenuItems(isMine, text, msgId, senderName) {
+function getMsgMenuItems(isMine, text, msgId, senderName, msg) {
     var copy = { icon: 'copy', label: 'Copiar', action: function() {
         navigator.clipboard.writeText(text).then(function() { message.success('Copiado'); });
     }};
@@ -227,7 +261,7 @@ function getMsgMenuItems(isMine, text, msgId, senderName) {
         { divider: true }
     ];
     if (isMine) {
-        base.push({ icon: 'info',         label: 'Info',        action: function() { message.tip('Próximamente'); } });
+        base.push({ icon: 'info',         label: 'Info',        action: function() { if (msg) openInfoModal(msg); } });
         base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
     } else {
         base.push({ icon: 'check-square', label: 'Seleccionar', action: function() { enterSelectMode(msgId); } });
@@ -388,6 +422,8 @@ function confirmForward() {
 }
 
 function closeChatPanel() {
+    setTypingIndicator(false);
+    typingThrottle = null;
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     activeConvId = null;
     convList.querySelectorAll('.conv-item').forEach(function(el) {
@@ -443,7 +479,8 @@ chatMessages.addEventListener('touchstart', function(e) {
         var text = srcBub ? getBubbleText(srcBub) : '';
         var msgId = parseInt(row.getAttribute('data-msg-id')) || 0;
         var senderName = isMine ? 'Tú' : (activeConvName || 'Ellos');
-        openDropdown(srcBub, getMsgMenuItems(isMine, text, msgId, senderName));
+        var msgObj = currentMsgs.find(function(m) { return parseInt(m.id) === msgId; }) || null;
+        openDropdown(srcBub, getMsgMenuItems(isMine, text, msgId, senderName, msgObj));
         posDropdownAt(longPressX, longPressY);
     }, 500);
 }, { passive: true });

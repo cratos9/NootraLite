@@ -1,9 +1,10 @@
 <?php
 require_once '../config/db.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
 $q = trim($_GET['q'] ?? '');
-$uid = 1;
+$uid = $_SESSION['user']['id'] ?? 1;
 
 if (strlen($q) < 2) {
     echo json_encode(['ok' => true, 'users' => []]);

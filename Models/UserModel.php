@@ -66,6 +66,11 @@ class User{
 
     public function Logout(){
         session_start();
+        $uid = $_SESSION['user']['id'] ?? null;
+        if ($uid) {
+            $stmt = $this->conn->prepare('UPDATE users SET last_seen = DATE_SUB(NOW(), INTERVAL 46 SECOND) WHERE id = ?');
+            $stmt->execute([$uid]);
+        }
         session_destroy();
         setcookie('remember_me', '', time() - 3600, "/");
         header('Location: Login.php');

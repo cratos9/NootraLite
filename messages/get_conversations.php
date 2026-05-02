@@ -3,7 +3,8 @@ require_once '../config/db.php';
 require_once '../Models/MessageModel.php';
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
-$uid = 1;
+if (session_status() === PHP_SESSION_NONE) session_start();
+$uid = $_SESSION['user']['id'] ?? 1;
 try {
     $pdo   = (new Database())->connect();
     $convs = (new MessageModel($pdo))->getConversations($uid);

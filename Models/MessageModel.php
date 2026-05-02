@@ -13,7 +13,7 @@ class MessageModel {
                        m.body AS last_msg, m.created_at AS last_time,
                        COALESCE(u.username, u.name) AS other_name,
                        u.id   AS other_user_id,
-                       IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online,
+                       IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
                         WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread,
                        IF(c.user1_id = ?, c.is_favorite_u1, c.is_favorite_u2)     AS is_favorite,
@@ -21,7 +21,11 @@ class MessageModel {
                        IF(c.user1_id = ?, c.is_muted_u1,    c.is_muted_u2)        AS is_muted,
                        IF(c.user1_id = ?, c.force_unread_u1, c.force_unread_u2)   AS force_unread,
                        (SELECT COUNT(*) FROM blocked_users
-                        WHERE blocker_id = ? AND blocked_id = u.id)                AS is_blocked
+                        WHERE blocker_id = ? AND blocked_id = u.id)                AS is_blocked,
+                       IF(c.user1_id = ?,
+                          c.typing_u2_at IS NOT NULL AND c.typing_u2_at > DATE_SUB(NOW(), INTERVAL 3 SECOND),
+                          c.typing_u1_at IS NOT NULL AND c.typing_u1_at > DATE_SUB(NOW(), INTERVAL 3 SECOND)
+                       ) AS is_typing
                 FROM conversations c
                 LEFT JOIN messages m ON m.id = (
                     SELECT id FROM messages
@@ -34,7 +38,7 @@ class MessageModel {
                 WHERE c.user1_id = ? OR c.user2_id = ?
                 ORDER BY last_time DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
+        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -92,7 +96,7 @@ class MessageModel {
     // retorna is_online (1/0) del otro usuario en una conv
     public function getOtherUserStatus($conv_id, $uid) {
         $stmt = $this->db->prepare(
-            'SELECT IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 120, 1, 0) AS is_online
+            'SELECT IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online
              FROM conversations c
              JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
              WHERE c.id = ?'
