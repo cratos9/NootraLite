@@ -67,7 +67,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
             <span class="sidebar-plan-badge plan-<?= htmlspecialchars($_sidebarPlan) ?>"><?= htmlspecialchars($_sidebarPlanLabel) ?></span>
         </div>
         <?php if ($_sidebarPlan === 'free'): ?>
-        <span class="sidebar-upgrade-btn">Mejorar</span>
+        <a href="../User/Subscriptions.php" class="sidebar-upgrade-btn">Mejorar</a>
         <?php endif; ?>
     </div>
 </aside>
@@ -89,7 +89,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
 
     <?php if ($_sidebarPlan === 'free'): ?>
     <div class="acm-section" style="--i:0">
-        <a href="#" class="acm-upgrade-row" id="acmUpgradeBtn">
+        <a href="../User/Subscriptions.php" class="acm-upgrade-row" id="acmUpgradeBtn">
             <div class="acm-upgrade-icon"><i data-lucide="zap"></i></div>
             <div class="acm-upgrade-text">
                 <span>Mejorar Plan</span>
