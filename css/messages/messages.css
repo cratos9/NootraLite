@@ -1622,6 +1622,7 @@ body { height: 100vh; overflow: hidden; }
     line-height: 1.45; margin-bottom: 7px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -2286,6 +2287,7 @@ body { height: 100vh; overflow: hidden; }
     word-break: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
