@@ -21,7 +21,11 @@ class MessageModel {
                        IF(c.user1_id = ?, c.is_muted_u1,    c.is_muted_u2)        AS is_muted,
                        IF(c.user1_id = ?, c.force_unread_u1, c.force_unread_u2)   AS force_unread,
                        (SELECT COUNT(*) FROM blocked_users
-                        WHERE blocker_id = ? AND blocked_id = u.id)                AS is_blocked
+                        WHERE blocker_id = ? AND blocked_id = u.id)                AS is_blocked,
+                       IF(c.user1_id = ?,
+                          c.typing_u2_at IS NOT NULL AND c.typing_u2_at > DATE_SUB(NOW(), INTERVAL 3 SECOND),
+                          c.typing_u1_at IS NOT NULL AND c.typing_u1_at > DATE_SUB(NOW(), INTERVAL 3 SECOND)
+                       ) AS is_typing
                 FROM conversations c
                 LEFT JOIN messages m ON m.id = (
                     SELECT id FROM messages
@@ -34,7 +38,7 @@ class MessageModel {
                 WHERE c.user1_id = ? OR c.user2_id = ?
                 ORDER BY last_time DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
+        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

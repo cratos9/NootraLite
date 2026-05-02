@@ -1289,6 +1289,21 @@ function setTypingIndicator(active) {
     } else {
         if (existing) existing.remove();
     }
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!statusEl) return;
+    if (active) {
+        if (!statusEl.classList.contains('typing')) {
+            statusEl.dataset.prev = statusEl.textContent;
+            statusEl.classList.add('typing');
+            statusEl.innerHTML = '<span class="header-typing-dots"><span></span><span></span><span></span></span>Escribiendo...';
+        }
+    } else {
+        if (statusEl.classList.contains('typing')) {
+            statusEl.classList.remove('typing');
+            statusEl.textContent = statusEl.dataset.prev || 'Desconectado';
+            delete statusEl.dataset.prev;
+        }
+    }
 }
 
 renderConvList('');
