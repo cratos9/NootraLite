@@ -100,7 +100,7 @@ function renderConvList(filter) {
         if (c.is_muted == 1)    flags += '<i data-lucide="bell-off" class="conv-flag muted"></i>';
 
         html += '<div class="conv-item' + isActive + unreadCls + enterCls + '" data-id="' + c.id + '" data-name="' + encodeURIComponent(name) + '"' + delayStyle + '>';
-        html += '<div class="conv-avatar" style="background:' + color + '">' + ini + '</div>';
+        html += '<div class="conv-avatar" style="background-color:' + color + '">' + ini + '</div>';
         html += '<div class="conv-info">';
         html += '<div class="conv-name">' + escapeHtml(name) + (flags ? '<span class="conv-flags">' + flags + '</span>' : '') + '</div>';
         if (c.is_typing == 1) {
@@ -291,7 +291,7 @@ ncpUserSearch.addEventListener('input', function() {
                     var col = avatarColor(u.name);
                     var ini = initials(u.name);
                     return '<div class="ncp-user-item" data-uid="' + u.id + '" style="animation-delay:' + (idx * 40) + 'ms">' +
-                        '<div class="ncp-user-avatar" style="background:' + col + '">' + escapeHtml(ini) + '</div>' +
+                        '<div class="ncp-user-avatar" style="background-color:' + col + '">' + escapeHtml(ini) + '</div>' +
                         '<span class="ncp-user-name">' + escapeHtml(u.name) + '</span>' +
                         '<i data-lucide="chevron-right" class="ncp-user-arrow"></i>' +
                     '</div>';

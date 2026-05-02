@@ -348,7 +348,7 @@ function renderForwardConvList(convs) {
         item.className = 'fw-conv-item' + (isSelected ? ' selected' : '');
         item.dataset.convId = c.id;
         item.style.animationDelay = (i * 20) + 'ms';
-        item.innerHTML = '<div class="fw-conv-avatar" style="background:' + col + '">' + ini + '</div>'
+        item.innerHTML = '<div class="fw-conv-avatar" style="background-color:' + col + '">' + ini + '</div>'
             + '<div class="fw-conv-info">'
             +   '<span class="fw-conv-name">' + escapeHtml(name) + '</span>'
             +   (last ? '<span class="fw-conv-last">' + last + '</span>' : '')
