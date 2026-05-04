@@ -27,3 +27,7 @@ CREATE TABLE subscriptions (
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+# Insertar planes de suscripción (individual, empresarial, educativo), 03/05/2026
+ALTER TABLE subscriptions 
+ADD COLUMN subscription_category VARCHAR(50) NOT NULL DEFAULT 'individual' AFTER plan_type;
