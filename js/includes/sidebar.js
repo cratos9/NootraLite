@@ -13,6 +13,7 @@ if (hamburger) {
 
 if (overlay) {
     overlay.addEventListener('click', function() {
+        if (acmModalOpen) { closeAccountModal(); return; }
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
         document.body.style.overflow = '';
@@ -136,3 +137,105 @@ function showMsgToast(n) {
 
 checkMsgNotifs();
 setInterval(checkMsgNotifs, 8000);
+
+// account modal
+var accountModal = document.getElementById('accountModal');
+var sidebarUserBtn = document.getElementById('sidebarUserBtn');
+var bottomNavAvatarBtn = document.getElementById('bottomNavAvatarBtn');
+var acmModalOpen = false;
+
+function openAccountModal() {
+    if (!accountModal) return;
+    accountModal.classList.remove('closing', 'show');
+    accountModal.style.display = '';
+    void accountModal.offsetWidth; // force reflow — re-triggerea stagger y avatar pulse
+    accountModal.classList.add('show');
+    acmModalOpen = true;
+    if (sidebar) sidebar.classList.add('modal-open');
+    if (sidebarUserBtn) sidebarUserBtn.setAttribute('aria-expanded', 'true');
+    syncThemeToggle();
+    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [accountModal] });
+    setTimeout(function() {
+        document.addEventListener('click', onModalOutsideClick, true);
+    }, 0);
+}
+
+function closeAccountModal() {
+    if (!accountModal || !acmModalOpen) return;
+    acmModalOpen = false;
+    if (sidebarUserBtn) sidebarUserBtn.setAttribute('aria-expanded', 'false');
+    accountModal.classList.add('closing');
+    document.removeEventListener('click', onModalOutsideClick, true);
+    accountModal.addEventListener('animationend', function h() {
+        accountModal.removeEventListener('animationend', h);
+        accountModal.classList.remove('show', 'closing');
+        accountModal.style.display = 'none';
+        if (sidebar) sidebar.classList.remove('modal-open');
+    }, { once: true });
+}
+
+function toggleAccountModal(e) {
+    if (e) e.stopPropagation();
+    if (acmModalOpen) closeAccountModal();
+    else openAccountModal();
+}
+
+function onModalOutsideClick(e) {
+    if (!acmModalOpen) return;
+    if (accountModal && accountModal.contains(e.target)) return;
+    if (sidebarUserBtn && sidebarUserBtn.contains(e.target)) return;
+    if (bottomNavAvatarBtn && bottomNavAvatarBtn.contains(e.target)) return;
+    closeAccountModal();
+}
+
+function syncThemeToggle(animate) {
+    if (!accountModal) return;
+    var sw = accountModal.querySelector('#acmSwitch');
+    var isDark = !document.body.classList.contains('light-mode');
+    if (sw) sw.setAttribute('aria-checked', isDark ? 'true' : 'false');
+    var label = accountModal.querySelector('.acm-toggle-label');
+    if (label) label.textContent = isDark ? 'Modo oscuro' : 'Modo claro';
+    if (animate) {
+        var icon = accountModal.querySelector('#acmThemeIcon');
+        if (icon) {
+            icon.classList.add('acm-icon-pop');
+            icon.addEventListener('animationend', function h() {
+                icon.removeEventListener('animationend', h);
+                icon.classList.remove('acm-icon-pop');
+            }, { once: true });
+        }
+    }
+}
+
+if (sidebarUserBtn) {
+    sidebarUserBtn.addEventListener('click', toggleAccountModal);
+    sidebarUserBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAccountModal(); }
+    });
+}
+
+if (bottomNavAvatarBtn) {
+    bottomNavAvatarBtn.addEventListener('click', toggleAccountModal);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && acmModalOpen) {
+        e.stopPropagation();
+        closeAccountModal();
+    }
+});
+
+if (accountModal) {
+    var acmThemeRow = accountModal.querySelector('#acmThemeRow');
+    if (acmThemeRow) {
+        acmThemeRow.addEventListener('click', function() {
+            document.body.classList.toggle('light-mode');
+            var isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            syncThemeToggle(true);
+        });
+        acmThemeRow.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); acmThemeRow.click(); }
+        });
+    }
+}

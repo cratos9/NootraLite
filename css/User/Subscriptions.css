@@ -1,3 +1,12 @@
+:root {
+    --accent-gold: #f59e0b;
+    --accent-teal: #06b6d4;
+    --accent-grad: linear-gradient(135deg, #7c3aed, #ec4899);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
 body{
     font-family: 'Poppins', sans-serif;
     padding: 0;
@@ -195,4 +204,23 @@ h2{
     font-size: 15px;
     padding: 0;
     margin: 0;
+}
+
+.light-mode {
+    --accent-gold: #d97706;
+    --accent-teal: #0891b2;
+    --accent-grad: linear-gradient(135deg, #6d28d9, #db2777);
+}
+
+.light-mode .pro {
+    box-shadow: 0 4px 20px rgba(109, 40, 217, 0.15);
+}
+
+.light-mode .mega {
+    box-shadow: 0 4px 20px rgba(219, 39, 119, 0.15);
+}
+
+.light-mode .change-link:hover {
+    background-color: #6d28d9;
+    border-color: #6d28d9;
 }

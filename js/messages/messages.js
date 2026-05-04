@@ -146,7 +146,7 @@ function openConversation(convId, name) {
     var ini = initials(name);
     chatHeader.innerHTML =
         '<div class="conv-avatar-wrap">' +
-          '<div class="conv-avatar" style="background:' + color + ';width:36px;height:36px;font-size:12px;">' + ini + '</div>' +
+          '<div class="conv-avatar" style="background-color:' + color + ';width:36px;height:36px;font-size:12px;">' + ini + '</div>' +
           '<span class="status-dot"></span>' +
         '</div>' +
         '<div class="chat-header-info">' +
@@ -346,7 +346,7 @@ function updateBlockedNotice(isBlocked, name) {
     if (!notice) return;
     if (isBlocked) {
         var ini   = initials(name || '?');
-        var color = avatarColor(name || '');
+        var color = avatarGradient(name || '');
         notice.innerHTML =
             '<div class="blocked-avatar-wrap">'
           +   '<div class="blocked-avatar-initials" style="background:' + color + '">' + ini + '</div>'
@@ -495,7 +495,7 @@ function openContactInfo() {
     var nameEl    = document.getElementById('contactInfoName');
     var blockBtn  = document.getElementById('btnContactBlock');
     var blockLbl  = document.getElementById('btnContactBlockLabel');
-    avatarEl.style.background = color;
+    avatarEl.style.backgroundColor = color;
     avatarEl.textContent = ini;
     nameEl.textContent   = name;
     blockLbl.textContent = isBlocked ? 'Desbloquear usuario' : 'Bloquear usuario';
@@ -926,7 +926,7 @@ function renderBookmarkItems(bookmarks) {
         var dateStr = formatTime(bm.bm_date);
         html += '<div class="bm-item bm-item-in" data-msg-id="' + bm.message_id + '" data-conv-id="' + bm.conversation_id + '" style="animation-delay:' + (i * 45) + 'ms">';
         html += '<div class="bm-item-header">';
-        html += '<div class="bm-avatar" style="background:' + color + '">' + escapeHtml(ini) + '</div>';
+        html += '<div class="bm-avatar" style="background-color:' + color + '">' + escapeHtml(ini) + '</div>'
         html += '<span class="bm-sender">' + escapeHtml(bm.sender_name || 'Usuario') + '</span>';
         html += '<span class="bm-date">' + escapeHtml(dateStr) + '</span>';
         html += '<button class="bm-remove-btn" aria-label="Quitar destacado"><i data-lucide="x"></i></button>';
