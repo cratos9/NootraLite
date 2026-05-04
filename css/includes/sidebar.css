@@ -233,7 +233,7 @@ body {
     .sidebar.open .nav-item span,
     .sidebar.open .logo-text { opacity: 1; max-width: 200px; }
     .sidebar.open .sidebar-user-info { opacity: 1; max-width: 130px; }
-    .sidebar.open .sidebar-upgrade-btn { opacity: 1; max-width: 60px; }
+    .sidebar.open .sidebar-upgrade-btn { opacity: 1; max-width: 70px; }
     .sidebar-close { display:flex; align-items:center; justify-content:center; background:none; border:none; color:var(--text-muted); cursor:pointer; margin-left:auto; padding:4px; border-radius:6px; }
     .sidebar-close:hover { color:var(--text-primary); background:rgba(255,255,255,0.08); }
     .sidebar-close svg { width:18px; height:18px; }
@@ -618,14 +618,16 @@ body {
     white-space: nowrap; flex-shrink: 0;
     font-size: 10px; font-weight: 700;
     background: linear-gradient(135deg, #7c3aed, #ec4899);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #fff;
+    text-decoration: none;
+    padding: 3px 8px;
+    border-radius: 20px;
     transition: opacity 0.15s, max-width 0.15s;
 }
 
 .sidebar:hover .sidebar-upgrade-btn,
 .sidebar.modal-open .sidebar-upgrade-btn {
-    opacity: 1; max-width: 60px;
+    opacity: 1; max-width: 70px;
     transition-delay: 0.1s;
 }
 
