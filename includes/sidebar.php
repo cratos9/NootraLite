@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 $_su = $_SESSION['user'] ?? [];
 $_sidebarUsername = $_su['username'] ?? 'Usuario';
-$_sidebarAvatar = !empty($_su['avatar_url']) ? htmlspecialchars($_su['avatar_url']) : '';
+$_sidebarAvatar = !empty($_su['avatar_url']) ? htmlspecialchars('../files/images/' . $_su['avatar_url']) : '';
 $_sidebarInitials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $_sidebarUsername), 0, 2)) ?: 'U';
 
 // Leer plan fresco de subscriptions para que siempre esté actualizado
