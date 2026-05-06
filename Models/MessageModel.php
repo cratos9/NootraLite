@@ -50,12 +50,14 @@ class MessageModel {
                     r.body AS reply_body,
                     r.sender_id AS reply_sender_id,
                     r.attachment_type AS reply_attachment_type,
-                    CASE WHEN m.deleted_for_sender = 1 AND m.deleted_for_receiver = 1 THEN 1 ELSE 0 END AS deleted_for_all
+                    m.deleted_for_all,
+                    COALESCE(uc.username, uc.name) AS contact_name
              FROM messages m
              LEFT JOIN messages r ON r.id = m.reply_to_id
+             LEFT JOIN users uc ON m.attachment_type = \'contact\' AND m.attachment_url = uc.id
              WHERE m.conversation_id = ?
-               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1)
-               AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_sender = 0)
+               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1 AND m.deleted_for_all = 0)
+               AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_all = 0)
              ORDER BY m.created_at ASC'
         );
         $stmt->execute([$conv_id, $uid, $uid]);

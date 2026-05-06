@@ -24,9 +24,13 @@ try {
     $conv_id = $model->createConversation($uid, $other_id);
 
     // datos del otro usuario
-    $stmt = $pdo->prepare('SELECT id, username, IF(TIMESTAMPDIFF(SECOND, last_seen, NOW()) < 120, 1, 0) AS is_online FROM users WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, COALESCE(username, name) AS username, IF(TIMESTAMPDIFF(SECOND, last_seen, NOW()) < 120, 1, 0) AS is_online FROM users WHERE id = ?');
     $stmt->execute([$other_id]);
     $other = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$other) {
+        echo json_encode(['ok' => false, 'error' => 'usuario no encontrado']);
+        exit;
+    }
 
     echo json_encode([
         'ok' => true,
