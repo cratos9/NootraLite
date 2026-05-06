@@ -9,7 +9,6 @@ include_once '../Models/NoteModel.php';
 include_once '../Models/AttachmentModel.php';
 include_once '../includes/attachments.php';
 $activePage = 'notebooks';
-include '../includes/sidebar.php';
 
 
 
