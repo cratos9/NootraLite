@@ -104,6 +104,27 @@
 
                 <div id="blockedNotice" class="blocked-notice" style="display:none"></div>
 
+                <!-- barra de grabación de audio -->
+                <div id="recordingBar" class="recording-bar">
+                    <span class="rec-dot"></span>
+                    <div class="rec-waveform" id="recWaveform">
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span>
+                    </div>
+                    <span id="recordingTimer" class="rec-timer">0:00</span>
+                    <button id="btnPauseRec" class="btn-rec-action btn-rec-pause" aria-label="Pausar grabación">
+                        <i data-lucide="pause"></i>
+                    </button>
+                    <button id="btnStopRec" class="btn-rec-action btn-rec-stop" aria-label="Enviar grabación">
+                        <i data-lucide="send"></i>
+                        <span>Enviar</span>
+                    </button>
+                    <button id="btnCancelRec" class="btn-rec-action btn-rec-cancel" aria-label="Cancelar grabación">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+
                 <div class="chat-input-bar">
                     <button class="btn-attach" id="btnAttach" aria-label="Adjuntar">
                         <i data-lucide="paperclip"></i>
@@ -426,6 +447,51 @@
     </div>
 </div>
 <canvas id="cameraCanvas" style="display:none"></canvas>
+
+<!-- contact picker sheet -->
+<div id="contactPickerBackdrop"></div>
+<div id="contactPickerSheet" role="dialog" aria-label="Compartir contacto">
+    <div class="cp-handle"></div>
+    <div class="cp-header">
+        <div class="cp-header-icon">
+            <i data-lucide="users"></i>
+        </div>
+        <span class="cp-title">Compartir contacto</span>
+        <button id="btnCloseContactPicker" class="cp-close-btn" aria-label="Cerrar">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="cp-search-wrap">
+        <i data-lucide="search" class="cp-search-icon"></i>
+        <input type="text" id="cpSearch" class="cp-search-input" placeholder="Buscar usuario..." autocomplete="off">
+        <button class="cp-search-clear" id="cpSearchClear" aria-label="Limpiar">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="cp-list" id="cpList">
+        <div class="cp-hint">
+            <i data-lucide="user-round-search"></i>
+            <span>Cargando usuarios...</span>
+        </div>
+    </div>
+    <div class="cp-footer">
+        <button id="btnCancelContactPicker" class="btn-cp-cancel">Cancelar</button>
+        <button id="btnShareContact" class="btn-cp-share" disabled>
+            <i data-lucide="send"></i>
+            <span>Compartir</span>
+        </button>
+    </div>
+</div>
+
+<div id="micPermBackdrop"></div>
+<div id="micPermModal" role="dialog" aria-label="Permiso de micrófono">
+    <div class="mic-perm-icon"><i data-lucide="mic-off"></i></div>
+    <div class="mic-perm-body">
+        <h3 class="mic-perm-title">Micrófono bloqueado</h3>
+        <p class="mic-perm-text">Tu navegador bloqueó el acceso al micrófono. Para grabar mensajes de voz, habilitá el permiso en la configuración del sitio y volvé a intentarlo.</p>
+    </div>
+    <button id="btnMicPermOk" class="btn-mic-ok">Entendido</button>
+</div>
 
 <div id="bookmarksBackdrop"></div>
 <div id="bookmarksDrawer" role="dialog" aria-label="Mensajes destacados">

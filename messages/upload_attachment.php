@@ -20,14 +20,16 @@ if ($file['size'] > 5 * 1024 * 1024) {
 
 $imageExts = ['jpg','jpeg','png','gif','webp'];
 $fileExts  = ['pdf','doc','docx','xls','xlsx','zip','rar'];
+$audioExts = ['webm','ogg','mp3','m4a','wav'];
 $ext       = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-if (!in_array($ext, array_merge($imageExts, $fileExts))) {
+if (!in_array($ext, array_merge($imageExts, $fileExts, $audioExts))) {
     echo json_encode(['ok' => false, 'error' => 'tipo de archivo no permitido']);
     exit;
 }
 
 $isImage = in_array($ext, $imageExts);
+$isAudio = in_array($ext, $audioExts);
 if ($isImage && !getimagesize($file['tmp_name'])) {
     echo json_encode(['ok' => false, 'error' => 'archivo de imagen inválido']);
     exit;
@@ -35,7 +37,8 @@ if ($isImage && !getimagesize($file['tmp_name'])) {
 
 $safeName = preg_replace('/[^\w.\-]/', '_', basename($file['name']));
 $newName  = time() . '_' . $safeName;
-$dir     = __DIR__ . '/../uploads/messages/';
+$subdir   = $isAudio ? 'audio/' : '';
+$dir      = __DIR__ . '/../uploads/messages/' . $subdir;
 if (!is_dir($dir)) mkdir($dir, 0755, true);
 
 if (!move_uploaded_file($file['tmp_name'], $dir . $newName)) {
@@ -43,11 +46,12 @@ if (!move_uploaded_file($file['tmp_name'], $dir . $newName)) {
     exit;
 }
 
-$type = $isImage ? 'image' : 'file';
+$type = $isImage ? 'image' : ($isAudio ? 'audio' : 'file');
+$urlPath = 'uploads/messages/' . $subdir . $newName;
 
 echo json_encode([
     'ok'   => true,
-    'url'  => '../uploads/messages/' . $newName,
+    'url'  => '../' . $urlPath,
     'type' => $type,
     'name' => $file['name'],
     'size' => (int)$file['size'],
