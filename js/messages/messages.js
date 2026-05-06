@@ -97,6 +97,27 @@ function renderMessages(msgs) {
                         + '<div class="attach-location-coords">Abrir en Google Maps</div>'
                         + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
                         + '</a>';
+                } else if (m.attachment_type === 'audio') {
+                    html += renderAudioBubble(m.attachment_url);
+                } else if (m.attachment_type === 'contact') {
+                    var cname = m.contact_name || 'Usuario';
+                    var cini  = initials(cname);
+                    var ccol  = avatarColor(cname);
+                    var cuid  = parseInt(m.attachment_url) || 0;
+                    html += '<div class="attach-contact" data-contact-id="' + cuid + '">'
+                        + '<div class="attach-contact-body">'
+                        +   '<div class="attach-contact-avatar" style="background-color:' + ccol + '">' + escapeHtml(cini) + '</div>'
+                        +   '<div class="attach-contact-info">'
+                        +     '<span class="attach-contact-name">' + escapeHtml(cname) + '</span>'
+                        +     '<span class="attach-contact-label">Contacto de NootraLite</span>'
+                        +   '</div>'
+                        +   '<i data-lucide="user-circle" class="attach-contact-icon"></i>'
+                        + '</div>'
+                        + '<div class="attach-contact-action">'
+                        +   '<i data-lucide="message-circle"></i>'
+                        +   '<span>Enviar mensaje</span>'
+                        + '</div>'
+                        + '</div>';
                 } else {
                     var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
                     html += '<div class="msg-attachment">';
@@ -663,10 +684,22 @@ chatMessages.addEventListener('click', function(e) {
 });
 
 document.addEventListener('keydown', function(e) {
+    var barActive = document.getElementById('recordingBar').classList.contains('active');
+    if (barActive && e.key === ' ' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        if (recPaused) { resumeRecording(); } else { pauseRecording(); }
+        return;
+    }
+    if (barActive && e.key === 'Enter') {
+        e.preventDefault();
+        stopRecording(false);
+        return;
+    }
     if (e.key !== 'Escape') return;
     if (selectMode) { exitSelectMode(); return; }
     if (document.getElementById('cameraView').classList.contains('open')) { closeCameraModal(); return; }
     if (document.getElementById('cameraPermModal').classList.contains('open')) { hideCameraPermModal(); return; }
+    if (document.getElementById('micPermModal').classList.contains('active')) { hideMicPermModal(); return; }
     var delMsgModal = document.getElementById('deleteMessageModal');
     if (delMsgModal && delMsgModal.classList.contains('open')) { closeModalAnimated(delMsgModal); return; }
     if (document.getElementById('forwardSheet').classList.contains('open')) {
@@ -674,6 +707,12 @@ document.addEventListener('keydown', function(e) {
     }
     if (document.getElementById('bookmarksDrawer').classList.contains('open')) {
         closeBookmarksDrawer(); return;
+    }
+    if (document.getElementById('contactPickerSheet').classList.contains('open')) {
+        closeContactPicker(); return;
+    }
+    if (document.getElementById('recordingBar').classList.contains('active')) {
+        stopRecording(true); return;
     }
     if (newConvPanel.classList.contains('open')) {
         if (ncpScreen2.style.display !== 'none') {
@@ -920,8 +959,10 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                     },
                     function() { message.error('No se pudo obtener la ubicación'); }
                 );
-            } else {
-                message.warning('Próximamente');
+            } else if (action === 'audio') {
+                startRecording();
+            } else if (action === 'contact') {
+                openContactPicker();
             }
         });
     });
@@ -1517,6 +1558,454 @@ function setTypingIndicator(active) {
         }
     }
 }
+
+/* ============================================================
+   AUDIO — MediaRecorder API
+   ============================================================ */
+var mediaRecorder = null;
+var audioChunks   = [];
+var recTimer      = null;
+var recSecs       = 0;
+var recStream     = null;
+var recPaused     = false;
+
+function showMicPermModal() {
+    var modal = document.getElementById('micPermModal');
+    var backdrop = document.getElementById('micPermBackdrop');
+    modal.classList.add('active');
+    backdrop.classList.add('active');
+    lucide.createIcons({ nodes: [modal] });
+}
+function hideMicPermModal() {
+    document.getElementById('micPermModal').classList.remove('active');
+    document.getElementById('micPermBackdrop').classList.remove('active');
+}
+
+function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        message.error('Grabación de audio no disponible en este navegador');
+        return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+            recStream   = stream;
+            audioChunks = [];
+            recPaused   = false;
+            var mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg');
+            mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.onstop = function() {
+                var blob = new Blob(audioChunks, { type: mimeType });
+                var ext  = mimeType.indexOf('ogg') >= 0 ? 'ogg' : 'webm';
+                var file = new File([blob], 'audio_' + Date.now() + '.' + ext, { type: mimeType });
+                if (recStream) { recStream.getTracks().forEach(function(t) { t.stop(); }); recStream = null; }
+                uploadAudioFile(file);
+            };
+            mediaRecorder.start(200);
+            showRecordingBar();
+        }, function(err) {
+            if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+                showMicPermModal();
+            } else {
+                message.error('No se pudo acceder al micrófono');
+            }
+        });
+}
+
+function showRecordingBar() {
+    var bar     = document.getElementById('recordingBar');
+    var timerEl = document.getElementById('recordingTimer');
+    recSecs   = 0;
+    recPaused = false;
+    timerEl.textContent = '0:00';
+    bar.classList.remove('hiding', 'paused');
+    bar.classList.add('active');
+    var pauseBtn = document.getElementById('btnPauseRec');
+    if (pauseBtn) pauseBtn.innerHTML = '<i data-lucide="pause"></i>';
+    recTimer = setInterval(function() {
+        if (recPaused) return;
+        recSecs++;
+        var m = Math.floor(recSecs / 60);
+        var s = recSecs % 60;
+        timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        if (recSecs >= 300) stopRecording(false);
+    }, 1000);
+    lucide.createIcons({ nodes: [bar] });
+}
+
+function hideRecordingBar() {
+    clearInterval(recTimer); recTimer = null;
+    recPaused = false;
+    var bar = document.getElementById('recordingBar');
+    bar.classList.add('hiding');
+    bar.addEventListener('animationend', function h(e) {
+        if (e.animationName !== 'recBarOut') return;
+        bar.removeEventListener('animationend', h);
+        bar.classList.remove('active', 'hiding', 'paused');
+    });
+}
+
+
+function pauseRecording() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+    mediaRecorder.pause();
+    recPaused = true;
+    document.getElementById('recordingBar').classList.add('paused');
+    var btn = document.getElementById('btnPauseRec');
+    btn.innerHTML = '<i data-lucide="play"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+
+function resumeRecording() {
+    if (!mediaRecorder || mediaRecorder.state !== 'paused') return;
+    mediaRecorder.resume();
+    recPaused = false;
+    document.getElementById('recordingBar').classList.remove('paused');
+    var btn = document.getElementById('btnPauseRec');
+    btn.innerHTML = '<i data-lucide="pause"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+
+function stopRecording(cancel) {
+    hideRecordingBar();
+    if (cancel) {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.ondataavailable = null;
+            mediaRecorder.onstop = null;
+            mediaRecorder.stop();
+        }
+        if (recStream) { recStream.getTracks().forEach(function(t) { t.stop(); }); recStream = null; }
+        audioChunks = [];
+        mediaRecorder = null;
+        return;
+    }
+    if (mediaRecorder) {
+        if (mediaRecorder.state === 'paused') mediaRecorder.resume();
+        if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+    }
+}
+
+function uploadAudioFile(file) {
+    var fd = new FormData();
+    fd.append('file', file);
+    message.tip('Subiendo audio...');
+    btnSend.disabled = true;
+    fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            btnSend.disabled = false;
+            if (!res.ok) { message.error(res.error || 'Error al subir audio'); return; }
+            var fd2 = new FormData();
+            fd2.append('conv_id',         activeConvId);
+            fd2.append('attachment_url',  res.url);
+            fd2.append('attachment_type', 'audio');
+            fetch('../messages/send_message.php', { method: 'POST', body: fd2 })
+                .then(function(r2) { return r2.json(); })
+                .then(function(res2) {
+                    if (!res2.ok) { message.error('Error al enviar audio'); return; }
+                    var row = buildAudioRow(res2.message);
+                    chatMessages.appendChild(row);
+                    lucide.createIcons({ nodes: [row] });
+                    scrollToBottom();
+                    loadConversations();
+                })
+                .catch(function() { message.error('Error de red'); });
+        })
+        .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
+}
+
+function buildAudioRow(msg) {
+    var div = document.createElement('div');
+    div.className = 'msg-row mine';
+    div.setAttribute('data-msg-id', msg.id);
+    div.innerHTML = '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>'
+        + '<div class="msg-bubble">'
+        + renderAudioBubble(msg.attachment_url)
+        + '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(msg.created_at) + '</span></div>'
+        + '</div>';
+    return div;
+}
+
+var AUDIO_WAVE_H = [3,5,8,13,20,26,28,24,18,12,7,11,19,26,28,22,15,9,14,22,28,25,17,10,6,10,17,22,15,7,4,3];
+
+function renderAudioBubble(url) {
+    var uid  = 'ap_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+    var bars = AUDIO_WAVE_H.map(function(h) { return '<span style="--h:' + h + 'px"></span>'; }).join('');
+    return '<div class="attach-audio" data-src="' + escapeHtml(url) + '" id="' + uid + '">'
+        + '<button class="audio-play-btn" aria-label="Reproducir"><i data-lucide="play"></i></button>'
+        + '<div class="audio-body">'
+        +   '<div class="audio-waveform-track">' + bars + '</div>'
+        +   '<div class="audio-meta">'
+        +     '<span class="audio-time">0:00</span>'
+        +     '<span class="audio-time-total"> / 0:00</span>'
+        +     '<button class="audio-speed-btn" data-speed="1">1×</button>'
+        +   '</div>'
+        + '</div>'
+        + '<audio src="' + escapeHtml(url) + '" preload="metadata" style="display:none"></audio>'
+        + '</div>';
+}
+
+document.getElementById('btnPauseRec').addEventListener('click', function() {
+    if (recPaused) { resumeRecording(); } else { pauseRecording(); }
+});
+document.getElementById('btnStopRec').addEventListener('click', function() { stopRecording(false); });
+document.getElementById('btnCancelRec').addEventListener('click', function() { stopRecording(true); });
+document.getElementById('btnMicPermOk').addEventListener('click', hideMicPermModal);
+document.getElementById('micPermBackdrop').addEventListener('click', hideMicPermModal);
+
+function fmtTime(secs) {
+    if (!isFinite(secs) || isNaN(secs)) return '--:--';
+    var m = Math.floor(secs / 60), s = Math.floor(secs % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function setAudioIcon(btn, name) {
+    btn.innerHTML = '<i data-lucide="' + name + '"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+function bindAudioEvents(card, aud, playBtn) {
+    aud.onloadedmetadata = function() {
+        var el = card.querySelector('.audio-time-total');
+        if (el) el.textContent = ' / ' + fmtTime(aud.duration || 0);
+    };
+    aud.ontimeupdate = function() {
+        var timeEl = card.querySelector('.audio-time');
+        if (timeEl) timeEl.textContent = fmtTime(aud.currentTime);
+        var bars = card.querySelectorAll('.audio-waveform-track span');
+        var pct    = aud.duration > 0 ? aud.currentTime / aud.duration : 0;
+        var filled = Math.round(pct * bars.length);
+        bars.forEach(function(b, i) { b.classList.toggle('filled', i < filled); });
+    };
+    aud.onended = function() {
+        setAudioIcon(playBtn, 'play');
+        card.classList.remove('playing');
+        var realDur = isFinite(aud.duration) ? aud.duration : aud.currentTime;
+        var totalEl = card.querySelector('.audio-time-total');
+        if (totalEl && isFinite(realDur)) totalEl.textContent = ' / ' + fmtTime(realDur);
+        aud.currentTime = 0;
+        var timeEl = card.querySelector('.audio-time');
+        if (timeEl) timeEl.textContent = '0:00';
+        card.querySelectorAll('.audio-waveform-track span').forEach(function(b) { b.classList.remove('filled'); });
+    };
+    if (aud.readyState >= 1) {
+        var el = card.querySelector('.audio-time-total');
+        if (el) el.textContent = ' / ' + fmtTime(aud.duration || 0);
+    }
+}
+
+chatMessages.addEventListener('click', function(e) {
+    var speedBtn = e.target.closest('.audio-speed-btn');
+    if (speedBtn) {
+        var card = speedBtn.closest('.attach-audio');
+        var aud  = card ? card.querySelector('audio') : null;
+        if (!aud) return;
+        var speeds = [1, 1.5, 2];
+        var cur  = parseFloat(speedBtn.getAttribute('data-speed')) || 1;
+        var next = speeds[(speeds.indexOf(cur) + 1) % speeds.length];
+        speedBtn.setAttribute('data-speed', next);
+        speedBtn.textContent = next + '×';
+        aud.playbackRate = next;
+        return;
+    }
+
+    var waveTrack = e.target.closest('.audio-waveform-track');
+    if (waveTrack) {
+        var card = waveTrack.closest('.attach-audio');
+        var aud  = card ? card.querySelector('audio') : null;
+        if (!aud || !aud.duration) return;
+        var rect = waveTrack.getBoundingClientRect();
+        aud.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * aud.duration;
+        return;
+    }
+
+    var playBtn = e.target.closest('.audio-play-btn');
+    if (!playBtn) return;
+    var card = playBtn.closest('.attach-audio');
+    if (!card) return;
+    var aud = card.querySelector('audio');
+    if (!aud) return;
+
+    if (aud.paused) {
+        document.querySelectorAll('.attach-audio audio').forEach(function(a) {
+            if (a !== aud && !a.paused) {
+                a.pause();
+                var oc = a.closest('.attach-audio');
+                if (oc) {
+                    var ob = oc.querySelector('.audio-play-btn');
+                    if (ob) setAudioIcon(ob, 'play');
+                    oc.classList.remove('playing');
+                }
+            }
+        });
+        bindAudioEvents(card, aud, playBtn);
+        aud.play();
+        setAudioIcon(playBtn, 'pause');
+        card.classList.add('playing');
+    } else {
+        aud.pause();
+        setAudioIcon(playBtn, 'play');
+        card.classList.remove('playing');
+    }
+});
+
+
+chatMessages.addEventListener('click', function(e) {
+    var card = e.target.closest('.attach-contact');
+    if (!card) return;
+    var cid = parseInt(card.getAttribute('data-contact-id'));
+    if (!cid || cid === currentUid) return;
+    startConversation(cid);
+});
+
+/* ============================================================
+   CONTACTO — picker de usuarios NootraLite
+   ============================================================ */
+var selectedContactId   = null;
+var selectedContactName = null;
+var cpAllUsers          = [];
+
+function openContactPicker() {
+    selectedContactId   = null;
+    selectedContactName = null;
+    document.getElementById('cpSearch').value = '';
+    document.getElementById('cpSearchClear').classList.remove('visible');
+    document.getElementById('btnShareContact').disabled = true;
+    document.getElementById('cpList').innerHTML = '<div class="cp-hint"><i data-lucide="loader-2" class="cp-spin"></i><span>Cargando usuarios...</span></div>';
+    lucide.createIcons({ nodes: [document.getElementById('cpList')] });
+
+    document.getElementById('contactPickerBackdrop').classList.add('open');
+    document.getElementById('contactPickerSheet').classList.add('open');
+
+    fetch('../messages/get_users.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { renderCpEmpty('Error al cargar usuarios'); return; }
+            cpAllUsers = res.users || [];
+            renderCpList(cpAllUsers);
+        })
+        .catch(function() { renderCpEmpty('Error de conexión'); });
+}
+
+function closeContactPicker() {
+    document.getElementById('contactPickerSheet').classList.remove('open');
+    document.getElementById('contactPickerBackdrop').classList.remove('open');
+    selectedContactId = null;
+    selectedContactName = null;
+}
+
+function renderCpList(users) {
+    var list = document.getElementById('cpList');
+    var q    = (document.getElementById('cpSearch').value || '').toLowerCase().trim();
+    var filtered = q ? users.filter(function(u) { return (u.name || '').toLowerCase().indexOf(q) >= 0; }) : users;
+    if (!filtered.length) {
+        var isEmpty = !q;
+        list.innerHTML = '<div class="cp-empty">'
+            + '<i data-lucide="' + (isEmpty ? 'users' : 'search-x') + '"></i>'
+            + '<span>' + (isEmpty ? 'No hay usuarios disponibles' : 'Sin resultados para "' + escapeHtml(q) + '"') + '</span>'
+            + '</div>';
+        lucide.createIcons({ nodes: [list] });
+        return;
+    }
+    list.innerHTML = '';
+    filtered.forEach(function(u, i) {
+        var ini  = initials(u.name || '?');
+        var col  = avatarColor(u.name || '');
+        var isSelected = selectedContactId == u.id;
+        var item = document.createElement('div');
+        item.className = 'cp-item' + (isSelected ? ' selected' : '');
+        item.dataset.uid = u.id;
+        item.style.animationDelay = (i * 35) + 'ms';
+        item.innerHTML = '<div class="cp-avatar" style="background-color:' + col + '">' + escapeHtml(ini) + '</div>'
+            + '<span class="cp-name">' + escapeHtml(u.name || 'Usuario') + '</span>'
+            + '<div class="cp-check-wrap' + (isSelected ? ' visible' : '') + '"><i data-lucide="check"></i></div>';
+        item.addEventListener('click', function() {
+            list.querySelectorAll('.cp-item').forEach(function(el) {
+                el.classList.remove('selected');
+                var cw = el.querySelector('.cp-check-wrap');
+                if (cw) cw.classList.remove('visible');
+            });
+            item.classList.add('selected');
+            var cw = item.querySelector('.cp-check-wrap');
+            if (cw) cw.classList.add('visible');
+            selectedContactId   = u.id;
+            selectedContactName = u.name;
+            document.getElementById('btnShareContact').disabled = false;
+            lucide.createIcons({ nodes: [list] });
+        });
+        list.appendChild(item);
+    });
+    lucide.createIcons({ nodes: [list] });
+}
+
+function renderCpEmpty(msg) {
+    var list = document.getElementById('cpList');
+    list.innerHTML = '<div class="cp-empty"><i data-lucide="alert-circle"></i><span>' + escapeHtml(msg) + '</span></div>';
+    lucide.createIcons({ nodes: [list] });
+}
+
+document.getElementById('cpSearch').addEventListener('input', function() {
+    var v = this.value;
+    document.getElementById('cpSearchClear').classList.toggle('visible', v.length > 0);
+    selectedContactId = null;
+    selectedContactName = null;
+    document.getElementById('btnShareContact').disabled = true;
+    renderCpList(cpAllUsers);
+});
+
+document.getElementById('cpSearchClear').addEventListener('click', function() {
+    document.getElementById('cpSearch').value = '';
+    this.classList.remove('visible');
+    renderCpList(cpAllUsers);
+    document.getElementById('cpSearch').focus();
+});
+
+document.getElementById('btnCloseContactPicker').addEventListener('click', closeContactPicker);
+document.getElementById('btnCancelContactPicker').addEventListener('click', closeContactPicker);
+document.getElementById('contactPickerBackdrop').addEventListener('click', closeContactPicker);
+
+document.getElementById('btnShareContact').addEventListener('click', function() {
+    if (!selectedContactId || !activeConvId) return;
+    var cid   = selectedContactId;
+    var cname = selectedContactName || 'Usuario';
+    closeContactPicker();
+    var ini   = initials(cname);
+    var col   = avatarColor(cname);
+    var row   = document.createElement('div');
+    row.className = 'msg-row mine';
+    row.innerHTML = '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>'
+        + '<div class="msg-bubble">'
+        + '<div class="attach-contact" data-contact-id="' + parseInt(cid) + '">'
+        +   '<div class="attach-contact-body">'
+        +     '<div class="attach-contact-avatar" style="background-color:' + col + '">' + escapeHtml(ini) + '</div>'
+        +     '<div class="attach-contact-info">'
+        +       '<span class="attach-contact-name">' + escapeHtml(cname) + '</span>'
+        +       '<span class="attach-contact-label">Contacto de NootraLite</span>'
+        +     '</div>'
+        +     '<i data-lucide="user-circle" class="attach-contact-icon"></i>'
+        +   '</div>'
+        +   '<div class="attach-contact-action"><i data-lucide="message-circle"></i><span>Enviar mensaje</span></div>'
+        + '</div>'
+        + '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>'
+        + '</div>';
+    chatMessages.appendChild(row);
+    lucide.createIcons({ nodes: [row] });
+    scrollToBottom();
+
+    var fd = new FormData();
+    fd.append('conv_id',         activeConvId);
+    fd.append('attachment_url',  String(cid));
+    fd.append('attachment_type', 'contact');
+    fetch('../messages/send_message.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al enviar contacto'); return; }
+            loadConversations();
+        })
+        .catch(function() { message.error('Error de red'); });
+});
 
 renderConvList('');
 lucide.createIcons();
