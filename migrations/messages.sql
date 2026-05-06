@@ -83,3 +83,7 @@ ALTER TABLE messages
 ALTER TABLE conversations
   ADD COLUMN typing_u1_at DATETIME NULL,
   ADD COLUMN typing_u2_at DATETIME NULL;
+
+# Expandir ENUM attachment_type para location, audio y contacto, 05/05/2026
+ALTER TABLE messages
+  MODIFY COLUMN attachment_type ENUM('image','file','location','audio','contact') DEFAULT NULL;
