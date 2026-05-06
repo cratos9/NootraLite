@@ -5,7 +5,6 @@ require_once '../Models/UserModel.php';
 require_once '../includes/lightMode.php';
 
 $activePage = 'profile';
-include '../includes/sidebar.php';
 
 $database = new Database();
 try {

@@ -7,6 +7,7 @@ $value = static function (string $key, string $default = '') use ($oldInput): st
     return htmlspecialchars((string) $raw, ENT_QUOTES, 'UTF-8');
 };
 ?>
+<?php include '../includes/sidebar.php'; ?>
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
