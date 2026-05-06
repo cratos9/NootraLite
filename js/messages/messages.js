@@ -88,7 +88,7 @@ function renderMessages(msgs) {
             if (m.body) html += '<span class="msg-text">' + escapeHtml(m.body) + '</span>';
             if (m.attachment_url) {
                 if (m.attachment_type === 'image') {
-                    html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
+                    html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="msgImgError(this)">';
                 } else if (m.attachment_type === 'location') {
                     html += '<a href="' + escapeHtml(m.attachment_url) + '" target="_blank" class="attach-location">'
                         + '<div class="attach-location-map"><div class="attach-location-pin-wrap"><i data-lucide="map-pin"></i></div></div>'

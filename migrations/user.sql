@@ -9,3 +9,6 @@ ALTER TABLE users ADD COLUMN verification_token VARCHAR(64) NULL, ADD COLUMN ver
 
 # Agregar columna plan para los niveles de suscripción del usuario, 01/05/2026
 ALTER TABLE users ADD COLUMN plan ENUM('free','pro','mega') NOT NULL DEFAULT 'free';
+
+# Eliminar columna plan de users — el plan vive en subscriptions.plan_type, 05/05/2026
+ALTER TABLE users DROP COLUMN plan;
