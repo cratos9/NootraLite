@@ -4,7 +4,6 @@ include_once '../config/encrypt.php';
 include_once '../includes/lightMode.php';
 include_once '../Models/BookModel.php';
 $activePage = 'notebooks';
-include '../includes/sidebar.php';
 
 $database = new Database();
 try {

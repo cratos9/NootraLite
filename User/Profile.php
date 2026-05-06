@@ -4,6 +4,8 @@ require_once '../config/encrypt.php';
 require_once '../includes/lightMode.php';
 require_once '../Models/UserModel.php';
 
+$activePage = 'profile';
+
 $database = new Database();
 try {
     $conn = $database->connect();
@@ -16,8 +18,6 @@ $user = new User($conn);
 $userId = $_SESSION['user']['id'] ?? null;
 
 $isVerified = $_SESSION['user']['is_verified'];
-$activePage = 'profile';
-include '../includes/sidebar.php';
 include 'Views/ProfileView.php';
 if (!$isVerified){
     echo '

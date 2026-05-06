@@ -3,7 +3,6 @@ include_once '../includes/Remember.php';
 include_once '../includes/lightMode.php';
 include_once '../Models/BookModel.php';
 $activePage = 'notebooks';
-include '../includes/sidebar.php';
 
 $errors = [];
 $parentId = null;
