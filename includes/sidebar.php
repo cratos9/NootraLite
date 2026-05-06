@@ -5,20 +5,21 @@ $_sidebarUsername = $_su['username'] ?? 'Usuario';
 $_sidebarAvatar = !empty($_su['avatar_url']) ? htmlspecialchars($_su['avatar_url']) : '';
 $_sidebarInitials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $_sidebarUsername), 0, 2)) ?: 'U';
 
-// Leer plan fresco de la DB para que siempre esté actualizado
+// Leer plan fresco de subscriptions para que siempre esté actualizado
 $_sidebarPlan = $_su['plan'] ?? 'free';
 if (!empty($_su['id'])) {
     require_once __DIR__ . '/../config/db.php';
     $_db = (new Database())->connect();
-    $__s = $_db->prepare('SELECT plan FROM users WHERE id = ? LIMIT 1');
+    $__s = $_db->prepare('SELECT plan_type FROM subscriptions WHERE user_id = ? LIMIT 1');
     $__s->execute([$_su['id']]);
     $__row = $__s->fetch(PDO::FETCH_ASSOC);
     if ($__row) {
-        $_sidebarPlan = $__row['plan'];
-        $_SESSION['user']['plan'] = $__row['plan'];
+        $_sidebarPlan = $__row['plan_type'];
+        $_SESSION['user']['plan'] = $__row['plan_type'];
     }
 }
 
+$_sidebarLoggedIn = !empty($_su['id']);
 $_planLabels = ['free' => 'Gratis', 'pro' => 'Pro', 'mega' => 'Mega'];
 $_sidebarPlanLabel = $_planLabels[$_sidebarPlan] ?? 'Gratis';
 $_avColors = ['#7c3aed','#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#3b82f6','#8b5cf6'];
