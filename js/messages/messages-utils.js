@@ -37,6 +37,13 @@ function escapeHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function msgImgError(img) {
+    if (!img.closest('.msg-bubble').querySelector('.msg-img-error')) {
+        img.insertAdjacentHTML('afterend', '<span class="msg-img-error">Imagen no disponible</span>');
+    }
+    img.remove();
+}
+
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
