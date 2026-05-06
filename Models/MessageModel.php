@@ -11,7 +11,7 @@ class MessageModel {
     public function getConversations($uid) {
         $sql = "SELECT c.id, c.user1_id, c.user2_id,
                        m.body AS last_msg, m.created_at AS last_time,
-                       COALESCE(u.username, u.name) AS other_name,
+                       u.username AS other_name,
                        u.id   AS other_user_id,
                        IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
@@ -51,7 +51,7 @@ class MessageModel {
                     r.sender_id AS reply_sender_id,
                     r.attachment_type AS reply_attachment_type,
                     m.deleted_for_all,
-                    COALESCE(uc.username, uc.name) AS contact_name
+                    uc.username AS contact_name
              FROM messages m
              LEFT JOIN messages r ON r.id = m.reply_to_id
              LEFT JOIN users uc ON m.attachment_type = \'contact\' AND m.attachment_url = uc.id

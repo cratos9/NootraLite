@@ -6,7 +6,7 @@ $type   = in_array($_POST['target_type'] ?? '', ['message', 'conversation']) ? $
 $tid    = intval($_POST['target_id'] ?? 0);
 $reason = trim(substr($_POST['reason'] ?? '', 0, 255));
 if (!$type || !$tid) { echo json_encode(['ok' => false]); exit; }
-$db = Database::getInstance()->getConnection();
+$db = (new Database())->connect();
 $db->prepare("INSERT INTO reports (reporter_id, target_type, target_id, reason) VALUES (?,?,?,?)")
    ->execute([$uid, $type, $tid, $reason]);
 echo json_encode(['ok' => true]);

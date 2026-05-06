@@ -9,10 +9,10 @@ try {
     $db   = new Database();
     $pdo  = $db->connect();
     $stmt = $pdo->prepare(
-        "SELECT id, COALESCE(username, name) AS name FROM users
+        "SELECT id, username AS name FROM users
          WHERE id != ?
            AND id NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = ?)
-         ORDER BY name ASC"
+         ORDER BY username ASC"
     );
     $stmt->execute([$uid, $uid]);
     echo json_encode(['ok' => true, 'users' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
