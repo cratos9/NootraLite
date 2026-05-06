@@ -152,6 +152,29 @@
                         <i data-lucide="trash-2"></i>
                     </button>
                 </div>
+
+                <!-- vista cámara integrada -->
+                <div id="cameraView" class="camera-view">
+                    <div class="camera-view-hdr">
+                        <button id="btnCameraClose" class="camera-view-close-btn" aria-label="Cerrar">
+                            <i data-lucide="x"></i>
+                        </button>
+                        <span class="camera-view-title">Tomar foto</span>
+                        <button id="btnSwitchCam" class="camera-view-switch-btn" aria-label="Cambiar cámara">
+                            <i data-lucide="refresh-cw"></i>
+                        </button>
+                    </div>
+                    <div class="camera-video-area">
+                        <video id="cameraVideo" autoplay playsinline muted></video>
+                        <div class="camera-flash" id="cameraFlash"></div>
+                    </div>
+                    <div class="camera-view-controls">
+                        <button id="btnCapture" class="btn-capture" aria-label="Tomar foto">
+                            <span class="btn-capture-ring"></span>
+                            <span class="btn-capture-dot"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -370,6 +393,39 @@
         </div>
     </div>
 </div>
+
+<!-- modal permiso cámara -->
+<div id="cameraPermModal" class="cam-perm-backdrop">
+    <div class="cam-perm-box">
+        <div class="cam-perm-icon-wrap" id="camPermIconWrap">
+            <i data-lucide="camera" id="camPermIcon"></i>
+        </div>
+        <h3 class="cam-perm-title" id="camPermTitle">Permitir cámara</h3>
+        <p class="cam-perm-desc" id="camPermDesc">Para tomar fotos, NootraLite necesita acceso a tu cámara.</p>
+        <div class="cam-perm-steps" id="camPermSteps" style="display:none">
+            <div class="cam-perm-step">
+                <span class="cam-perm-step-n">1</span>
+                <span>Haz clic en el <strong>ícono de candado</strong> junto a la URL del navegador</span>
+            </div>
+            <div class="cam-perm-step">
+                <span class="cam-perm-step-n">2</span>
+                <span>Busca <strong>Cámara</strong> y cámbialo a <strong>Permitir</strong></span>
+            </div>
+            <div class="cam-perm-step">
+                <span class="cam-perm-step-n">3</span>
+                <span>Vuelve aquí y pulsa <strong>Reintentar</strong></span>
+            </div>
+        </div>
+        <div class="cam-perm-btns">
+            <button id="btnCamDeny" class="btn-cam-deny">Cancelar</button>
+            <button id="btnCamAllow" class="btn-cam-allow">
+                <i data-lucide="camera" id="camAllowIcon"></i>
+                <span id="btnCamAllowLabel">Permitir cámara</span>
+            </button>
+        </div>
+    </div>
+</div>
+<canvas id="cameraCanvas" style="display:none"></canvas>
 
 <div id="bookmarksBackdrop"></div>
 <div id="bookmarksDrawer" role="dialog" aria-label="Mensajes destacados">
