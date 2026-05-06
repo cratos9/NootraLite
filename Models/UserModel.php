@@ -184,6 +184,14 @@ class User{
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getUserId($email){
+        $sql = "SELECT id FROM users WHERE email = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user['id'];
+    }
+
 }
 
 ?>
