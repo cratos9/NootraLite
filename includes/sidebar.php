@@ -55,6 +55,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
             <i data-lucide="notepad-text"></i> <span>Notas rápidas</span>
         </a>
     </nav>
+    <?php if ($_sidebarLoggedIn): ?>
     <div class="sidebar-user-widget" id="sidebarUserBtn" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="Cuenta de <?= htmlspecialchars($_sidebarUsername) ?>">
         <div class="sidebar-user-avatar"<?= !$_sidebarAvatar ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
             <?php if ($_sidebarAvatar): ?>
@@ -71,8 +72,23 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
         <a href="../User/Subscriptions.php" class="sidebar-upgrade-btn">Mejorar</a>
         <?php endif; ?>
     </div>
+    <?php else: ?>
+    <div class="sidebar-user-widget sidebar-guest-widget" id="sidebarUserBtn" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="Iniciar sesión">
+        <div class="sidebar-guest-avatar">
+            <i data-lucide="user-round"></i>
+        </div>
+        <div class="sidebar-user-info">
+            <span class="sidebar-user-name">Invitado</span>
+            <span class="sidebar-guest-hint">Inicia sesión</span>
+        </div>
+        <div class="sidebar-guest-arrow">
+            <i data-lucide="log-in"></i>
+        </div>
+    </div>
+    <?php endif; ?>
 </aside>
 
+<?php if ($_sidebarLoggedIn): ?>
 <div id="accountModal" class="account-modal" role="dialog" aria-modal="true" aria-label="Cuenta">
     <div class="acm-header">
         <div class="acm-avatar" id="acmAvatar"<?= !$_sidebarAvatar ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
@@ -140,6 +156,49 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
         </a>
     </div>
 </div>
+<?php else: ?>
+<div id="accountModal" class="account-modal account-modal-guest" role="dialog" aria-modal="true" aria-label="Iniciar sesión">
+    <div class="acm-header acm-header-guest">
+        <div class="acm-guest-icon-wrap">
+            <i data-lucide="user-round"></i>
+        </div>
+        <div>
+            <div class="acm-guest-title">Bienvenido</div>
+            <div class="acm-guest-sub">Inicia sesión para continuar</div>
+        </div>
+    </div>
+
+    <div class="acm-section" style="--i:0">
+        <a class="acm-auth-btn acm-auth-btn-primary" href="../User/Login.php">
+            <div class="acm-auth-icon"><i data-lucide="log-in"></i></div>
+            <span class="acm-auth-label">Iniciar sesión</span>
+            <i data-lucide="arrow-right" class="acm-auth-arrow"></i>
+        </a>
+        <a class="acm-auth-btn acm-auth-btn-secondary" href="../User/Register.php">
+            <div class="acm-auth-icon"><i data-lucide="user-plus"></i></div>
+            <span class="acm-auth-label">Crear cuenta</span>
+            <span class="acm-auth-free">Gratis</span>
+        </a>
+    </div>
+
+    <div class="acm-separator"></div>
+
+    <div class="acm-section" style="--i:1">
+        <div class="acm-toggle-row" id="acmThemeRow" role="button" tabindex="0" aria-label="Cambiar tema">
+            <div class="acm-toggle-left">
+                <div class="acm-theme-icon" id="acmThemeIcon">
+                    <i data-lucide="moon" class="acm-icon-moon"></i>
+                    <i data-lucide="sun" class="acm-icon-sun"></i>
+                </div>
+                <span class="acm-toggle-label">Modo oscuro</span>
+            </div>
+            <div class="acm-switch" id="acmSwitch" aria-checked="true" role="switch">
+                <div class="acm-switch-thumb"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <button class="btn-hamburger" aria-label="Menú"><i data-lucide="menu"></i></button>
 
@@ -157,14 +216,16 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
         <i data-lucide="message-circle"></i><span>Mensajes</span>
         <span class="bottom-msg-badge" id="bottomMsgBadge" style="display:none"></span>
     </a>
-    <button class="bottom-nav-item bottom-nav-avatar" id="bottomNavAvatarBtn" aria-label="Cuenta" aria-haspopup="true">
-        <div class="bottom-nav-avatar-circle">
-            <?php if ($_sidebarAvatar): ?>
+    <button class="bottom-nav-item bottom-nav-avatar<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-btn' : '' ?>" id="bottomNavAvatarBtn" aria-label="<?= $_sidebarLoggedIn ? 'Cuenta' : 'Iniciar sesión' ?>" aria-haspopup="true">
+        <div class="bottom-nav-avatar-circle<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-circle' : '' ?>">
+            <?php if ($_sidebarLoggedIn && $_sidebarAvatar): ?>
                 <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
-            <?php else: ?>
+            <?php elseif ($_sidebarLoggedIn): ?>
                 <span><?= htmlspecialchars($_sidebarInitials) ?></span>
+            <?php else: ?>
+                <i data-lucide="user-round"></i>
             <?php endif; ?>
         </div>
-        <span>Cuenta</span>
+        <span><?= $_sidebarLoggedIn ? 'Cuenta' : 'Entrar' ?></span>
     </button>
 </nav>
