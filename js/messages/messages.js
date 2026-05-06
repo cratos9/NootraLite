@@ -89,6 +89,14 @@ function renderMessages(msgs) {
             if (m.attachment_url) {
                 if (m.attachment_type === 'image') {
                     html += '<img class="msg-img" src="' + m.attachment_url + '" alt="imagen" loading="lazy" onerror="this.closest(\'.msg-bubble\').querySelector(\'.msg-img-error\') || this.insertAdjacentHTML(\'afterend\',\'<span class=\\\"msg-img-error\\\">Imagen no disponible</span>\'); this.remove();">';
+                } else if (m.attachment_type === 'location') {
+                    html += '<a href="' + escapeHtml(m.attachment_url) + '" target="_blank" class="attach-location">'
+                        + '<div class="attach-location-map"><div class="attach-location-pin-wrap"><i data-lucide="map-pin"></i></div></div>'
+                        + '<div class="attach-location-info"><div class="attach-location-text">'
+                        + '<div class="attach-location-label">Ver ubicación</div>'
+                        + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                        + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
+                        + '</a>';
                 } else {
                     var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
                     html += '<div class="msg-attachment">';
@@ -302,6 +310,14 @@ function sendMessage() {
     if (snapAttName) {
         if (snapAttType === 'image') {
             html += '<img class="msg-img" src="' + snapAttUrl + '" alt="imagen" loading="lazy">';
+        } else if (snapAttType === 'location') {
+            html += '<a href="' + escapeHtml(snapAttUrl) + '" target="_blank" class="attach-location">'
+                + '<div class="attach-location-map"><div class="attach-location-pin-wrap"><i data-lucide="map-pin"></i></div></div>'
+                + '<div class="attach-location-info"><div class="attach-location-text">'
+                + '<div class="attach-location-label">Ver ubicación</div>'
+                + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
+                + '</a>';
         } else {
             html += '<div class="msg-attachment">';
             html += '<span class="att-icon"><i data-lucide="file-text"></i></span>';
@@ -649,6 +665,8 @@ chatMessages.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     if (selectMode) { exitSelectMode(); return; }
+    if (document.getElementById('cameraView').classList.contains('open')) { closeCameraModal(); return; }
+    if (document.getElementById('cameraPermModal').classList.contains('open')) { hideCameraPermModal(); return; }
     var delMsgModal = document.getElementById('deleteMessageModal');
     if (delMsgModal && delMsgModal.classList.contains('open')) { closeModalAnimated(delMsgModal); return; }
     if (document.getElementById('forwardSheet').classList.contains('open')) {
@@ -698,6 +716,179 @@ document.getElementById('btnAttach').addEventListener('click', function(e) {
     }
 });
 
+var cameraStream = null;
+var cameraFacing = 'user';
+
+function openCameraModal() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        fileInput.accept = 'image/*';
+        fileInput.click();
+        return;
+    }
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'camera' }).then(function(result) {
+            if (result.state === 'granted') {
+                startCameraView();
+            } else if (result.state === 'denied') {
+                showCameraPermModal(true);
+            } else {
+                showCameraPermModal(false);
+            }
+        }).catch(function() { startCameraView(); });
+    } else {
+        showCameraPermModal(false);
+    }
+}
+
+function showCameraPermModal(denied) {
+    var modal = document.getElementById('cameraPermModal');
+    var desc  = document.getElementById('camPermDesc');
+    var steps = document.getElementById('camPermSteps');
+    var title = document.getElementById('camPermTitle');
+    var icon  = document.getElementById('camPermIconWrap');
+    var allow = document.getElementById('btnCamAllow');
+    var label = document.getElementById('btnCamAllowLabel');
+    var allowIcon = document.getElementById('camAllowIcon');
+    if (denied) {
+        title.textContent = 'Cámara bloqueada';
+        desc.textContent = 'El acceso a la cámara está bloqueado en este navegador. Sigue los pasos para activarlo:';
+        steps.style.display = '';
+        icon.dataset.denied = '1';
+        allowIcon.setAttribute('data-lucide', 'refresh-cw');
+        label.textContent = 'Reintentar';
+        allow.dataset.denied = '1';
+    } else {
+        title.textContent = 'Permitir cámara';
+        desc.textContent = 'Para tomar fotos, NootraLite necesita acceso a tu cámara.';
+        steps.style.display = 'none';
+        delete icon.dataset.denied;
+        allowIcon.setAttribute('data-lucide', 'camera');
+        label.textContent = 'Permitir cámara';
+        delete allow.dataset.denied;
+    }
+    modal.classList.add('open');
+    lucide.createIcons({ nodes: [modal] });
+}
+
+function hideCameraPermModal(cb) {
+    var modal = document.getElementById('cameraPermModal');
+    modal.style.opacity = '0';
+    modal.style.transition = 'opacity 0.18s ease';
+    setTimeout(function() {
+        modal.classList.remove('open');
+        modal.style.opacity = '';
+        modal.style.transition = '';
+        if (cb) cb();
+    }, 180);
+}
+
+function startCameraView() {
+    var view = document.getElementById('cameraView');
+    view.classList.add('open');
+    lucide.createIcons({ nodes: [view] });
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: false })
+        .then(function(stream) {
+            cameraStream = stream;
+            document.getElementById('cameraVideo').srcObject = stream;
+        })
+        .catch(function(err) {
+            closeCameraModal();
+            if (err && err.name === 'NotAllowedError') {
+                showCameraPermModal(true);
+            } else {
+                message.warning('No se pudo acceder a la cámara');
+            }
+        });
+}
+
+function closeCameraModal() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(function(t) { t.stop(); });
+        cameraStream = null;
+    }
+    var video = document.getElementById('cameraVideo');
+    if (video) video.srcObject = null;
+    var view = document.getElementById('cameraView');
+    if (!view.classList.contains('open') || view.classList.contains('closing')) return;
+    view.classList.add('closing');
+    view.addEventListener('animationend', function h() {
+        view.removeEventListener('animationend', h);
+        view.classList.remove('open', 'closing');
+    });
+}
+
+function switchCamera() {
+    cameraFacing = cameraFacing === 'user' ? 'environment' : 'user';
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(function(t) { t.stop(); });
+        cameraStream = null;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: false })
+        .then(function(stream) {
+            cameraStream = stream;
+            document.getElementById('cameraVideo').srcObject = stream;
+        })
+        .catch(function() { message.warning('No se pudo cambiar la cámara'); });
+}
+
+function takePhoto() {
+    var video  = document.getElementById('cameraVideo');
+    var canvas = document.getElementById('cameraCanvas');
+    var flash  = document.getElementById('cameraFlash');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    flash.classList.add('flash');
+    setTimeout(function() { flash.classList.remove('flash'); }, 150);
+    setTimeout(function() {
+        closeCameraModal();
+        canvas.toBlob(function(blob) {
+            var file = new File([blob], 'foto_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+            var fd = new FormData();
+            fd.append('file', file);
+            message.tip('Subiendo foto...');
+            btnSend.disabled = true;
+            fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    btnSend.disabled = false;
+                    if (!res.ok) { message.error(res.error || 'Error al subir'); return; }
+                    pendingAttUrl  = res.url;
+                    pendingAttType = res.type;
+                    pendingAttName = res.name;
+                    pendingAttSize = res.size;
+                    sendMessage();
+                })
+                .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
+        }, 'image/jpeg', 0.92);
+    }, 100);
+}
+
+document.getElementById('btnCamAllow').addEventListener('click', function() {
+    if (this.dataset.denied === '1') {
+        // reintentar — el usuario fue a settings y volvió
+        hideCameraPermModal(function() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: false })
+                .then(function(stream) {
+                    cameraStream = stream;
+                    var view = document.getElementById('cameraView');
+                    view.classList.add('open');
+                    lucide.createIcons({ nodes: [view] });
+                    document.getElementById('cameraVideo').srcObject = stream;
+                })
+                .catch(function() {
+                    showCameraPermModal(true);
+                });
+        });
+    } else {
+        hideCameraPermModal(function() { startCameraView(); });
+    }
+});
+document.getElementById('btnCamDeny').addEventListener('click', function() { hideCameraPermModal(); });
+document.getElementById('btnCameraClose').addEventListener('click', function() { closeCameraModal(); });
+document.getElementById('btnSwitchCam').addEventListener('click', switchCamera);
+document.getElementById('btnCapture').addEventListener('click', takePhoto);
+
 document.querySelectorAll('.attach-option').forEach(function(opt) {
     opt.addEventListener('click', function() {
         var action = this.dataset.action;
@@ -708,6 +899,27 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
             } else if (action === 'document') {
                 fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar';
                 fileInput.click();
+            } else if (action === 'camera') {
+                openCameraModal();
+            } else if (action === 'location') {
+                if (!navigator.geolocation) {
+                    message.error('Geolocalización no disponible');
+                    return;
+                }
+                message.tip('Obteniendo ubicación...');
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        var lat  = pos.coords.latitude.toFixed(6);
+                        var lng  = pos.coords.longitude.toFixed(6);
+                        var murl = 'https://maps.google.com/?q=' + lat + ',' + lng;
+                        pendingAttUrl  = murl;
+                        pendingAttType = 'location';
+                        pendingAttName = 'location';
+                        pendingAttSize = 0;
+                        sendMessage();
+                    },
+                    function() { message.error('No se pudo obtener la ubicación'); }
+                );
             } else {
                 message.warning('Próximamente');
             }
