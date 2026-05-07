@@ -15,6 +15,8 @@ var userResults     = document.getElementById('userResults');
 var ncpTimer = null;
 var searchTimer = null;
 var convListInitted = false;
+var fetchingConvs = false;
+var fetchingConvTyping = false;
 
 function toggleConvMeta(convId, meta) {
     var fd = new FormData();
@@ -48,13 +50,17 @@ function convLastPreview(c) {
 }
 
 function loadConversations() {
+    if (fetchingConvs || document.hidden) return;
+    fetchingConvs = true;
     fetch('../messages/get_conversations.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingConvs = false;
             if (!res.ok) return;
             conversations = res.conversations;
             renderConvList(convSearch.value);
-        });
+        })
+        .catch(function() { fetchingConvs = false; });
 }
 
 function renderConvList(filter) {
@@ -70,8 +76,10 @@ function renderConvList(filter) {
     }
 
     if (filtered.length === 0) {
-        var emptyMsg = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
-        convList.innerHTML = '<div class="conv-empty">' + emptyMsg + '</div>';
+        var emptyMsg  = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
+        var emptyIcon = activeFilter === 'favorites' ? 'star' : activeFilter === 'unread' ? 'mail' : 'message-circle';
+        convList.innerHTML = '<div class="conv-empty"><i data-lucide="' + emptyIcon + '"></i><span>' + emptyMsg + '</span></div>';
+        lucide.createIcons();
         return;
     }
 
@@ -186,9 +194,12 @@ convSearch.addEventListener('input', function() {
 var convActivityActive = {};
 
 function pollConvTyping() {
+    if (fetchingConvTyping || document.hidden) return;
+    fetchingConvTyping = true;
     fetch('../messages/poll_conv_typing.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingConvTyping = false;
             if (!res.ok) return;
             var newActivity = {};
             (res.recording || []).forEach(function(id) { newActivity[id] = 'recording'; });
@@ -223,7 +234,7 @@ function pollConvTyping() {
             });
             convActivityActive = newActivity;
         })
-        .catch(function() {});
+        .catch(function() { fetchingConvTyping = false; });
 }
 
 setInterval(pollConvTyping, 500);
