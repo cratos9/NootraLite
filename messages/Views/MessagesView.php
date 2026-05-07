@@ -74,8 +74,11 @@
         <!-- panel derecho: chat -->
         <section class="chat-panel" id="chatPanel">
             <div class="chat-empty" id="chatEmpty">
-                <i data-lucide="message-circle"></i>
-                <p>Selecciona una conversación</p>
+                <div class="chat-empty-icon-wrap">
+                    <i data-lucide="message-circle"></i>
+                </div>
+                <span class="chat-empty-title">Tus mensajes</span>
+                <span class="chat-empty-sub">Selecciona una conversación para empezar a chatear</span>
             </div>
 
             <div class="chat-active" id="chatActive">
@@ -90,6 +93,9 @@
                     </button>
                 </div>
                 <div class="chat-messages" id="chatMessages"></div>
+                <button id="btnScrollBottom" class="btn-scroll-bottom" aria-label="Ir al final" style="display:none">
+                    <i data-lucide="chevrons-down"></i>
+                </button>
 
                 <div class="reply-bar" id="replyBar" style="display:none">
                     <div class="reply-bar-indicator"></div>
