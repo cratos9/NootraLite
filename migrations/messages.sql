@@ -93,3 +93,8 @@ ALTER TABLE messages
 
 # Columna para distinguir borrado-para-todos (scope=all) del borrado individual, 06/05/2026
 ALTER TABLE messages ADD COLUMN deleted_for_all TINYINT(1) NOT NULL DEFAULT 0;
+
+# Columnas para indicador "Grabando audio..." (como typing pero para audio), 06/05/2026
+ALTER TABLE conversations
+  ADD COLUMN recording_u1_at DATETIME NULL,
+  ADD COLUMN recording_u2_at DATETIME NULL;

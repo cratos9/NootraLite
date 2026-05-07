@@ -24,7 +24,13 @@ var forwardTargetConvIds = [];
 function activateReply(msgId, body, senderName) {
     replyToId = msgId; replyToBody = body; replyToSender = senderName;
     replyBarSender.textContent = senderName;
-    replyBarBody.textContent = body;
+    var replyMsg = (typeof currentMsgs !== 'undefined') ? currentMsgs.find(function(m) { return parseInt(m.id) === parseInt(msgId); }) : null;
+    if (replyMsg && !replyMsg.body && replyMsg.attachment_type) {
+        replyBarBody.innerHTML = attachmentPreviewHtml(replyMsg.attachment_type);
+        lucide.createIcons({ nodes: [replyBarBody] });
+    } else {
+        replyBarBody.textContent = body;
+    }
     replyBar.classList.remove('reply-bar-leaving');
     replyBar.style.display = 'flex';
     void replyBar.offsetWidth;
@@ -94,6 +100,7 @@ function updateStatusUI(isOnline, lastSeen) {
     var dot = chatHeader.querySelector('.status-dot');
     var statusEl = chatHeader.querySelector('.chat-status');
     if (!dot || !statusEl) return;
+    if (statusEl.classList.contains('typing') || statusEl.classList.contains('recording')) return;
     var newText = isOnline ? 'En línea' : formatLastSeen(lastSeen || null);
     var wasOnline = dot.classList.contains('online');
     var changed = statusEl.textContent !== newText || wasOnline !== !!isOnline;
@@ -423,8 +430,12 @@ function confirmForward() {
 
 function closeChatPanel() {
     setTypingIndicator(false);
+    setRecordingIndicator(false);
+    stopRecordingSignal();
     typingThrottle = null;
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    if (pollInterval)       { clearInterval(pollInterval);       pollInterval       = null; }
+    if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
+    if (statusPollInterval) { clearInterval(statusPollInterval); statusPollInterval = null; }
     activeConvId = null;
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.classList.remove('active');
@@ -440,7 +451,11 @@ function closeChatPanel() {
 }
 
 function closeMobileChat() {
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    setRecordingIndicator(false);
+    stopRecordingSignal();
+    if (pollInterval)       { clearInterval(pollInterval);       pollInterval       = null; }
+    if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
+    if (statusPollInterval) { clearInterval(statusPollInterval); statusPollInterval = null; }
     activeConvId = null;
     lastMsgId = 0;
     var btn = document.getElementById('btnBack');

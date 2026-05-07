@@ -16,6 +16,7 @@ var pendingAttSize = 0;
 var pollInterval = null;
 var typingPollInterval = null;
 var statusPollInterval = null;
+var recordingSignalInterval = null;
 var infoMsgCurrent  = null;
 var infoRelInterval = null;
 var lastMsgId    = 0;
@@ -30,12 +31,24 @@ function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
     var t = textEl ? textEl.textContent.trim() : '';
     if (t) return t;
-    if (bubble.querySelector('.msg-img'))         return '📷 Imagen';
-    if (bubble.querySelector('.msg-attachment'))  return '📎 Archivo';
-    if (bubble.querySelector('.attach-location')) return '📍 Ubicación';
-    if (bubble.querySelector('audio'))            return '🎵 Audio';
-    if (bubble.querySelector('.attach-contact'))  return '👤 Contacto';
-    return '📎 Adjunto';
+    if (bubble.querySelector('.msg-img'))         return 'Imagen';
+    if (bubble.querySelector('.msg-attachment'))  return 'Archivo';
+    if (bubble.querySelector('.attach-location')) return 'Ubicación';
+    if (bubble.querySelector('audio'))            return 'Audio';
+    if (bubble.querySelector('.attach-contact'))  return 'Contacto';
+    return 'Adjunto';
+}
+
+function attachmentPreviewHtml(type) {
+    var map = {
+        'image':    { icon: 'image',     label: 'Imagen' },
+        'audio':    { icon: 'mic',       label: 'Audio' },
+        'location': { icon: 'map-pin',   label: 'Ubicación' },
+        'contact':  { icon: 'user',      label: 'Contacto' },
+        'file':     { icon: 'paperclip', label: 'Archivo' }
+    };
+    var entry = map[type] || { icon: 'paperclip', label: 'Adjunto' };
+    return '<i data-lucide="' + entry.icon + '" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"></i>' + entry.label;
 }
 
 function renderMessages(msgs) {
@@ -72,8 +85,7 @@ function renderMessages(msgs) {
             if (!m.reply_body && !m.reply_attachment_type) {
                 rBodyHtml = '<span class="reply-preview-body reply-deleted">Mensaje eliminado</span>';
             } else if (!m.reply_body) {
-                var attLabel = m.reply_attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo';
-                rBodyHtml = '<span class="reply-preview-body">' + attLabel + '</span>';
+                rBodyHtml = '<span class="reply-preview-body">' + attachmentPreviewHtml(m.reply_attachment_type) + '</span>';
             } else {
                 rBodyHtml = '<span class="reply-preview-body">' + escapeHtml(m.reply_body) + '</span>';
             }
@@ -145,6 +157,8 @@ function renderMessages(msgs) {
 
 function openConversation(convId, name) {
     setTypingIndicator(false);
+    setRecordingIndicator(false);
+    stopRecordingSignal();
     typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
@@ -166,6 +180,7 @@ function openConversation(convId, name) {
             break;
         }
     }
+    renderConvList(convSearch.value);
 
     var mrFd = new FormData();
     mrFd.append('conv_id', convId);
@@ -230,11 +245,11 @@ function openConversation(convId, name) {
             scrollToBottom();
             updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
-            pollInterval = setInterval(pollMessages, 5000);
+            pollInterval = setInterval(pollMessages, 2000);
             if (typingPollInterval) clearInterval(typingPollInterval);
             typingPollInterval = setInterval(pollTyping, 500);
             if (statusPollInterval) clearInterval(statusPollInterval);
-            statusPollInterval = setInterval(pollStatus, 8000);
+            statusPollInterval = setInterval(pollStatus, 5000);
             lucide.createIcons();
         })
         .catch(function() {
@@ -261,21 +276,32 @@ function pollMessages() {
                 }
             }
             if (!res.messages || !res.messages.length) {
-                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                _applyRemoteActivity(res);
                 return;
             }
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
             if (newestId <= lastMsgId) {
-                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                _applyRemoteActivity(res);
                 return;
             }
             lastMsgId = newestId;
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
-            if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+            _applyRemoteActivity(res);
             if (wasAtBottom) scrollToBottom();
-            loadConversations();
+            var lastMsg = msgs[msgs.length - 1];
+            for (var ci = 0; ci < conversations.length; ci++) {
+                if (conversations[ci].id == activeConvId) {
+                    conversations[ci].last_msg = lastMsg.body || null;
+                    conversations[ci].last_attachment_type = lastMsg.body ? null : (lastMsg.attachment_type || null);
+                    conversations[ci].last_deleted_for_all = lastMsg.deleted_for_all || 0;
+                    conversations[ci].last_time = lastMsg.created_at;
+                    conversations[ci].unread = 0;
+                    break;
+                }
+            }
+            renderConvList(convSearch.value);
             var fd = new FormData();
             fd.append('conv_id', activeConvId);
             fetch('../messages/mark_read.php', { method: 'POST', body: fd });
@@ -288,9 +314,26 @@ function pollTyping() {
     fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            if (res.ok) setTypingIndicator(res.other_typing);
+            if (!res.ok) return;
+            if (res.other_recording) {
+                setTypingIndicator(false);
+                setRecordingIndicator(true);
+            } else {
+                setRecordingIndicator(false);
+                setTypingIndicator(res.other_typing);
+            }
         })
         .catch(function() {});
+}
+
+function _applyRemoteActivity(res) {
+    if (res.other_recording) {
+        setTypingIndicator(false);
+        setRecordingIndicator(true);
+    } else {
+        setRecordingIndicator(false);
+        if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+    }
 }
 
 function pollStatus() {
@@ -367,7 +410,8 @@ function sendMessage() {
             if (!res.ok) return;
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
-                    conversations[i].last_msg = body || '📎 Adjunto';
+                    conversations[i].last_msg = body || null;
+                    conversations[i].last_attachment_type = body ? null : (snapAttType || null);
                     conversations[i].last_time = res.message.created_at;
                     break;
                 }
@@ -1018,7 +1062,9 @@ function updatePinnedBar(msgs) {
     if (!msg) { hidePinnedBar(); return; }
     var isMine = parseInt(msg.sender_id) === currentUid;
     document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
-    document.getElementById('pinnedBarBody').textContent   = msg.body || (msg.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+    var pBody = document.getElementById('pinnedBarBody');
+    pBody.innerHTML = msg.body ? escapeHtml(msg.body) : attachmentPreviewHtml(msg.attachment_type);
+    lucide.createIcons({ nodes: [pBody] });
     bar.classList.remove('hiding');
     if (!bar.classList.contains('show')) {
         bar.classList.add('show');
@@ -1069,10 +1115,18 @@ function pinMessage(msgId) {
                 }
             }
             var bar     = document.getElementById('pinnedBar');
-            var bubble  = newRow ? newRow.querySelector('.msg-bubble') : null;
-            var isMine  = newRow ? newRow.classList.contains('mine') : false;
+            var newRow2 = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+            var isMine  = newRow2 ? newRow2.classList.contains('mine') : false;
             document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
-            document.getElementById('pinnedBarBody').textContent   = bubble ? getBubbleText(bubble) : '';
+            var pBody2  = document.getElementById('pinnedBarBody');
+            var pinMsg  = currentMsgs.find(function(m) { return parseInt(m.id) === parseInt(msgId); });
+            if (pinMsg) {
+                pBody2.innerHTML = pinMsg.body ? escapeHtml(pinMsg.body) : attachmentPreviewHtml(pinMsg.attachment_type);
+                lucide.createIcons({ nodes: [pBody2] });
+            } else {
+                var bub2 = newRow2 ? newRow2.querySelector('.msg-bubble') : null;
+                pBody2.textContent = bub2 ? getBubbleText(bub2) : '';
+            }
             bar.classList.remove('hiding');
             if (!bar.classList.contains('show')) {
                 bar.classList.add('show');
@@ -1175,7 +1229,7 @@ function renderBookmarkItems(bookmarks) {
         var bm    = bookmarks[i];
         var color = avatarColor(bm.sender_name || '');
         var ini   = initials(bm.sender_name || '?');
-        var preview = bm.body || (bm.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+        var preview = bm.body ? escapeHtml(bm.body.substring(0, 80) + (bm.body.length > 80 ? '…' : '')) : attachmentPreviewHtml(bm.attachment_type);
         var dateStr = formatTime(bm.bm_date);
         html += '<div class="bm-item bm-item-in" data-msg-id="' + bm.message_id + '" data-conv-id="' + bm.conversation_id + '" style="animation-delay:' + (i * 45) + 'ms">';
         html += '<div class="bm-item-header">';
@@ -1184,7 +1238,7 @@ function renderBookmarkItems(bookmarks) {
         html += '<span class="bm-date">' + escapeHtml(dateStr) + '</span>';
         html += '<button class="bm-remove-btn" aria-label="Quitar destacado"><i data-lucide="x"></i></button>';
         html += '</div>';
-        html += '<div class="bm-preview">' + escapeHtml(preview) + '</div>';
+        html += '<div class="bm-preview">' + preview + '</div>';
         html += '<button class="bm-goto-btn">Ir al mensaje <i data-lucide="arrow-right"></i></button>';
         html += '</div>';
     }
@@ -1408,7 +1462,7 @@ setInterval(function() {
     fetch('../messages/update_last_seen.php', { method: 'POST' });
 }, 30000);
 
-setInterval(loadConversations, 10000);
+setInterval(loadConversations, 3000);
 
 function openInfoModal(msg) {
     infoMsgCurrent = msg;
@@ -1559,6 +1613,48 @@ function setTypingIndicator(active) {
     }
 }
 
+function setRecordingIndicator(active) {
+    var existing = chatMessages.querySelector('.recording-indicator-row');
+    if (active) {
+        if (!existing) {
+            var typingRow = chatMessages.querySelector('.typing-indicator-row');
+            if (typingRow) typingRow.remove();
+            var el = document.createElement('div');
+            el.className = 'recording-indicator-row';
+            el.innerHTML = '<div class="recording-bubble">'
+                + '<span class="rec-dot"></span>'
+                + '<div class="rec-waves"><span></span><span></span><span></span><span></span><span></span></div>'
+                + '<span class="rec-label">Grabando audio...</span>'
+                + '</div>';
+            chatMessages.appendChild(el);
+            scrollToBottom();
+        }
+    } else {
+        if (existing) existing.remove();
+    }
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!statusEl) return;
+    if (active) {
+        if (!statusEl.classList.contains('recording')) {
+            if (statusEl.classList.contains('typing')) {
+                statusEl.dataset.prevRec = statusEl.dataset.prev || 'Desconectado';
+                statusEl.classList.remove('typing');
+                delete statusEl.dataset.prev;
+            } else {
+                statusEl.dataset.prevRec = statusEl.textContent;
+            }
+            statusEl.classList.add('recording');
+            statusEl.innerHTML = '<span class="header-rec-dot"></span>Grabando audio...';
+        }
+    } else {
+        if (statusEl.classList.contains('recording')) {
+            statusEl.classList.remove('recording');
+            statusEl.textContent = statusEl.dataset.prevRec || 'Desconectado';
+            delete statusEl.dataset.prevRec;
+        }
+    }
+}
+
 /* ============================================================
    AUDIO — MediaRecorder API
    ============================================================ */
@@ -1616,6 +1712,34 @@ function startRecording() {
         });
 }
 
+function startRecordingSignal() {
+    if (!activeConvId) return;
+    var send = function() {
+        fetch('../messages/recording.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'conv_id=' + activeConvId + '&action=start'
+        });
+    };
+    send();
+    if (recordingSignalInterval) clearInterval(recordingSignalInterval);
+    recordingSignalInterval = setInterval(send, 2000);
+}
+
+function stopRecordingSignal() {
+    if (recordingSignalInterval) {
+        clearInterval(recordingSignalInterval);
+        recordingSignalInterval = null;
+    }
+    if (activeConvId) {
+        fetch('../messages/recording.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'conv_id=' + activeConvId + '&action=stop'
+        });
+    }
+}
+
 function showRecordingBar() {
     var bar     = document.getElementById('recordingBar');
     var timerEl = document.getElementById('recordingTimer');
@@ -1624,6 +1748,7 @@ function showRecordingBar() {
     timerEl.textContent = '0:00';
     bar.classList.remove('hiding', 'paused');
     bar.classList.add('active');
+    startRecordingSignal();
     var pauseBtn = document.getElementById('btnPauseRec');
     if (pauseBtn) pauseBtn.innerHTML = '<i data-lucide="pause"></i>';
     recTimer = setInterval(function() {
@@ -1672,6 +1797,7 @@ function resumeRecording() {
 
 function stopRecording(cancel) {
     hideRecordingBar();
+    stopRecordingSignal();
     if (cancel) {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.ondataavailable = null;

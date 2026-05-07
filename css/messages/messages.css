@@ -170,7 +170,9 @@ body { height: 100vh; overflow: hidden; }
 .conv-last {
     font-size: 11px; color: var(--text-muted);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 3px;
 }
+.conv-last-icon { width: 11px; height: 11px; flex-shrink: 0; }
 
 .conv-meta {
     display: flex; flex-direction: column;
@@ -3061,6 +3063,8 @@ body { height: 100vh; overflow: hidden; }
     height: 30px;
     cursor: pointer;
     padding: 3px 0;
+    overflow: hidden;
+    min-width: 0;
 }
 .audio-waveform-track span {
     flex-shrink: 0;
@@ -3543,8 +3547,11 @@ body { height: 100vh; overflow: hidden; }
 @media (max-width: 750px) {
     #contactPickerSheet { max-width: 100%; border-radius: 16px 16px 0 0; }
     #contactPickerSheet::before { border-radius: 16px 16px 0 0; }
-    .attach-audio { min-width: 170px; max-width: 220px; }
-    .attach-contact { min-width: 150px; max-width: 200px; }
+    .msg-bubble { max-width: 85%; }
+    .attach-audio { min-width: 0; max-width: 100%; }
+    .attach-location { min-width: 0; max-width: 100%; }
+    .attach-contact { min-width: 0; max-width: 100%; }
+    .audio-waveform-track { overflow: hidden; }
 }
 
 .light-mode #contactPickerSheet { background: #fff; border-color: #e2e8f0; box-shadow: 0 -12px 40px rgba(0,0,0,0.1); }
@@ -3561,3 +3568,124 @@ body { height: 100vh; overflow: hidden; }
 .light-mode .btn-cp-cancel { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
 .light-mode .btn-cp-cancel:hover { background: #e2e8f0; }
 .light-mode .cp-handle { background: #cbd5e1; }
+
+/* --- recording indicator — chat bubble --- */
+@keyframes recWave {
+    0%, 100% { transform: scaleY(0.35); opacity: 0.5; }
+    50%       { transform: scaleY(1);   opacity: 1; }
+}
+@keyframes recIndicatorIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.recording-indicator-row {
+    padding: 4px 0 2px;
+    flex-shrink: 0;
+    animation: recIndicatorIn 0.22s ease;
+}
+.recording-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 14px 14px 14px 4px;
+    padding: 8px 14px;
+}
+.rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    flex-shrink: 0;
+    animation: recDotPulse 1.4s ease-in-out infinite;
+}
+.rec-waves {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 18px;
+}
+.rec-waves span {
+    display: block;
+    width: 3px;
+    border-radius: 2px;
+    background: #ef4444;
+    animation: recWave 0.85s ease-in-out infinite;
+}
+.rec-waves span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+.rec-waves span:nth-child(2) { height: 14px; animation-delay: 0.12s; }
+.rec-waves span:nth-child(3) { height: 18px; animation-delay: 0.24s; }
+.rec-waves span:nth-child(4) { height: 14px; animation-delay: 0.36s; }
+.rec-waves span:nth-child(5) { height: 8px;  animation-delay: 0.48s; }
+.rec-label {
+    font-size: 0.72rem;
+    color: #ef4444;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* --- recording indicator — chat header --- */
+.chat-status.recording {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ef4444;
+    font-style: normal;
+}
+.header-rec-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+    flex-shrink: 0;
+    animation: recDotPulse 1.4s ease-in-out infinite;
+}
+
+/* --- recording indicator — conv list --- */
+.conv-last.conv-recording {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ef4444;
+    font-style: italic;
+}
+.conv-rec-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+    flex-shrink: 0;
+    animation: recDotPulse 1.4s ease-in-out infinite;
+}
+.conv-rec-waves {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 12px;
+    flex-shrink: 0;
+}
+.conv-rec-waves span {
+    display: block;
+    width: 2px;
+    border-radius: 1px;
+    background: #ef4444;
+    animation: recWave 0.85s ease-in-out infinite;
+}
+.conv-rec-waves span:nth-child(1) { height: 4px;  animation-delay: 0s; }
+.conv-rec-waves span:nth-child(2) { height: 7px;  animation-delay: 0.12s; }
+.conv-rec-waves span:nth-child(3) { height: 10px; animation-delay: 0.24s; }
+.conv-rec-waves span:nth-child(4) { height: 7px;  animation-delay: 0.36s; }
+.conv-rec-waves span:nth-child(5) { height: 4px;  animation-delay: 0.48s; }
+
+.light-mode .recording-bubble { background: #fff; border-color: rgba(239,68,68,.25); }
+.light-mode .conv-last.conv-recording { color: #dc2626; }
+.light-mode .conv-rec-dot,
+.light-mode .conv-rec-waves span,
+.light-mode .rec-waves span,
+.light-mode .rec-dot,
+.light-mode .header-rec-dot { background: #dc2626; }
+.light-mode .rec-label,
+.light-mode .chat-status.recording { color: #dc2626; }
