@@ -11,7 +11,7 @@ try {
     $stmt = $pdo->prepare(
         'SELECT mb.message_id, mb.created_at AS bm_date,
                 m.body, m.attachment_type, m.conversation_id, m.sender_id,
-                COALESCE(u.username, u.name) AS sender_name
+                u.username AS sender_name
          FROM message_bookmarks mb
          JOIN messages m ON m.id = mb.message_id
          JOIN conversations c ON c.id = m.conversation_id

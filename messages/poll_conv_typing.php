@@ -20,4 +20,18 @@ $stmt = $pdo->prepare(
 $stmt->execute([$uid, $uid, $uid]);
 $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-echo json_encode(['ok' => true, 'typing' => array_map('intval', $ids)]);
+$stmt2 = $pdo->prepare(
+    'SELECT id FROM conversations
+     WHERE (user1_id = ? OR user2_id = ?)
+       AND IF(user1_id = ?,
+              recording_u2_at IS NOT NULL AND recording_u2_at > DATE_SUB(NOW(), INTERVAL 4 SECOND),
+              recording_u1_at IS NOT NULL AND recording_u1_at > DATE_SUB(NOW(), INTERVAL 4 SECOND))'
+);
+$stmt2->execute([$uid, $uid, $uid]);
+$recIds = $stmt2->fetchAll(PDO::FETCH_COLUMN);
+
+echo json_encode([
+    'ok'        => true,
+    'typing'    => array_map('intval', $ids),
+    'recording' => array_map('intval', $recIds),
+]);

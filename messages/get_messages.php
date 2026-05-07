@@ -47,14 +47,19 @@ try {
     $bookmarkedIds = array_values(array_map('intval', $bmStmt->fetchAll(PDO::FETCH_COLUMN)));
 
     $tStmt = $pdo->prepare(
-        'SELECT IF(user1_id = ?,
-            typing_u2_at IS NOT NULL AND typing_u2_at > DATE_SUB(NOW(), INTERVAL 3 SECOND),
-            typing_u1_at IS NOT NULL AND typing_u1_at > DATE_SUB(NOW(), INTERVAL 3 SECOND)
-         ) AS other_typing
+        'SELECT
+            IF(user1_id = ?,
+                typing_u2_at IS NOT NULL AND typing_u2_at > DATE_SUB(NOW(), INTERVAL 3 SECOND),
+                typing_u1_at IS NOT NULL AND typing_u1_at > DATE_SUB(NOW(), INTERVAL 3 SECOND)
+            ) AS other_typing,
+            IF(user1_id = ?,
+                recording_u2_at IS NOT NULL AND recording_u2_at > DATE_SUB(NOW(), INTERVAL 4 SECOND),
+                recording_u1_at IS NOT NULL AND recording_u1_at > DATE_SUB(NOW(), INTERVAL 4 SECOND)
+            ) AS other_recording
          FROM conversations WHERE id = ?'
     );
-    $tStmt->execute([$uid, $conv_id]);
-    $otherTyping = (bool)$tStmt->fetchColumn();
+    $tStmt->execute([$uid, $uid, $conv_id]);
+    $tRow = $tStmt->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'ok'                => true,
@@ -63,7 +68,8 @@ try {
         'last_seen'         => $otherLastSeen,
         'pinned_message_id' => $pinnedMsgId ? (int)$pinnedMsgId : null,
         'bookmarked_ids'    => $bookmarkedIds,
-        'other_typing'      => $otherTyping
+        'other_typing'      => $tRow ? (bool)$tRow['other_typing']    : false,
+        'other_recording'   => $tRow ? (bool)$tRow['other_recording'] : false,
     ]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false, 'error' => 'error al obtener mensajes']);
