@@ -17,6 +17,7 @@ var pollInterval = null;
 var typingPollInterval = null;
 var statusPollInterval = null;
 var recordingSignalInterval = null;
+var fetchingMessages = false;
 var infoMsgCurrent  = null;
 var infoRelInterval = null;
 var lastMsgId    = 0;
@@ -26,6 +27,12 @@ var bookmarkedIds = [];
 var selectMode = false;
 var selectedMsgIds = [];
 var typingThrottle = null;
+
+function locationCoordsText(url) {
+    var m = url.match(/[?&]q=([-\d.]+),([-\d.]+)/);
+    if (!m) return 'Abrir en Google Maps';
+    return parseFloat(m[1]).toFixed(4) + ', ' + parseFloat(m[2]).toFixed(4);
+}
 
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
@@ -107,6 +114,7 @@ function renderMessages(msgs) {
                         + '<div class="attach-location-info"><div class="attach-location-text">'
                         + '<div class="attach-location-label">Ver ubicación</div>'
                         + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                        + '<div class="attach-location-coords attach-location-latlng">' + locationCoordsText(m.attachment_url) + '</div>'
                         + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
                         + '</a>';
                 } else if (m.attachment_type === 'audio') {
@@ -245,7 +253,7 @@ function openConversation(convId, name) {
             scrollToBottom();
             updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
-            pollInterval = setInterval(pollMessages, 2000);
+            pollInterval = setInterval(pollMessages, 1000);
             if (typingPollInterval) clearInterval(typingPollInterval);
             typingPollInterval = setInterval(pollTyping, 500);
             if (statusPollInterval) clearInterval(statusPollInterval);
@@ -258,10 +266,12 @@ function openConversation(convId, name) {
 }
 
 function pollMessages() {
-    if (!activeConvId) return;
+    if (!activeConvId || fetchingMessages || document.hidden) return;
+    fetchingMessages = true;
     fetch('../messages/get_messages.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingMessages = false;
             if (!res.ok) return;
             if (res.is_online !== undefined) updateStatusUI(res.is_online, res.last_seen);
             if (infoMsgCurrent && res.messages) {
@@ -306,11 +316,11 @@ function pollMessages() {
             fd.append('conv_id', activeConvId);
             fetch('../messages/mark_read.php', { method: 'POST', body: fd });
         })
-        .catch(function() {});
+        .catch(function() { fetchingMessages = false; });
 }
 
 function pollTyping() {
-    if (!activeConvId) return;
+    if (!activeConvId || document.hidden) return;
     fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
@@ -337,7 +347,7 @@ function _applyRemoteActivity(res) {
 }
 
 function pollStatus() {
-    if (!activeConvId) return;
+    if (!activeConvId || document.hidden) return;
     fetch('../messages/poll_status.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
@@ -346,9 +356,12 @@ function pollStatus() {
         .catch(function() {});
 }
 
+var sendingMessage = false;
+
 function sendMessage() {
     var body = msgInput.value.trim();
-    if ((!body && !pendingAttUrl) || !activeConvId) return;
+    if ((!body && !pendingAttUrl) || !activeConvId || sendingMessage) return;
+    sendingMessage = true;
 
     msgInput.value = '';
     msgInput.focus();
@@ -379,7 +392,7 @@ function sendMessage() {
                 + '<div class="attach-location-map"><div class="attach-location-pin-wrap"><i data-lucide="map-pin"></i></div></div>'
                 + '<div class="attach-location-info"><div class="attach-location-text">'
                 + '<div class="attach-location-label">Ver ubicación</div>'
-                + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                + '<div class="attach-location-coords">' + locationCoordsText(snapAttUrl) + '</div>'
                 + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
                 + '</a>';
         } else {
@@ -407,6 +420,7 @@ function sendMessage() {
     fetch('../messages/send_message.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            sendingMessage = false;
             if (!res.ok) return;
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
@@ -418,7 +432,8 @@ function sendMessage() {
             }
             renderConvList(convSearch.value);
             loadConversations();
-        });
+        })
+        .catch(function() { sendingMessage = false; });
 }
 
 function updateBlockedNotice(isBlocked, name) {
@@ -427,7 +442,7 @@ function updateBlockedNotice(isBlocked, name) {
     if (!notice) return;
     if (isBlocked) {
         var ini   = initials(name || '?');
-        var color = avatarGradient(name || '');
+        var color = avatarColor(name || '');
         notice.innerHTML =
             '<div class="blocked-avatar-wrap">'
           +   '<div class="blocked-avatar-initials" style="background:' + color + '">' + ini + '</div>'
@@ -656,6 +671,13 @@ msgInput.addEventListener('keydown', function(e) {
 });
 
 chatHeader.addEventListener('click', function(e) {
+    var phoneBtn = e.target.closest('[aria-label="Llamar"]');
+    var videoBtn = e.target.closest('[aria-label="Video"]');
+    if (phoneBtn || videoBtn) {
+        e.stopPropagation();
+        message.warning('Las llamadas estarán disponibles próximamente');
+        return;
+    }
     var btn = e.target.closest('.btn-chat-more');
     if (!btn) return;
     e.stopPropagation();
@@ -992,8 +1014,10 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                 message.tip('Obteniendo ubicación...');
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
-                        var lat  = pos.coords.latitude.toFixed(6);
-                        var lng  = pos.coords.longitude.toFixed(6);
+                        var lat = pos.coords.latitude.toFixed(6);
+                        var lng = pos.coords.longitude.toFixed(6);
+                        var acc = Math.round(pos.coords.accuracy);
+                        if (acc > 150) message.warning('Señal GPS débil — precisión: ±' + acc + 'm');
                         var murl = 'https://maps.google.com/?q=' + lat + ',' + lng;
                         pendingAttUrl  = murl;
                         pendingAttType = 'location';
@@ -1001,7 +1025,8 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                         pendingAttSize = 0;
                         sendMessage();
                     },
-                    function() { message.error('No se pudo obtener la ubicación'); }
+                    function() { message.error('No se pudo obtener la ubicación'); },
+                    { enableHighAccuracy: true, timeout: 12000 }
                 );
             } else if (action === 'audio') {
                 startRecording();
@@ -2131,6 +2156,44 @@ document.getElementById('btnShareContact').addEventListener('click', function() 
             loadConversations();
         })
         .catch(function() { message.error('Error de red'); });
+});
+
+var btnScrollBottom = document.getElementById('btnScrollBottom');
+var scrollBottomVisible = false;
+
+chatMessages.addEventListener('scroll', function() {
+    var distFromBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+    var shouldShow = distFromBottom > 180;
+    if (shouldShow === scrollBottomVisible) return;
+    scrollBottomVisible = shouldShow;
+    if (shouldShow) {
+        btnScrollBottom.style.display = 'flex';
+        btnScrollBottom.classList.remove('sbb-out');
+        void btnScrollBottom.offsetWidth;
+        btnScrollBottom.classList.add('sbb-in');
+    } else {
+        btnScrollBottom.classList.remove('sbb-in');
+        void btnScrollBottom.offsetWidth;
+        btnScrollBottom.classList.add('sbb-out');
+        btnScrollBottom.addEventListener('animationend', function onOut() {
+            btnScrollBottom.removeEventListener('animationend', onOut);
+            if (!scrollBottomVisible) {
+                btnScrollBottom.style.display = 'none';
+                btnScrollBottom.classList.remove('sbb-out');
+            }
+        });
+    }
+});
+
+btnScrollBottom.addEventListener('click', function() {
+    scrollToBottom();
+});
+
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        if (activeConvId) { fetchingMessages = false; pollMessages(); }
+        loadConversations();
+    }
 });
 
 renderConvList('');
