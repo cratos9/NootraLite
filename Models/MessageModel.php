@@ -10,7 +10,8 @@ class MessageModel {
     // lista de conversaciones del usuario con ultimo mensaje y no leidos
     public function getConversations($uid) {
         $sql = "SELECT c.id, c.user1_id, c.user2_id,
-                       m.body AS last_msg, m.created_at AS last_time,
+                       m.body AS last_msg, m.attachment_type AS last_attachment_type,
+                       m.deleted_for_all AS last_deleted_for_all, m.created_at AS last_time,
                        u.username AS other_name,
                        u.id   AS other_user_id,
                        IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
@@ -31,7 +32,7 @@ class MessageModel {
                     SELECT id FROM messages
                     WHERE conversation_id = c.id
                       AND NOT (sender_id = ? AND deleted_for_sender = 1)
-                      AND NOT (sender_id != ? AND deleted_for_receiver = 1 AND deleted_for_sender = 0)
+                      AND NOT (sender_id != ? AND deleted_for_receiver = 1 AND deleted_for_all = 0)
                     ORDER BY created_at DESC LIMIT 1
                 )
                 LEFT JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
@@ -56,7 +57,8 @@ class MessageModel {
              LEFT JOIN messages r ON r.id = m.reply_to_id
              LEFT JOIN users uc ON m.attachment_type = \'contact\' AND m.attachment_url = uc.id
              WHERE m.conversation_id = ?
-               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1 AND m.deleted_for_all = 0)
+               AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1)
+               /* receiver: solo ocultar si NO es tombstone activo (deleted_for_all=1 = receiver aún debe ver "Mensaje eliminado") */
                AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_all = 0)
              ORDER BY m.created_at ASC'
         );
