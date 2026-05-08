@@ -12,3 +12,127 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* topbar */
+.dash-topbar {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.dash-topbar-left { display: flex; flex-direction: column; gap: 1px; }
+.dash-page-title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -.2px; }
+.dash-date { font-size: 11px; color: var(--text-muted); }
+.dash-topbar-right { display: flex; align-items: center; gap: 8px; }
+
+/* búsqueda */
+.dash-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 34px;
+    transition: border-color .15s, box-shadow .15s;
+    cursor: text;
+}
+.dash-search-wrap:focus-within {
+    border-color: rgba(124,58,237,.45);
+    box-shadow: 0 0 0 3px rgba(124,58,237,.08);
+}
+.dash-search-icon svg { width: 13px; height: 13px; color: var(--text-muted); display: block; }
+.dash-search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font: 400 12px 'Poppins', sans-serif;
+    color: var(--text-primary);
+    width: 180px;
+    cursor: text;
+}
+.dash-search-input::placeholder { color: var(--text-muted); }
+
+/* botones icono */
+.dash-topbar-icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: border-color .15s, color .15s, background .15s;
+    position: relative;
+}
+.dash-topbar-icon-btn:hover { border-color: #7c3aed; color: var(--text-primary); background: rgba(124,58,237,.07); }
+.dash-topbar-icon-btn svg { width: 15px; height: 15px; }
+
+/* campana */
+.dash-bell-wrap { position: relative; }
+.dash-bell-dot {
+    position: absolute;
+    top: 5px; right: 5px;
+    width: 7px; height: 7px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid var(--bg-secondary);
+    animation: dashBellPulse 2s ease-in-out infinite;
+}
+.dash-notif-dropdown {
+    position: absolute;
+    top: calc(100% + 8px); right: 0;
+    width: 280px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 200;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.dash-notif-dropdown.open { animation: dashDropDown .2s cubic-bezier(.34,1.56,.64,1); }
+.dash-notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.dash-notif-empty svg { width: 20px; height: 20px; opacity: .45; }
+
+/* toggle tema — mismo tamaño que botones del topbar */
+#dashThemeToggle { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); padding: 0; justify-content: center; }
+.light-mode #dashThemeToggle { border-color: #e2e8f0; }
+
+/* área de contenido */
+.dash-content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+/* animaciones */
+@keyframes dashDropDown {
+    from { opacity: 0; transform: translateY(-6px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes dashBellPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+    50%       { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+}
+
+/* light mode */
+.light-mode .dash-search-wrap { background: #f1f5f9; border-color: #e2e8f0; }
+.light-mode .dash-search-wrap:focus-within { border-color: rgba(124,58,237,.4); }
+.light-mode .dash-topbar-icon-btn { border-color: #e2e8f0; color: #64748b; }
+.light-mode .dash-topbar-icon-btn:hover { border-color: #7c3aed; color: #1e293b; }
+.light-mode .dash-notif-dropdown { background: #fff; border-color: #e2e8f0; box-shadow: 0 8px 32px rgba(0,0,0,.1); }
+.light-mode #dashThemeToggle { border-color: #e2e8f0; }
+.light-mode .dash-bell-dot { border-color: #fff; }

@@ -14,12 +14,90 @@
 <body>
 <?php include '../includes/sidebar.php'; ?>
 <div class="dash-wrap">
-  <!-- contenido — sesiones D2+ -->
+
+  <header class="dash-topbar">
+    <div class="dash-topbar-left">
+      <span class="dash-page-title">Dashboard</span>
+      <span class="dash-date" id="dashDate"></span>
+    </div>
+    <div class="dash-topbar-right">
+
+      <div class="dash-search-wrap">
+        <i data-lucide="search" class="dash-search-icon"></i>
+        <input type="text" class="dash-search-input" id="dashSearchInput"
+               placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite" readonly>
+      </div>
+
+      <div class="dash-bell-wrap">
+        <button class="dash-topbar-icon-btn" id="dashBellBtn" aria-label="Notificaciones">
+          <i data-lucide="bell"></i>
+          <span class="dash-bell-dot" id="dashBellDot" style="display:none"></span>
+        </button>
+        <div class="dash-notif-dropdown" id="dashNotifDropdown" style="display:none">
+          <div class="dash-notif-empty">
+            <i data-lucide="bell-off"></i>
+            <span>Sin notificaciones</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-theme" id="dashThemeToggle" aria-label="Cambiar tema">
+        <i data-lucide="sun" class="icon-sun"></i>
+        <i data-lucide="moon" class="icon-moon"></i>
+      </button>
+
+    </div>
+  </header>
+
+  <div class="dash-content">
+    <!-- secciones D3+ -->
+  </div>
+
 </div>
 
 <script>
 var dashUid  = <?= (int)($_SESSION['user']['id'] ?? 0) ?>;
 var dashName = <?= json_encode($_SESSION['user']['username'] ?? 'Usuario') ?>;
+
+(function() {
+    var el = document.getElementById('dashDate');
+    if (!el) return;
+    var opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    var txt = new Date().toLocaleDateString('es-MX', opts);
+    el.textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+})();
+
+function dashToggleTheme() {
+    var isCurrentlyLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+    var isLight = !isCurrentlyLight;
+    document.body.classList.toggle('light-mode', isLight);
+    document.documentElement.classList.toggle('light-mode', isLight);
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+document.getElementById('dashThemeToggle').addEventListener('click', dashToggleTheme);
+
+var dashBellBtn      = document.getElementById('dashBellBtn');
+var dashBellDropdown = document.getElementById('dashNotifDropdown');
+var dashBellOpen = false;
+if (dashBellBtn && dashBellDropdown) {
+    dashBellBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dashBellOpen = !dashBellOpen;
+        if (dashBellOpen) {
+            dashBellDropdown.style.display = '';
+            dashBellDropdown.classList.add('open');
+        } else {
+            dashBellDropdown.classList.remove('open');
+            dashBellDropdown.style.display = 'none';
+        }
+    });
+    document.addEventListener('click', function() {
+        if (!dashBellOpen) return;
+        dashBellOpen = false;
+        dashBellDropdown.classList.remove('open');
+        dashBellDropdown.style.display = 'none';
+    });
+}
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
