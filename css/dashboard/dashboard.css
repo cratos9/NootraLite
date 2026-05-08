@@ -173,8 +173,8 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
 @media (max-width: 480px) {
     .dash-wrap { margin-left: 0; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0)); }
     .dash-topbar { padding: 0 16px; height: 56px; }
-    .dash-search-wrap { display: none; }
-    .dash-bell-wrap { display: none; }
+    .dash-search-input { display: none; }
+    .dash-search-wrap { width: 34px; height: 34px; padding: 0; gap: 0; justify-content: center; border-radius: 8px; }
     .dash-content { padding: 16px; }
     .dash-greet-h { font-size: 20px; }
 }
