@@ -118,7 +118,42 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
 /* área de contenido */
 .dash-content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 
+/* greeting */
+.dash-greeting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 8px 0;
+    animation: dashFadeUp .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+.dash-greet-h {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 5px;
+    letter-spacing: -.5px;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+.dash-greet-name {
+    background: linear-gradient(135deg, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 14px rgba(167,139,250,.25));
+}
+.dash-greet-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+    animation: dashFadeUp .4s cubic-bezier(.34,1.56,.64,1) .12s both;
+}
+
 /* animaciones */
+@keyframes dashFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 @keyframes dashDropDown {
     from { opacity: 0; transform: translateY(-6px) scale(.97); }
     to   { opacity: 1; transform: translateY(0)   scale(1); }
@@ -141,6 +176,7 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
     .dash-search-wrap { display: none; }
     .dash-bell-wrap { display: none; }
     .dash-content { padding: 16px; }
+    .dash-greet-h { font-size: 20px; }
 }
 
 /* light mode */
