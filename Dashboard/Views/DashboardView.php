@@ -61,7 +61,38 @@
       <!-- racha: sesión D24 opcional -->
     </section>
 
-    <!-- secciones D4+ -->
+    <section class="dash-stats">
+      <div class="dash-stat" id="statMessages" style="--sd:.05s">
+        <div class="dash-stat-icon blue"><i data-lucide="message-circle"></i></div>
+        <div class="dash-stat-body">
+          <span class="dash-stat-lbl">Mensajes sin leer</span>
+          <span class="dash-stat-num" id="statMsgNum">—</span>
+        </div>
+      </div>
+      <div class="dash-stat" id="statEvents" style="--sd:.10s">
+        <div class="dash-stat-icon teal"><i data-lucide="calendar"></i></div>
+        <div class="dash-stat-body">
+          <span class="dash-stat-lbl">Eventos de hoy</span>
+          <span class="dash-stat-num" id="statEvtNum">—</span>
+        </div>
+      </div>
+      <div class="dash-stat" id="statTasks" style="--sd:.15s">
+        <div class="dash-stat-icon green"><i data-lucide="check-square"></i></div>
+        <div class="dash-stat-body">
+          <span class="dash-stat-lbl">Tareas pendientes</span>
+          <span class="dash-stat-num" id="statTaskNum">—</span>
+        </div>
+      </div>
+      <div class="dash-stat" id="statNotes" style="--sd:.20s">
+        <div class="dash-stat-icon purple"><i data-lucide="notebook-pen"></i></div>
+        <div class="dash-stat-body">
+          <span class="dash-stat-lbl">Notas esta semana</span>
+          <span class="dash-stat-num" id="statNoteNum">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- secciones D5+ -->
   </div>
 
 </div>
@@ -149,6 +180,80 @@ document.getElementById('dashThemeToggle').addEventListener('click', dashToggleT
     if (wordEl) wordEl.textContent = pick[0];
     if (subEl)  subEl.textContent  = pick[1];
 })();
+
+var colorRgb = {
+    blue:'59,130,246', red:'239,68,68',   cyan:'6,182,212',
+    teal:'20,184,166', orange:'249,115,22',amber:'245,158,11',
+    green:'16,185,129',indigo:'99,102,241',purple:'124,58,237',
+    pink:'236,72,153',
+};
+var statGroups = [
+    { stats:[
+        {icon:'message-circle', lbl:'Mensajes sin leer',     numId:'statMsgNum',   color:'red'   }, // rojo = necesitan atención
+        {icon:'send',           lbl:'Enviados hoy',           numId:'statSentNum',  color:'blue'  }, // azul = info enviada, neutral
+        {icon:'inbox',          lbl:'Conversaciones activas', numId:'statConvNum',  color:'cyan'  }, // cyan = en vivo, ahora
+    ]},
+    { stats:[
+        {icon:'calendar',       lbl:'Eventos de hoy',         numId:'statEvtNum',   color:'teal'  }, // teal = agenda, tiempo
+        {icon:'calendar-clock', lbl:'Próximas entregas',      numId:'statEvtDNum',  color:'orange'}, // naranja = urgencia próxima
+        {icon:'calendar-check', lbl:'Eventos esta semana',    numId:'statEvtWNum',  color:'amber' }, // ámbar = planificado, pendiente
+    ]},
+    { stats:[
+        {icon:'alert-circle',   lbl:'Tareas pendientes',      numId:'statTaskNum',  color:'amber' }, // ámbar = por hacer, atención
+        {icon:'circle-check',   lbl:'Completadas hoy',        numId:'statDoneNum',  color:'green' }, // verde = logro, completado
+        {icon:'timer',          lbl:'En progreso',            numId:'statWipNum',   color:'indigo'}, // índigo = enfocado, trabajando
+    ]},
+    { stats:[
+        {icon:'notebook-pen',   lbl:'Notas esta semana',      numId:'statNoteNum',  color:'purple'}, // morado = creativo, ideas
+        {icon:'book-open',      lbl:'Notas totales',          numId:'statTotalNum', color:'indigo'}, // índigo = conocimiento acumulado
+        {icon:'bookmark',       lbl:'Guardadas',              numId:'statBkmNum',   color:'pink'  }, // rosa = personal, favorito
+    ]},
+];
+var statSlots   = ['statMessages','statEvents','statTasks','statNotes'];
+var statCurrent = statGroups.map(function(g){ return Math.floor(Math.random()*g.stats.length); });
+
+statSlots.forEach(function(id,i) {
+    var card = document.getElementById(id);
+    if (!card) return;
+    var s = statGroups[i].stats[statCurrent[i]];
+    var iEl = card.querySelector('.dash-stat-icon i');
+    var iWr = card.querySelector('.dash-stat-icon');
+    var lEl = card.querySelector('.dash-stat-lbl');
+    var nEl = card.querySelector('.dash-stat-num');
+    if (iEl) iEl.setAttribute('data-lucide', s.icon);
+    if (lEl) lEl.textContent = s.lbl;
+    if (nEl) nEl.id = s.numId;
+    if (iWr) iWr.className = 'dash-stat-icon '+s.color;
+    card.style.setProperty('--card-rgb', colorRgb[s.color] || '124,58,237');
+});
+
+function swapStat(i) {
+    var card = document.getElementById(statSlots[i]);
+    if (!card) return;
+    var body = card.querySelector('.dash-stat-body');
+    statCurrent[i] = (statCurrent[i]+1) % statGroups[i].stats.length;
+    var s = statGroups[i].stats[statCurrent[i]];
+    body.classList.add('stat-out');
+    setTimeout(function() {
+        var iWr = card.querySelector('.dash-stat-icon');
+        var lEl = card.querySelector('.dash-stat-lbl');
+        var nEl = card.querySelector('.dash-stat-num');
+        if (iWr) { iWr.innerHTML='<i data-lucide="'+s.icon+'"></i>'; iWr.className='dash-stat-icon '+s.color; }
+        if (lEl) lEl.textContent = s.lbl;
+        if (nEl) nEl.id = s.numId;
+        card.style.setProperty('--card-rgb', colorRgb[s.color] || '124,58,237');
+        lucide.createIcons();
+        body.classList.remove('stat-out');
+        body.classList.add('stat-in');
+        setTimeout(function(){ body.classList.remove('stat-in'); }, 280);
+    }, 180);
+}
+
+statSlots.forEach(function(_,i){
+    setTimeout(function(){
+        setInterval(function(){ swapStat(i); }, 7000);
+    }, 3000 + i*1800);
+});
 
 var dashBellBtn      = document.getElementById('dashBellBtn');
 var dashBellDropdown = document.getElementById('dashNotifDropdown');
