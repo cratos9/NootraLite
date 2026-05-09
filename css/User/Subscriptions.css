@@ -287,7 +287,32 @@ h2{
     filter: brightness(1.05);
 }
 
-@media screen and (max-width: 600px) {
+@media  screen and (max-width:768px) {
+    .type{
+        margin-top: 50px;
+    }
+    
+    .main{
+        padding: 10px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .type{
+        margin-top: 50px;
+    }
+    
+    .main{
+        padding: 10px;
+        padding-bottom: 55px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     .subscription-modal-actions {
         flex-direction: column;
     }
