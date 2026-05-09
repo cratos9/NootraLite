@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="../js/includes/lightMode.js" defer></script>
+    <script src="../js/includes/toast.js"></script>
+    <link rel="stylesheet" href="../css/includes/toast.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/includes/sidebar.css">
     <link rel="stylesheet" href="../css/User/Subscriptions.css">
@@ -30,19 +32,19 @@
                     if ($subscription['plan_type'] === 'free' && $subscription['subscription_category'] === 'individual') {
                         echo '<span class="current-plan individual">Plan actual</span>';
                     } else {
-                        echo '<a href="#" class="change-link individual" disabled >Cancelar suscripción</a>';
+                        echo '<a href="../User/Subscriptions.php?action=cancelIndividualSubscription" class="change-link individual" id="cancelSubscriptionTrigger">Cancelar suscripción</a>';
                     }
 
                     if ($subscription['plan_type'] === 'free' && $subscription['subscription_category'] === 'enterprise') {
                         echo '<span class="current-plan enterprise hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=basic&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Basica empresarial</a>';
+                        echo '<a href="../User/PayFake.php?plan=free&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Basica empresarial</a>';
                     }
 
                     if ($subscription['plan_type'] === 'free' && $subscription['subscription_category'] === 'education') {
                         echo '<span class="current-plan education hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=basic&category=education" class="change-link education hidden" disabled >Cambiar a Basica educacion</a>';
+                        echo '<a href="../User/PayFake.php?plan=free&category=education" class="change-link education hidden" disabled >Cambiar a Basica educacion</a>';
                     }
                 ?>
             </section>
@@ -74,19 +76,19 @@
                     if ($subscription['plan_type'] === 'pro' && $subscription['subscription_category'] === 'individual') {
                         echo '<span class="current-plan individual">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=pro&category=individual" class="change-link individual" disabled >Cambiar a Pro</a>';
+                        echo '<a href="../User/PayFake.php?plan=pro&category=individual" class="change-link individual" disabled >Cambiar a Pro</a>';
                     }
 
                     if ($subscription['plan_type'] === 'pro' && $subscription['subscription_category'] === 'enterprise') {
                         echo '<span class="current-plan enterprise hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=pro&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Pro empresarial</a>';
+                        echo '<a href="../User/PayFake.php?plan=pro&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Pro empresarial</a>';
                     }
 
                     if ($subscription['plan_type'] === 'pro' && $subscription['subscription_category'] === 'education') {
                         echo '<span class="current-plan education hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=pro&category=education" class="change-link education hidden" disabled >Cambiar a Pro educacion</a>';
+                        echo '<a href="../User/PayFake.php?plan=pro&category=education" class="change-link education hidden" disabled >Cambiar a Pro educacion</a>';
                     }
                 ?>
             </section>
@@ -117,19 +119,19 @@
                     if ($subscription['plan_type'] === 'mega' && $subscription['subscription_category'] === 'individual') {
                         echo '<span class="current-plan individual">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=mega&category=individual" class="change-link individual" disabled >Cambiar a Mega</a>';
+                        echo '<a href="../User/PayFake.php?plan=mega&category=individual" class="change-link individual" disabled >Cambiar a Mega</a>';
                     }
 
                     if ($subscription['plan_type'] === 'mega' && $subscription['subscription_category'] === 'enterprise') {
                         echo '<span class="current-plan enterprise hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=mega&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Mega empresarial</a>';
+                        echo '<a href="../User/PayFake.php?plan=mega&category=enterprise" class="change-link enterprise hidden" disabled >Cambiar a Mega empresarial</a>';
                     }
 
                     if ($subscription['plan_type'] === 'mega' && $subscription['subscription_category'] === 'education') {
                         echo '<span class="current-plan education hidden">Plan actual</span>';
                     } else {
-                        echo '<a href="../User/ChangeSubscription.php?plan=mega&category=education" class="change-link education hidden" disabled >Cambiar a Mega educacion</a>';
+                        echo '<a href="../User/PayFake.php?plan=mega&category=education" class="change-link education hidden" disabled >Cambiar a Mega educacion</a>';
                     }
                 ?>
             </section>
@@ -150,6 +152,18 @@
             </section>
         </article>
     </main>
+
+    <div class="subscription-modal-overlay hidden" id="cancelSubModalOverlay" aria-hidden="true">
+        <div class="subscription-modal" role="dialog" aria-modal="true" aria-labelledby="cancelSubModalTitle" aria-describedby="cancelSubModalDesc">
+            <h3 id="cancelSubModalTitle">Confirmar cancelación</h3>
+            <p id="cancelSubModalDesc">Tu plan de pago se cancelará y al finalizar tu periodo vigente pasarás a Gratis Individual. ¿Deseas continuar?</p>
+            <div class="subscription-modal-actions">
+                <button type="button" class="subscription-modal-btn subscription-modal-btn-secondary" id="cancelSubModalClose">Volver</button>
+                <button type="button" class="subscription-modal-btn subscription-modal-btn-danger" id="cancelSubModalConfirm">Sí, cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/User/Subscriptions.js"></script>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>

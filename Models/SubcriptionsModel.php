@@ -51,6 +51,12 @@ class SubscriptionsModel{
         $stmt = $this->conn->prepare($query);
         return $stmt->execute();
     }
+
+    public function changeBasicPlan($subscription_id){
+        $query = "UPDATE subscriptions SET plan_type = 'free', subscription_category = 'individual', monthly_query_limit = 100, max_notebooks = 10, max_notes_per_notebook = 20, max_attachments_per_note = 5 WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([$subscription_id]);
+    }
 }
 
 ?>

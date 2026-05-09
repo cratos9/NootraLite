@@ -224,3 +224,75 @@ h2{
     background-color: #6d28d9;
     border-color: #6d28d9;
 }
+
+.subscription-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2200;
+    padding: 16px;
+}
+
+.subscription-modal {
+    width: min(520px, 100%);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    padding: 22px;
+}
+
+.subscription-modal h3 {
+    margin: 0 0 10px 0;
+    font-size: 22px;
+}
+
+.subscription-modal p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.subscription-modal-actions {
+    margin-top: 18px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.subscription-modal-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-primary);
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.subscription-modal-btn-secondary:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.subscription-modal-btn-danger {
+    border-color: var(--danger);
+    color: #fff;
+    background-color: var(--danger);
+}
+
+.subscription-modal-btn-danger:hover {
+    filter: brightness(1.05);
+}
+
+@media screen and (max-width: 600px) {
+    .subscription-modal-actions {
+        flex-direction: column;
+    }
+
+    .subscription-modal-btn {
+        width: 100%;
+    }
+}
