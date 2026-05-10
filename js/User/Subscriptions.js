@@ -15,6 +15,53 @@ individalPricesAmount = ['0', '200', '150'];
 enterprisePricesAmount = ['1500', '2500', '2000'];
 educationPricesAmount = ['100', '180', '130'];
 
+const cancelSubTrigger = document.getElementById('cancelSubscriptionTrigger');
+const cancelSubModalOverlay = document.getElementById('cancelSubModalOverlay');
+const cancelSubModalClose = document.getElementById('cancelSubModalClose');
+const cancelSubModalConfirm = document.getElementById('cancelSubModalConfirm');
+
+let cancelSubHref = null;
+
+function openCancelSubModal(href) {
+    if (!cancelSubModalOverlay) return;
+    cancelSubHref = href;
+    cancelSubModalOverlay.classList.remove('hidden');
+    cancelSubModalOverlay.setAttribute('aria-hidden', 'false');
+}
+
+function closeCancelSubModal() {
+    if (!cancelSubModalOverlay) return;
+    cancelSubModalOverlay.classList.add('hidden');
+    cancelSubModalOverlay.setAttribute('aria-hidden', 'true');
+}
+
+if (cancelSubTrigger && cancelSubModalOverlay && cancelSubModalClose && cancelSubModalConfirm) {
+    cancelSubTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        openCancelSubModal(cancelSubTrigger.getAttribute('href'));
+    });
+
+    cancelSubModalClose.addEventListener('click', closeCancelSubModal);
+
+    cancelSubModalConfirm.addEventListener('click', () => {
+        if (cancelSubHref) {
+            window.location.href = cancelSubHref;
+        }
+    });
+
+    cancelSubModalOverlay.addEventListener('click', (event) => {
+        if (event.target === cancelSubModalOverlay) {
+            closeCancelSubModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !cancelSubModalOverlay.classList.contains('hidden')) {
+            closeCancelSubModal();
+        }
+    });
+}
+
 function changePlan(plan){
     btnIndividual.classList.remove('active');
     btnEnterprise.classList.remove('active');
