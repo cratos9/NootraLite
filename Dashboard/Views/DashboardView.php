@@ -19,7 +19,6 @@
         <p>Username: <?php echo $_SESSION['user']['username']; ?></p>
         <p>ID: <?php echo $_SESSION['user']['id']; ?></p>
         <p>Last Login: <?php echo $_SESSION['user']['last_login']; ?></p>
-        <a href="../User/Subscriptions.php">Subscripciones</a>
     </main>
     <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
     <script src="../js/includes/sidebar.js"></script>
