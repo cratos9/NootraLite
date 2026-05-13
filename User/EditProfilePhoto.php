@@ -5,7 +5,6 @@ require_once '../Models/UserModel.php';
 require_once '../includes/attachments.php';
 
 $activePage = 'profile';
-include '../includes/sidebar.php';
 
 $userID = $_SESSION['user']['id'];
 $database = new Database();

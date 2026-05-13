@@ -73,7 +73,11 @@ function bumpBadge(el) {
     }, { once: true });
 }
 
+var fetchingNotifs = false;
+
 function checkMsgNotifs() {
+    if (fetchingNotifs || document.hidden) return;
+    fetchingNotifs = true;
     fetch('../messages/poll_notifications.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
@@ -103,8 +107,9 @@ function checkMsgNotifs() {
             }
             prevUnread = n;
             sessionStorage.setItem('snt_seen', String(n));
+            fetchingNotifs = false;
         })
-        .catch(function() {});
+        .catch(function() { fetchingNotifs = false; });
 }
 
 function showMsgToast(n) {
@@ -136,7 +141,10 @@ function showMsgToast(n) {
 }
 
 checkMsgNotifs();
-setInterval(checkMsgNotifs, 8000);
+setInterval(checkMsgNotifs, 5000);
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) checkMsgNotifs();
+});
 
 // account modal
 var accountModal = document.getElementById('accountModal');

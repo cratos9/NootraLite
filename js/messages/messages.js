@@ -16,6 +16,8 @@ var pendingAttSize = 0;
 var pollInterval = null;
 var typingPollInterval = null;
 var statusPollInterval = null;
+var recordingSignalInterval = null;
+var fetchingMessages = false;
 var infoMsgCurrent  = null;
 var infoRelInterval = null;
 var lastMsgId    = 0;
@@ -26,16 +28,34 @@ var selectMode = false;
 var selectedMsgIds = [];
 var typingThrottle = null;
 
+function locationCoordsText(url) {
+    var m = url.match(/[?&]q=([-\d.]+),([-\d.]+)/);
+    if (!m) return 'Abrir en Google Maps';
+    return parseFloat(m[1]).toFixed(4) + ', ' + parseFloat(m[2]).toFixed(4);
+}
+
 function getBubbleText(bubble) {
     var textEl = bubble.querySelector('.msg-text');
     var t = textEl ? textEl.textContent.trim() : '';
     if (t) return t;
-    if (bubble.querySelector('.msg-img'))         return '📷 Imagen';
-    if (bubble.querySelector('.msg-attachment'))  return '📎 Archivo';
-    if (bubble.querySelector('.attach-location')) return '📍 Ubicación';
-    if (bubble.querySelector('audio'))            return '🎵 Audio';
-    if (bubble.querySelector('.attach-contact'))  return '👤 Contacto';
-    return '📎 Adjunto';
+    if (bubble.querySelector('.msg-img'))         return 'Imagen';
+    if (bubble.querySelector('.msg-attachment'))  return 'Archivo';
+    if (bubble.querySelector('.attach-location')) return 'Ubicación';
+    if (bubble.querySelector('audio'))            return 'Audio';
+    if (bubble.querySelector('.attach-contact'))  return 'Contacto';
+    return 'Adjunto';
+}
+
+function attachmentPreviewHtml(type) {
+    var map = {
+        'image':    { icon: 'image',     label: 'Imagen' },
+        'audio':    { icon: 'mic',       label: 'Audio' },
+        'location': { icon: 'map-pin',   label: 'Ubicación' },
+        'contact':  { icon: 'user',      label: 'Contacto' },
+        'file':     { icon: 'paperclip', label: 'Archivo' }
+    };
+    var entry = map[type] || { icon: 'paperclip', label: 'Adjunto' };
+    return '<i data-lucide="' + entry.icon + '" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"></i>' + entry.label;
 }
 
 function renderMessages(msgs) {
@@ -72,8 +92,7 @@ function renderMessages(msgs) {
             if (!m.reply_body && !m.reply_attachment_type) {
                 rBodyHtml = '<span class="reply-preview-body reply-deleted">Mensaje eliminado</span>';
             } else if (!m.reply_body) {
-                var attLabel = m.reply_attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo';
-                rBodyHtml = '<span class="reply-preview-body">' + attLabel + '</span>';
+                rBodyHtml = '<span class="reply-preview-body">' + attachmentPreviewHtml(m.reply_attachment_type) + '</span>';
             } else {
                 rBodyHtml = '<span class="reply-preview-body">' + escapeHtml(m.reply_body) + '</span>';
             }
@@ -95,8 +114,30 @@ function renderMessages(msgs) {
                         + '<div class="attach-location-info"><div class="attach-location-text">'
                         + '<div class="attach-location-label">Ver ubicación</div>'
                         + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                        + '<div class="attach-location-coords attach-location-latlng">' + locationCoordsText(m.attachment_url) + '</div>'
                         + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
                         + '</a>';
+                } else if (m.attachment_type === 'audio') {
+                    html += renderAudioBubble(m.attachment_url);
+                } else if (m.attachment_type === 'contact') {
+                    var cname = m.contact_name || 'Usuario';
+                    var cini  = initials(cname);
+                    var ccol  = avatarColor(cname);
+                    var cuid  = parseInt(m.attachment_url) || 0;
+                    html += '<div class="attach-contact" data-contact-id="' + cuid + '">'
+                        + '<div class="attach-contact-body">'
+                        +   '<div class="attach-contact-avatar" style="background-color:' + ccol + '">' + escapeHtml(cini) + '</div>'
+                        +   '<div class="attach-contact-info">'
+                        +     '<span class="attach-contact-name">' + escapeHtml(cname) + '</span>'
+                        +     '<span class="attach-contact-label">Contacto de NootraLite</span>'
+                        +   '</div>'
+                        +   '<i data-lucide="user-circle" class="attach-contact-icon"></i>'
+                        + '</div>'
+                        + '<div class="attach-contact-action">'
+                        +   '<i data-lucide="message-circle"></i>'
+                        +   '<span>Enviar mensaje</span>'
+                        + '</div>'
+                        + '</div>';
                 } else {
                     var fname = m.attachment_url.split('/').pop().replace(/^\d+_/, '');
                     html += '<div class="msg-attachment">';
@@ -124,6 +165,8 @@ function renderMessages(msgs) {
 
 function openConversation(convId, name) {
     setTypingIndicator(false);
+    setRecordingIndicator(false);
+    stopRecordingSignal();
     typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
@@ -145,6 +188,7 @@ function openConversation(convId, name) {
             break;
         }
     }
+    renderConvList(convSearch.value);
 
     var mrFd = new FormData();
     mrFd.append('conv_id', convId);
@@ -209,11 +253,11 @@ function openConversation(convId, name) {
             scrollToBottom();
             updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
-            pollInterval = setInterval(pollMessages, 5000);
+            pollInterval = setInterval(pollMessages, 1000);
             if (typingPollInterval) clearInterval(typingPollInterval);
             typingPollInterval = setInterval(pollTyping, 500);
             if (statusPollInterval) clearInterval(statusPollInterval);
-            statusPollInterval = setInterval(pollStatus, 8000);
+            statusPollInterval = setInterval(pollStatus, 5000);
             lucide.createIcons();
         })
         .catch(function() {
@@ -222,10 +266,12 @@ function openConversation(convId, name) {
 }
 
 function pollMessages() {
-    if (!activeConvId) return;
+    if (!activeConvId || fetchingMessages || document.hidden) return;
+    fetchingMessages = true;
     fetch('../messages/get_messages.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingMessages = false;
             if (!res.ok) return;
             if (res.is_online !== undefined) updateStatusUI(res.is_online, res.last_seen);
             if (infoMsgCurrent && res.messages) {
@@ -240,40 +286,68 @@ function pollMessages() {
                 }
             }
             if (!res.messages || !res.messages.length) {
-                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                _applyRemoteActivity(res);
                 return;
             }
             var msgs = res.messages;
             var newestId = parseInt(msgs[msgs.length - 1].id);
             if (newestId <= lastMsgId) {
-                if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+                _applyRemoteActivity(res);
                 return;
             }
             lastMsgId = newestId;
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
-            if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+            _applyRemoteActivity(res);
             if (wasAtBottom) scrollToBottom();
-            loadConversations();
+            var lastMsg = msgs[msgs.length - 1];
+            for (var ci = 0; ci < conversations.length; ci++) {
+                if (conversations[ci].id == activeConvId) {
+                    conversations[ci].last_msg = lastMsg.body || null;
+                    conversations[ci].last_attachment_type = lastMsg.body ? null : (lastMsg.attachment_type || null);
+                    conversations[ci].last_deleted_for_all = lastMsg.deleted_for_all || 0;
+                    conversations[ci].last_time = lastMsg.created_at;
+                    conversations[ci].unread = 0;
+                    break;
+                }
+            }
+            renderConvList(convSearch.value);
             var fd = new FormData();
             fd.append('conv_id', activeConvId);
             fetch('../messages/mark_read.php', { method: 'POST', body: fd });
         })
-        .catch(function() {});
+        .catch(function() { fetchingMessages = false; });
 }
 
 function pollTyping() {
-    if (!activeConvId) return;
+    if (!activeConvId || document.hidden) return;
     fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            if (res.ok) setTypingIndicator(res.other_typing);
+            if (!res.ok) return;
+            if (res.other_recording) {
+                setTypingIndicator(false);
+                setRecordingIndicator(true);
+            } else {
+                setRecordingIndicator(false);
+                setTypingIndicator(res.other_typing);
+            }
         })
         .catch(function() {});
 }
 
+function _applyRemoteActivity(res) {
+    if (res.other_recording) {
+        setTypingIndicator(false);
+        setRecordingIndicator(true);
+    } else {
+        setRecordingIndicator(false);
+        if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+    }
+}
+
 function pollStatus() {
-    if (!activeConvId) return;
+    if (!activeConvId || document.hidden) return;
     fetch('../messages/poll_status.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
@@ -282,9 +356,12 @@ function pollStatus() {
         .catch(function() {});
 }
 
+var sendingMessage = false;
+
 function sendMessage() {
     var body = msgInput.value.trim();
-    if ((!body && !pendingAttUrl) || !activeConvId) return;
+    if ((!body && !pendingAttUrl) || !activeConvId || sendingMessage) return;
+    sendingMessage = true;
 
     msgInput.value = '';
     msgInput.focus();
@@ -315,7 +392,7 @@ function sendMessage() {
                 + '<div class="attach-location-map"><div class="attach-location-pin-wrap"><i data-lucide="map-pin"></i></div></div>'
                 + '<div class="attach-location-info"><div class="attach-location-text">'
                 + '<div class="attach-location-label">Ver ubicación</div>'
-                + '<div class="attach-location-coords">Abrir en Google Maps</div>'
+                + '<div class="attach-location-coords">' + locationCoordsText(snapAttUrl) + '</div>'
                 + '</div><i data-lucide="external-link" class="attach-location-ext"></i></div>'
                 + '</a>';
         } else {
@@ -343,17 +420,20 @@ function sendMessage() {
     fetch('../messages/send_message.php', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            sendingMessage = false;
             if (!res.ok) return;
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
-                    conversations[i].last_msg = body || '📎 Adjunto';
+                    conversations[i].last_msg = body || null;
+                    conversations[i].last_attachment_type = body ? null : (snapAttType || null);
                     conversations[i].last_time = res.message.created_at;
                     break;
                 }
             }
             renderConvList(convSearch.value);
             loadConversations();
-        });
+        })
+        .catch(function() { sendingMessage = false; });
 }
 
 function updateBlockedNotice(isBlocked, name) {
@@ -362,7 +442,7 @@ function updateBlockedNotice(isBlocked, name) {
     if (!notice) return;
     if (isBlocked) {
         var ini   = initials(name || '?');
-        var color = avatarGradient(name || '');
+        var color = avatarColor(name || '');
         notice.innerHTML =
             '<div class="blocked-avatar-wrap">'
           +   '<div class="blocked-avatar-initials" style="background:' + color + '">' + ini + '</div>'
@@ -591,6 +671,13 @@ msgInput.addEventListener('keydown', function(e) {
 });
 
 chatHeader.addEventListener('click', function(e) {
+    var phoneBtn = e.target.closest('[aria-label="Llamar"]');
+    var videoBtn = e.target.closest('[aria-label="Video"]');
+    if (phoneBtn || videoBtn) {
+        e.stopPropagation();
+        message.warning('Las llamadas estarán disponibles próximamente');
+        return;
+    }
     var btn = e.target.closest('.btn-chat-more');
     if (!btn) return;
     e.stopPropagation();
@@ -663,10 +750,22 @@ chatMessages.addEventListener('click', function(e) {
 });
 
 document.addEventListener('keydown', function(e) {
+    var barActive = document.getElementById('recordingBar').classList.contains('active');
+    if (barActive && e.key === ' ' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        if (recPaused) { resumeRecording(); } else { pauseRecording(); }
+        return;
+    }
+    if (barActive && e.key === 'Enter') {
+        e.preventDefault();
+        stopRecording(false);
+        return;
+    }
     if (e.key !== 'Escape') return;
     if (selectMode) { exitSelectMode(); return; }
     if (document.getElementById('cameraView').classList.contains('open')) { closeCameraModal(); return; }
     if (document.getElementById('cameraPermModal').classList.contains('open')) { hideCameraPermModal(); return; }
+    if (document.getElementById('micPermModal').classList.contains('active')) { hideMicPermModal(); return; }
     var delMsgModal = document.getElementById('deleteMessageModal');
     if (delMsgModal && delMsgModal.classList.contains('open')) { closeModalAnimated(delMsgModal); return; }
     if (document.getElementById('forwardSheet').classList.contains('open')) {
@@ -674,6 +773,12 @@ document.addEventListener('keydown', function(e) {
     }
     if (document.getElementById('bookmarksDrawer').classList.contains('open')) {
         closeBookmarksDrawer(); return;
+    }
+    if (document.getElementById('contactPickerSheet').classList.contains('open')) {
+        closeContactPicker(); return;
+    }
+    if (document.getElementById('recordingBar').classList.contains('active')) {
+        stopRecording(true); return;
     }
     if (newConvPanel.classList.contains('open')) {
         if (ncpScreen2.style.display !== 'none') {
@@ -909,8 +1014,10 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                 message.tip('Obteniendo ubicación...');
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
-                        var lat  = pos.coords.latitude.toFixed(6);
-                        var lng  = pos.coords.longitude.toFixed(6);
+                        var lat = pos.coords.latitude.toFixed(6);
+                        var lng = pos.coords.longitude.toFixed(6);
+                        var acc = Math.round(pos.coords.accuracy);
+                        if (acc > 150) message.warning('Señal GPS débil — precisión: ±' + acc + 'm');
                         var murl = 'https://maps.google.com/?q=' + lat + ',' + lng;
                         pendingAttUrl  = murl;
                         pendingAttType = 'location';
@@ -918,10 +1025,13 @@ document.querySelectorAll('.attach-option').forEach(function(opt) {
                         pendingAttSize = 0;
                         sendMessage();
                     },
-                    function() { message.error('No se pudo obtener la ubicación'); }
+                    function() { message.error('No se pudo obtener la ubicación'); },
+                    { enableHighAccuracy: true, timeout: 12000 }
                 );
-            } else {
-                message.warning('Próximamente');
+            } else if (action === 'audio') {
+                startRecording();
+            } else if (action === 'contact') {
+                openContactPicker();
             }
         });
     });
@@ -977,7 +1087,9 @@ function updatePinnedBar(msgs) {
     if (!msg) { hidePinnedBar(); return; }
     var isMine = parseInt(msg.sender_id) === currentUid;
     document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
-    document.getElementById('pinnedBarBody').textContent   = msg.body || (msg.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+    var pBody = document.getElementById('pinnedBarBody');
+    pBody.innerHTML = msg.body ? escapeHtml(msg.body) : attachmentPreviewHtml(msg.attachment_type);
+    lucide.createIcons({ nodes: [pBody] });
     bar.classList.remove('hiding');
     if (!bar.classList.contains('show')) {
         bar.classList.add('show');
@@ -1028,10 +1140,18 @@ function pinMessage(msgId) {
                 }
             }
             var bar     = document.getElementById('pinnedBar');
-            var bubble  = newRow ? newRow.querySelector('.msg-bubble') : null;
-            var isMine  = newRow ? newRow.classList.contains('mine') : false;
+            var newRow2 = chatMessages.querySelector('[data-msg-id="' + msgId + '"]');
+            var isMine  = newRow2 ? newRow2.classList.contains('mine') : false;
             document.getElementById('pinnedBarSender').textContent = (isMine ? 'Tú' : (activeConvName || 'Ellos')) + ': ';
-            document.getElementById('pinnedBarBody').textContent   = bubble ? getBubbleText(bubble) : '';
+            var pBody2  = document.getElementById('pinnedBarBody');
+            var pinMsg  = currentMsgs.find(function(m) { return parseInt(m.id) === parseInt(msgId); });
+            if (pinMsg) {
+                pBody2.innerHTML = pinMsg.body ? escapeHtml(pinMsg.body) : attachmentPreviewHtml(pinMsg.attachment_type);
+                lucide.createIcons({ nodes: [pBody2] });
+            } else {
+                var bub2 = newRow2 ? newRow2.querySelector('.msg-bubble') : null;
+                pBody2.textContent = bub2 ? getBubbleText(bub2) : '';
+            }
             bar.classList.remove('hiding');
             if (!bar.classList.contains('show')) {
                 bar.classList.add('show');
@@ -1134,7 +1254,7 @@ function renderBookmarkItems(bookmarks) {
         var bm    = bookmarks[i];
         var color = avatarColor(bm.sender_name || '');
         var ini   = initials(bm.sender_name || '?');
-        var preview = bm.body || (bm.attachment_type === 'image' ? '📷 Imagen' : '📎 Archivo');
+        var preview = bm.body ? escapeHtml(bm.body.substring(0, 80) + (bm.body.length > 80 ? '…' : '')) : attachmentPreviewHtml(bm.attachment_type);
         var dateStr = formatTime(bm.bm_date);
         html += '<div class="bm-item bm-item-in" data-msg-id="' + bm.message_id + '" data-conv-id="' + bm.conversation_id + '" style="animation-delay:' + (i * 45) + 'ms">';
         html += '<div class="bm-item-header">';
@@ -1143,7 +1263,7 @@ function renderBookmarkItems(bookmarks) {
         html += '<span class="bm-date">' + escapeHtml(dateStr) + '</span>';
         html += '<button class="bm-remove-btn" aria-label="Quitar destacado"><i data-lucide="x"></i></button>';
         html += '</div>';
-        html += '<div class="bm-preview">' + escapeHtml(preview) + '</div>';
+        html += '<div class="bm-preview">' + preview + '</div>';
         html += '<button class="bm-goto-btn">Ir al mensaje <i data-lucide="arrow-right"></i></button>';
         html += '</div>';
     }
@@ -1367,7 +1487,7 @@ setInterval(function() {
     fetch('../messages/update_last_seen.php', { method: 'POST' });
 }, 30000);
 
-setInterval(loadConversations, 10000);
+setInterval(loadConversations, 3000);
 
 function openInfoModal(msg) {
     infoMsgCurrent = msg;
@@ -1517,6 +1637,564 @@ function setTypingIndicator(active) {
         }
     }
 }
+
+function setRecordingIndicator(active) {
+    var existing = chatMessages.querySelector('.recording-indicator-row');
+    if (active) {
+        if (!existing) {
+            var typingRow = chatMessages.querySelector('.typing-indicator-row');
+            if (typingRow) typingRow.remove();
+            var el = document.createElement('div');
+            el.className = 'recording-indicator-row';
+            el.innerHTML = '<div class="recording-bubble">'
+                + '<span class="rec-dot"></span>'
+                + '<div class="rec-waves"><span></span><span></span><span></span><span></span><span></span></div>'
+                + '<span class="rec-label">Grabando audio...</span>'
+                + '</div>';
+            chatMessages.appendChild(el);
+            scrollToBottom();
+        }
+    } else {
+        if (existing) existing.remove();
+    }
+    var statusEl = chatHeader.querySelector('.chat-status');
+    if (!statusEl) return;
+    if (active) {
+        if (!statusEl.classList.contains('recording')) {
+            if (statusEl.classList.contains('typing')) {
+                statusEl.dataset.prevRec = statusEl.dataset.prev || 'Desconectado';
+                statusEl.classList.remove('typing');
+                delete statusEl.dataset.prev;
+            } else {
+                statusEl.dataset.prevRec = statusEl.textContent;
+            }
+            statusEl.classList.add('recording');
+            statusEl.innerHTML = '<span class="header-rec-dot"></span>Grabando audio...';
+        }
+    } else {
+        if (statusEl.classList.contains('recording')) {
+            statusEl.classList.remove('recording');
+            statusEl.textContent = statusEl.dataset.prevRec || 'Desconectado';
+            delete statusEl.dataset.prevRec;
+        }
+    }
+}
+
+/* ============================================================
+   AUDIO — MediaRecorder API
+   ============================================================ */
+var mediaRecorder = null;
+var audioChunks   = [];
+var recTimer      = null;
+var recSecs       = 0;
+var recStream     = null;
+var recPaused     = false;
+
+function showMicPermModal() {
+    var modal = document.getElementById('micPermModal');
+    var backdrop = document.getElementById('micPermBackdrop');
+    modal.classList.add('active');
+    backdrop.classList.add('active');
+    lucide.createIcons({ nodes: [modal] });
+}
+function hideMicPermModal() {
+    document.getElementById('micPermModal').classList.remove('active');
+    document.getElementById('micPermBackdrop').classList.remove('active');
+}
+
+function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        message.error('Grabación de audio no disponible en este navegador');
+        return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+            recStream   = stream;
+            audioChunks = [];
+            recPaused   = false;
+            var mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg');
+            mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.onstop = function() {
+                var blob = new Blob(audioChunks, { type: mimeType });
+                var ext  = mimeType.indexOf('ogg') >= 0 ? 'ogg' : 'webm';
+                var file = new File([blob], 'audio_' + Date.now() + '.' + ext, { type: mimeType });
+                if (recStream) { recStream.getTracks().forEach(function(t) { t.stop(); }); recStream = null; }
+                uploadAudioFile(file);
+            };
+            mediaRecorder.start(200);
+            showRecordingBar();
+        }, function(err) {
+            if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+                showMicPermModal();
+            } else {
+                message.error('No se pudo acceder al micrófono');
+            }
+        });
+}
+
+function startRecordingSignal() {
+    if (!activeConvId) return;
+    var send = function() {
+        fetch('../messages/recording.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'conv_id=' + activeConvId + '&action=start'
+        });
+    };
+    send();
+    if (recordingSignalInterval) clearInterval(recordingSignalInterval);
+    recordingSignalInterval = setInterval(send, 2000);
+}
+
+function stopRecordingSignal() {
+    if (recordingSignalInterval) {
+        clearInterval(recordingSignalInterval);
+        recordingSignalInterval = null;
+    }
+    if (activeConvId) {
+        fetch('../messages/recording.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'conv_id=' + activeConvId + '&action=stop'
+        });
+    }
+}
+
+function showRecordingBar() {
+    var bar     = document.getElementById('recordingBar');
+    var timerEl = document.getElementById('recordingTimer');
+    recSecs   = 0;
+    recPaused = false;
+    timerEl.textContent = '0:00';
+    bar.classList.remove('hiding', 'paused');
+    bar.classList.add('active');
+    startRecordingSignal();
+    var pauseBtn = document.getElementById('btnPauseRec');
+    if (pauseBtn) pauseBtn.innerHTML = '<i data-lucide="pause"></i>';
+    recTimer = setInterval(function() {
+        if (recPaused) return;
+        recSecs++;
+        var m = Math.floor(recSecs / 60);
+        var s = recSecs % 60;
+        timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        if (recSecs >= 300) stopRecording(false);
+    }, 1000);
+    lucide.createIcons({ nodes: [bar] });
+}
+
+function hideRecordingBar() {
+    clearInterval(recTimer); recTimer = null;
+    recPaused = false;
+    var bar = document.getElementById('recordingBar');
+    bar.classList.add('hiding');
+    bar.addEventListener('animationend', function h(e) {
+        if (e.animationName !== 'recBarOut') return;
+        bar.removeEventListener('animationend', h);
+        bar.classList.remove('active', 'hiding', 'paused');
+    });
+}
+
+
+function pauseRecording() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+    mediaRecorder.pause();
+    recPaused = true;
+    document.getElementById('recordingBar').classList.add('paused');
+    var btn = document.getElementById('btnPauseRec');
+    btn.innerHTML = '<i data-lucide="play"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+
+function resumeRecording() {
+    if (!mediaRecorder || mediaRecorder.state !== 'paused') return;
+    mediaRecorder.resume();
+    recPaused = false;
+    document.getElementById('recordingBar').classList.remove('paused');
+    var btn = document.getElementById('btnPauseRec');
+    btn.innerHTML = '<i data-lucide="pause"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+
+function stopRecording(cancel) {
+    hideRecordingBar();
+    stopRecordingSignal();
+    if (cancel) {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.ondataavailable = null;
+            mediaRecorder.onstop = null;
+            mediaRecorder.stop();
+        }
+        if (recStream) { recStream.getTracks().forEach(function(t) { t.stop(); }); recStream = null; }
+        audioChunks = [];
+        mediaRecorder = null;
+        return;
+    }
+    if (mediaRecorder) {
+        if (mediaRecorder.state === 'paused') mediaRecorder.resume();
+        if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+    }
+}
+
+function uploadAudioFile(file) {
+    var fd = new FormData();
+    fd.append('file', file);
+    message.tip('Subiendo audio...');
+    btnSend.disabled = true;
+    fetch('../messages/upload_attachment.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            btnSend.disabled = false;
+            if (!res.ok) { message.error(res.error || 'Error al subir audio'); return; }
+            var fd2 = new FormData();
+            fd2.append('conv_id',         activeConvId);
+            fd2.append('attachment_url',  res.url);
+            fd2.append('attachment_type', 'audio');
+            fetch('../messages/send_message.php', { method: 'POST', body: fd2 })
+                .then(function(r2) { return r2.json(); })
+                .then(function(res2) {
+                    if (!res2.ok) { message.error('Error al enviar audio'); return; }
+                    var row = buildAudioRow(res2.message);
+                    chatMessages.appendChild(row);
+                    lucide.createIcons({ nodes: [row] });
+                    scrollToBottom();
+                    loadConversations();
+                })
+                .catch(function() { message.error('Error de red'); });
+        })
+        .catch(function() { btnSend.disabled = false; message.error('Error de red'); });
+}
+
+function buildAudioRow(msg) {
+    var div = document.createElement('div');
+    div.className = 'msg-row mine';
+    div.setAttribute('data-msg-id', msg.id);
+    div.innerHTML = '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>'
+        + '<div class="msg-bubble">'
+        + renderAudioBubble(msg.attachment_url)
+        + '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(msg.created_at) + '</span></div>'
+        + '</div>';
+    return div;
+}
+
+var AUDIO_WAVE_H = [3,5,8,13,20,26,28,24,18,12,7,11,19,26,28,22,15,9,14,22,28,25,17,10,6,10,17,22,15,7,4,3];
+
+function renderAudioBubble(url) {
+    var uid  = 'ap_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+    var bars = AUDIO_WAVE_H.map(function(h) { return '<span style="--h:' + h + 'px"></span>'; }).join('');
+    return '<div class="attach-audio" data-src="' + escapeHtml(url) + '" id="' + uid + '">'
+        + '<button class="audio-play-btn" aria-label="Reproducir"><i data-lucide="play"></i></button>'
+        + '<div class="audio-body">'
+        +   '<div class="audio-waveform-track">' + bars + '</div>'
+        +   '<div class="audio-meta">'
+        +     '<span class="audio-time">0:00</span>'
+        +     '<span class="audio-time-total"> / 0:00</span>'
+        +     '<button class="audio-speed-btn" data-speed="1">1×</button>'
+        +   '</div>'
+        + '</div>'
+        + '<audio src="' + escapeHtml(url) + '" preload="metadata" style="display:none"></audio>'
+        + '</div>';
+}
+
+document.getElementById('btnPauseRec').addEventListener('click', function() {
+    if (recPaused) { resumeRecording(); } else { pauseRecording(); }
+});
+document.getElementById('btnStopRec').addEventListener('click', function() { stopRecording(false); });
+document.getElementById('btnCancelRec').addEventListener('click', function() { stopRecording(true); });
+document.getElementById('btnMicPermOk').addEventListener('click', hideMicPermModal);
+document.getElementById('micPermBackdrop').addEventListener('click', hideMicPermModal);
+
+function fmtTime(secs) {
+    if (!isFinite(secs) || isNaN(secs)) return '--:--';
+    var m = Math.floor(secs / 60), s = Math.floor(secs % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function setAudioIcon(btn, name) {
+    btn.innerHTML = '<i data-lucide="' + name + '"></i>';
+    lucide.createIcons({ nodes: [btn] });
+}
+function bindAudioEvents(card, aud, playBtn) {
+    aud.onloadedmetadata = function() {
+        var el = card.querySelector('.audio-time-total');
+        if (el) el.textContent = ' / ' + fmtTime(aud.duration || 0);
+    };
+    aud.ontimeupdate = function() {
+        var timeEl = card.querySelector('.audio-time');
+        if (timeEl) timeEl.textContent = fmtTime(aud.currentTime);
+        var bars = card.querySelectorAll('.audio-waveform-track span');
+        var pct    = aud.duration > 0 ? aud.currentTime / aud.duration : 0;
+        var filled = Math.round(pct * bars.length);
+        bars.forEach(function(b, i) { b.classList.toggle('filled', i < filled); });
+    };
+    aud.onended = function() {
+        setAudioIcon(playBtn, 'play');
+        card.classList.remove('playing');
+        var realDur = isFinite(aud.duration) ? aud.duration : aud.currentTime;
+        var totalEl = card.querySelector('.audio-time-total');
+        if (totalEl && isFinite(realDur)) totalEl.textContent = ' / ' + fmtTime(realDur);
+        aud.currentTime = 0;
+        var timeEl = card.querySelector('.audio-time');
+        if (timeEl) timeEl.textContent = '0:00';
+        card.querySelectorAll('.audio-waveform-track span').forEach(function(b) { b.classList.remove('filled'); });
+    };
+    if (aud.readyState >= 1) {
+        var el = card.querySelector('.audio-time-total');
+        if (el) el.textContent = ' / ' + fmtTime(aud.duration || 0);
+    }
+}
+
+chatMessages.addEventListener('click', function(e) {
+    var speedBtn = e.target.closest('.audio-speed-btn');
+    if (speedBtn) {
+        var card = speedBtn.closest('.attach-audio');
+        var aud  = card ? card.querySelector('audio') : null;
+        if (!aud) return;
+        var speeds = [1, 1.5, 2];
+        var cur  = parseFloat(speedBtn.getAttribute('data-speed')) || 1;
+        var next = speeds[(speeds.indexOf(cur) + 1) % speeds.length];
+        speedBtn.setAttribute('data-speed', next);
+        speedBtn.textContent = next + '×';
+        aud.playbackRate = next;
+        return;
+    }
+
+    var waveTrack = e.target.closest('.audio-waveform-track');
+    if (waveTrack) {
+        var card = waveTrack.closest('.attach-audio');
+        var aud  = card ? card.querySelector('audio') : null;
+        if (!aud || !aud.duration) return;
+        var rect = waveTrack.getBoundingClientRect();
+        aud.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * aud.duration;
+        return;
+    }
+
+    var playBtn = e.target.closest('.audio-play-btn');
+    if (!playBtn) return;
+    var card = playBtn.closest('.attach-audio');
+    if (!card) return;
+    var aud = card.querySelector('audio');
+    if (!aud) return;
+
+    if (aud.paused) {
+        document.querySelectorAll('.attach-audio audio').forEach(function(a) {
+            if (a !== aud && !a.paused) {
+                a.pause();
+                var oc = a.closest('.attach-audio');
+                if (oc) {
+                    var ob = oc.querySelector('.audio-play-btn');
+                    if (ob) setAudioIcon(ob, 'play');
+                    oc.classList.remove('playing');
+                }
+            }
+        });
+        bindAudioEvents(card, aud, playBtn);
+        aud.play();
+        setAudioIcon(playBtn, 'pause');
+        card.classList.add('playing');
+    } else {
+        aud.pause();
+        setAudioIcon(playBtn, 'play');
+        card.classList.remove('playing');
+    }
+});
+
+
+chatMessages.addEventListener('click', function(e) {
+    var card = e.target.closest('.attach-contact');
+    if (!card) return;
+    var cid = parseInt(card.getAttribute('data-contact-id'));
+    if (!cid || cid === currentUid) return;
+    startConversation(cid);
+});
+
+/* ============================================================
+   CONTACTO — picker de usuarios NootraLite
+   ============================================================ */
+var selectedContactId   = null;
+var selectedContactName = null;
+var cpAllUsers          = [];
+
+function openContactPicker() {
+    selectedContactId   = null;
+    selectedContactName = null;
+    document.getElementById('cpSearch').value = '';
+    document.getElementById('cpSearchClear').classList.remove('visible');
+    document.getElementById('btnShareContact').disabled = true;
+    document.getElementById('cpList').innerHTML = '<div class="cp-hint"><i data-lucide="loader-2" class="cp-spin"></i><span>Cargando usuarios...</span></div>';
+    lucide.createIcons({ nodes: [document.getElementById('cpList')] });
+
+    document.getElementById('contactPickerBackdrop').classList.add('open');
+    document.getElementById('contactPickerSheet').classList.add('open');
+
+    fetch('../messages/get_users.php')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { renderCpEmpty('Error al cargar usuarios'); return; }
+            cpAllUsers = res.users || [];
+            renderCpList(cpAllUsers);
+        })
+        .catch(function() { renderCpEmpty('Error de conexión'); });
+}
+
+function closeContactPicker() {
+    document.getElementById('contactPickerSheet').classList.remove('open');
+    document.getElementById('contactPickerBackdrop').classList.remove('open');
+    selectedContactId = null;
+    selectedContactName = null;
+}
+
+function renderCpList(users) {
+    var list = document.getElementById('cpList');
+    var q    = (document.getElementById('cpSearch').value || '').toLowerCase().trim();
+    var filtered = q ? users.filter(function(u) { return (u.name || '').toLowerCase().indexOf(q) >= 0; }) : users;
+    if (!filtered.length) {
+        var isEmpty = !q;
+        list.innerHTML = '<div class="cp-empty">'
+            + '<i data-lucide="' + (isEmpty ? 'users' : 'search-x') + '"></i>'
+            + '<span>' + (isEmpty ? 'No hay usuarios disponibles' : 'Sin resultados para "' + escapeHtml(q) + '"') + '</span>'
+            + '</div>';
+        lucide.createIcons({ nodes: [list] });
+        return;
+    }
+    list.innerHTML = '';
+    filtered.forEach(function(u, i) {
+        var ini  = initials(u.name || '?');
+        var col  = avatarColor(u.name || '');
+        var isSelected = selectedContactId == u.id;
+        var item = document.createElement('div');
+        item.className = 'cp-item' + (isSelected ? ' selected' : '');
+        item.dataset.uid = u.id;
+        item.style.animationDelay = (i * 35) + 'ms';
+        item.innerHTML = '<div class="cp-avatar" style="background-color:' + col + '">' + escapeHtml(ini) + '</div>'
+            + '<span class="cp-name">' + escapeHtml(u.name || 'Usuario') + '</span>'
+            + '<div class="cp-check-wrap' + (isSelected ? ' visible' : '') + '"><i data-lucide="check"></i></div>';
+        item.addEventListener('click', function() {
+            list.querySelectorAll('.cp-item').forEach(function(el) {
+                el.classList.remove('selected');
+                var cw = el.querySelector('.cp-check-wrap');
+                if (cw) cw.classList.remove('visible');
+            });
+            item.classList.add('selected');
+            var cw = item.querySelector('.cp-check-wrap');
+            if (cw) cw.classList.add('visible');
+            selectedContactId   = u.id;
+            selectedContactName = u.name;
+            document.getElementById('btnShareContact').disabled = false;
+            lucide.createIcons({ nodes: [list] });
+        });
+        list.appendChild(item);
+    });
+    lucide.createIcons({ nodes: [list] });
+}
+
+function renderCpEmpty(msg) {
+    var list = document.getElementById('cpList');
+    list.innerHTML = '<div class="cp-empty"><i data-lucide="alert-circle"></i><span>' + escapeHtml(msg) + '</span></div>';
+    lucide.createIcons({ nodes: [list] });
+}
+
+document.getElementById('cpSearch').addEventListener('input', function() {
+    var v = this.value;
+    document.getElementById('cpSearchClear').classList.toggle('visible', v.length > 0);
+    selectedContactId = null;
+    selectedContactName = null;
+    document.getElementById('btnShareContact').disabled = true;
+    renderCpList(cpAllUsers);
+});
+
+document.getElementById('cpSearchClear').addEventListener('click', function() {
+    document.getElementById('cpSearch').value = '';
+    this.classList.remove('visible');
+    renderCpList(cpAllUsers);
+    document.getElementById('cpSearch').focus();
+});
+
+document.getElementById('btnCloseContactPicker').addEventListener('click', closeContactPicker);
+document.getElementById('btnCancelContactPicker').addEventListener('click', closeContactPicker);
+document.getElementById('contactPickerBackdrop').addEventListener('click', closeContactPicker);
+
+document.getElementById('btnShareContact').addEventListener('click', function() {
+    if (!selectedContactId || !activeConvId) return;
+    var cid   = selectedContactId;
+    var cname = selectedContactName || 'Usuario';
+    closeContactPicker();
+    var ini   = initials(cname);
+    var col   = avatarColor(cname);
+    var row   = document.createElement('div');
+    row.className = 'msg-row mine';
+    row.innerHTML = '<button class="msg-actions-btn" aria-label="Opciones"><i data-lucide="chevron-down"></i></button>'
+        + '<div class="msg-bubble">'
+        + '<div class="attach-contact" data-contact-id="' + parseInt(cid) + '">'
+        +   '<div class="attach-contact-body">'
+        +     '<div class="attach-contact-avatar" style="background-color:' + col + '">' + escapeHtml(ini) + '</div>'
+        +     '<div class="attach-contact-info">'
+        +       '<span class="attach-contact-name">' + escapeHtml(cname) + '</span>'
+        +       '<span class="attach-contact-label">Contacto de NootraLite</span>'
+        +     '</div>'
+        +     '<i data-lucide="user-circle" class="attach-contact-icon"></i>'
+        +   '</div>'
+        +   '<div class="attach-contact-action"><i data-lucide="message-circle"></i><span>Enviar mensaje</span></div>'
+        + '</div>'
+        + '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>'
+        + '</div>';
+    chatMessages.appendChild(row);
+    lucide.createIcons({ nodes: [row] });
+    scrollToBottom();
+
+    var fd = new FormData();
+    fd.append('conv_id',         activeConvId);
+    fd.append('attachment_url',  String(cid));
+    fd.append('attachment_type', 'contact');
+    fetch('../messages/send_message.php', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res.ok) { message.error('Error al enviar contacto'); return; }
+            loadConversations();
+        })
+        .catch(function() { message.error('Error de red'); });
+});
+
+var btnScrollBottom = document.getElementById('btnScrollBottom');
+var scrollBottomVisible = false;
+
+chatMessages.addEventListener('scroll', function() {
+    var distFromBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+    var shouldShow = distFromBottom > 180;
+    if (shouldShow === scrollBottomVisible) return;
+    scrollBottomVisible = shouldShow;
+    if (shouldShow) {
+        btnScrollBottom.style.display = 'flex';
+        btnScrollBottom.classList.remove('sbb-out');
+        void btnScrollBottom.offsetWidth;
+        btnScrollBottom.classList.add('sbb-in');
+    } else {
+        btnScrollBottom.classList.remove('sbb-in');
+        void btnScrollBottom.offsetWidth;
+        btnScrollBottom.classList.add('sbb-out');
+        btnScrollBottom.addEventListener('animationend', function onOut() {
+            btnScrollBottom.removeEventListener('animationend', onOut);
+            if (!scrollBottomVisible) {
+                btnScrollBottom.style.display = 'none';
+                btnScrollBottom.classList.remove('sbb-out');
+            }
+        });
+    }
+});
+
+btnScrollBottom.addEventListener('click', function() {
+    scrollToBottom();
+});
+
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        if (activeConvId) { fetchingMessages = false; pollMessages(); }
+        loadConversations();
+    }
+});
 
 renderConvList('');
 lucide.createIcons();

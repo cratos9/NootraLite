@@ -87,3 +87,14 @@ ALTER TABLE conversations
 # Expandir ENUM attachment_type para location, audio y contacto, 05/05/2026
 ALTER TABLE messages
   MODIFY COLUMN attachment_type ENUM('image','file','location','audio','contact') DEFAULT NULL;
+
+# Crear carpeta uploads/messages/audio/ para archivos webm/ogg grabados con MediaRecorder, 06/05/2026
+# No requiere cambio en la DB — solo la carpeta en el servidor (se crea automáticamente via PHP mkdir)
+
+# Columna para distinguir borrado-para-todos (scope=all) del borrado individual, 06/05/2026
+ALTER TABLE messages ADD COLUMN deleted_for_all TINYINT(1) NOT NULL DEFAULT 0;
+
+# Columnas para indicador "Grabando audio..." (como typing pero para audio), 06/05/2026
+ALTER TABLE conversations
+  ADD COLUMN recording_u1_at DATETIME NULL,
+  ADD COLUMN recording_u2_at DATETIME NULL;

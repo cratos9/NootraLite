@@ -1,3 +1,4 @@
+<?php include '../includes/sidebar.php'; ?>
 <!DOCTYPE html>
 <html lang="es-MX">
 

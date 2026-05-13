@@ -15,6 +15,8 @@ var userResults     = document.getElementById('userResults');
 var ncpTimer = null;
 var searchTimer = null;
 var convListInitted = false;
+var fetchingConvs = false;
+var fetchingConvTyping = false;
 
 function toggleConvMeta(convId, meta) {
     var fd = new FormData();
@@ -35,14 +37,30 @@ function toggleConvMeta(convId, meta) {
         });
 }
 
+function convLastPreview(c) {
+    if (c.last_deleted_for_all == 1) return '<i data-lucide="slash" class="conv-last-icon"></i> Mensaje eliminado';
+    if (c.last_msg) return escapeHtml(c.last_msg.slice(0, 36) + (c.last_msg.length > 36 ? '…' : ''));
+    var t = c.last_attachment_type;
+    if (t === 'audio')    return '<i data-lucide="mic" class="conv-last-icon"></i> Audio';
+    if (t === 'image')    return '<i data-lucide="image" class="conv-last-icon"></i> Imagen';
+    if (t === 'location') return '<i data-lucide="map-pin" class="conv-last-icon"></i> Ubicación';
+    if (t === 'contact')  return '<i data-lucide="user" class="conv-last-icon"></i> Contacto';
+    if (t === 'file')     return '<i data-lucide="paperclip" class="conv-last-icon"></i> Archivo';
+    return 'Sin mensajes';
+}
+
 function loadConversations() {
+    if (fetchingConvs || document.hidden) return;
+    fetchingConvs = true;
     fetch('../messages/get_conversations.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingConvs = false;
             if (!res.ok) return;
             conversations = res.conversations;
             renderConvList(convSearch.value);
-        });
+        })
+        .catch(function() { fetchingConvs = false; });
 }
 
 function renderConvList(filter) {
@@ -58,8 +76,10 @@ function renderConvList(filter) {
     }
 
     if (filtered.length === 0) {
-        var emptyMsg = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
-        convList.innerHTML = '<div class="conv-empty">' + emptyMsg + '</div>';
+        var emptyMsg  = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
+        var emptyIcon = activeFilter === 'favorites' ? 'star' : activeFilter === 'unread' ? 'mail' : 'message-circle';
+        convList.innerHTML = '<div class="conv-empty"><i data-lucide="' + emptyIcon + '"></i><span>' + emptyMsg + '</span></div>';
+        lucide.createIcons();
         return;
     }
 
@@ -75,7 +95,7 @@ function renderConvList(filter) {
         var color = avatarColor(name);
         var ini = initials(name);
         var unread = parseInt(c.unread) || 0;
-        var lastMsg = c.last_msg ? c.last_msg.slice(0, 36) + (c.last_msg.length > 36 ? '…' : '') : 'Sin mensajes';
+        var lastMsg = convLastPreview(c);
         var time = formatTime(c.last_time);
         var isActive = c.id == activeConvId ? ' active' : '';
 
@@ -106,7 +126,7 @@ function renderConvList(filter) {
         if (c.is_typing == 1) {
             html += '<div class="conv-last conv-typing"><span class="conv-typing-dots"><span></span><span></span><span></span></span><span>Escribiendo...</span></div>';
         } else {
-            html += '<div class="conv-last">' + escapeHtml(lastMsg) + '</div>';
+            html += '<div class="conv-last">' + lastMsg + '</div>';
         }
         html += '</div>';
         html += '<div class="conv-meta">';
@@ -119,6 +139,25 @@ function renderConvList(filter) {
     }
     convList.innerHTML = html;
     convListInitted = true;
+
+    convList.querySelectorAll('.conv-item').forEach(function(el) {
+        var cid = parseInt(el.getAttribute('data-id'));
+        var state = convActivityActive[cid];
+        if (state) {
+            var lastEl = el.querySelector('.conv-last');
+            if (lastEl) {
+                if (state === 'recording') {
+                    lastEl.className = 'conv-last conv-recording';
+                    lastEl.innerHTML = '<span class="conv-rec-dot"></span>'
+                        + '<div class="conv-rec-waves"><span></span><span></span><span></span><span></span><span></span></div>'
+                        + '<span>Grabando audio...</span>';
+                } else if (state === 'typing') {
+                    lastEl.className = 'conv-last conv-typing';
+                    lastEl.innerHTML = '<span class="conv-typing-dots"><span></span><span></span><span></span></span><span>Escribiendo...</span>';
+                }
+            }
+        }
+    });
 
     convList.querySelectorAll('.conv-item').forEach(function(el) {
         el.addEventListener('click', function(e) {
@@ -152,37 +191,50 @@ convSearch.addEventListener('input', function() {
     renderConvList(this.value);
 });
 
-var convTypingActive = {};
+var convActivityActive = {};
 
 function pollConvTyping() {
+    if (fetchingConvTyping || document.hidden) return;
+    fetchingConvTyping = true;
     fetch('../messages/poll_conv_typing.php')
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            fetchingConvTyping = false;
             if (!res.ok) return;
-            var newTyping = {};
-            res.typing.forEach(function(id) { newTyping[id] = true; });
+            var newActivity = {};
+            (res.recording || []).forEach(function(id) { newActivity[id] = 'recording'; });
+            (res.typing || []).forEach(function(id) { if (!newActivity[id]) newActivity[id] = 'typing'; });
 
             document.querySelectorAll('#convList .conv-item').forEach(function(el) {
                 var id = parseInt(el.getAttribute('data-id'));
                 var lastEl = el.querySelector('.conv-last');
                 if (!lastEl) return;
 
-                if (newTyping[id] && !convTypingActive[id]) {
+                var oldState = convActivityActive[id] || null;
+                var newState = newActivity[id] || null;
+                if (oldState === newState) return;
+
+                if (newState === 'typing') {
                     lastEl.className = 'conv-last conv-typing';
                     lastEl.innerHTML = '<span class="conv-typing-dots"><span></span><span></span><span></span></span><span>Escribiendo...</span>';
-                } else if (!newTyping[id] && convTypingActive[id]) {
+                } else if (newState === 'recording') {
+                    lastEl.className = 'conv-last conv-recording';
+                    lastEl.innerHTML = '<span class="conv-rec-dot"></span>'
+                        + '<div class="conv-rec-waves"><span></span><span></span><span></span><span></span><span></span></div>'
+                        + '<span>Grabando audio...</span>';
+                } else {
                     var conv = null;
                     for (var i = 0; i < conversations.length; i++) {
                         if (conversations[i].id == id) { conv = conversations[i]; break; }
                     }
-                    var txt = conv && conv.last_msg ? conv.last_msg.slice(0, 36) + (conv.last_msg.length > 36 ? '…' : '') : 'Sin mensajes';
                     lastEl.className = 'conv-last';
-                    lastEl.textContent = txt;
+                    lastEl.innerHTML = conv ? convLastPreview(conv) : 'Sin mensajes';
+                    lucide.createIcons({ nodes: [lastEl] });
                 }
             });
-            convTypingActive = newTyping;
+            convActivityActive = newActivity;
         })
-        .catch(function() {});
+        .catch(function() { fetchingConvTyping = false; });
 }
 
 setInterval(pollConvTyping, 500);

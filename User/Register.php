@@ -1,6 +1,7 @@
 <?php
 
 require_once '../Models/UserModel.php';
+require_once '../Models/SubcriptionsModel.php';
 require_once '../config/db.php';
 
 $database = new Database();
@@ -12,6 +13,7 @@ try {
 }
 
 $usuario = new User($conn);
+$subscription = new SubscriptionsModel($conn);
 
 $errors = [];
 $oldInput = [
@@ -75,6 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors) && $usuario->Register($fullname, $email, $password, $username)) {
+        $user_id = $usuario->getUserId($email);
+        $subscription->addSubscription($user_id);
         header('Location: Login.php');
         exit();
     } elseif (empty($errors)) {

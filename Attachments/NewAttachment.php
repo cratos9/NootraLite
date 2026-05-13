@@ -8,7 +8,6 @@ require_once '../Models/AttachmentModel.php';
 require_once '../includes/attachments.php';
 
 $activePage = 'notebooks';
-include '../includes/sidebar.php';
 
 $userID = $_SESSION['user']['id'] ?? 0;
 $IsVerified = (bool) ($_SESSION['user']['is_verified'] ?? false);
