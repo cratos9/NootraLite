@@ -5,6 +5,7 @@ require_once '../includes/lightMode.php';
 require_once '../config/encrypt.php';
 require_once '../Models/BookModel.php';
 require_once '../Models/AttachmentModel.php';
+require_once '../Models/SubcriptionsModel.php';
 require_once '../includes/attachments.php';
 
 $activePage = 'notebooks';
@@ -21,6 +22,8 @@ try {
 
 $book = new Book($conn);
 $attachmentModel = new AttachmentModel($conn);
+$subscriptions = new SubscriptionsModel($conn);
+$subscription = $subscriptions->getSubcription($userID);
 
 $bookId = isset($_GET['book_id']) ? (int) $_GET['book_id'] : (int) ($_POST['book_id'] ?? 0);
 $bookData = [];
@@ -40,6 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_attachment']))
 		$messageType = 'error';
 	} elseif (empty($bookData)) {
 		$message = 'No se encontró el libro al que quieres agregar el archivo.';
+		$messageType = 'error';
+	} elseif ($subscription && $subscriptions->countAttachmentsByNotebook($userID, $bookId) >= (int)($subscription['max_attachments_per_note'] ?? 0)) {
+		$message = 'Has alcanzado el límite de archivos adjuntos permitido para este cuaderno.';
 		$messageType = 'error';
 	} elseif (!isset($_FILES['attachment'])) {
 		$message = 'Selecciona un archivo para subir.';

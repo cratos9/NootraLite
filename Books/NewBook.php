@@ -2,6 +2,7 @@
 include_once '../includes/Remember.php';
 include_once '../includes/lightMode.php';
 include_once '../Models/BookModel.php';
+include_once '../Models/SubcriptionsModel.php';
 $activePage = 'notebooks';
 
 $errors = [];
@@ -30,6 +31,8 @@ if ($parentIdInput !== null && $parentIdInput !== '') {
 }
 
 $book = new Book($conn);
+$subscriptions = new SubscriptionsModel($conn);
+$subscription = $subscriptions->getSubcription($_SESSION['user']['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);
@@ -61,6 +64,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (strlen($description) > 1000) {
         $errors[] = "La descripción no puede exceder los 1000 caracteres.";
+    }
+
+    if (empty($errors) && $subscription) {
+        $currentBooks = $subscriptions->countBooksByUser($_SESSION['user']['id']);
+        $maxBooks = (int)($subscription['max_notebooks'] ?? 0);
+
+        if ($currentBooks >= $maxBooks) {
+            $errors[] = "Has alcanzado el límite de libros permitido por tu suscripción.";
+        }
     }
 
     if (empty($description)) {
