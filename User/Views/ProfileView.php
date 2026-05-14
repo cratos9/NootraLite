@@ -95,7 +95,18 @@
         <section class="useInfo">
             <header class="title"><hr class="tablet"><i data-lucide="boxes" class="icon-info"></i> Información de uso<hr></header>
             <section class="user-details">
-                <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
+                <div class="info">
+                    <p class="label">Número de archivos cargados: <?php echo htmlspecialchars($filesCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de notas: <?php echo htmlspecialchars($notesCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de libros: <?php echo htmlspecialchars($booksCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de eventos: <?php echo htmlspecialchars($eventsCount ?? 0); ?></p>
+                </div>
             </section>
         </section>
         <section class="options">
