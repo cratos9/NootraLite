@@ -57,6 +57,22 @@
                         </form>
                     </div>
                 <?php endif; ?>
+                <?php if ($isVerified and !$isTwoFactorEnabled): ?>
+                    <div class="info">
+                        <form action="ActiveTwoFactorAuthentication.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email">Activar autenticación de dos factores</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+                <?php if ($isVerified and $isTwoFactorEnabled): ?>
+                    <div class="info">
+                        <form action="DeactivateTwoFactorAuthentication.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email" onclick="return confirm('¿Estás seguro de que quieres desactivar la autenticación de dos factores?');">Desactivar autenticación de dos factores</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
             </section>
         </section>
         <section class="schoolInfo">

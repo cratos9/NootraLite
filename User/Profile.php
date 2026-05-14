@@ -18,6 +18,8 @@ $user = new User($conn);
 $userId = $_SESSION['user']['id'] ?? null;
 
 $isVerified = $_SESSION['user']['is_verified'];
+$isTwoFactorEnabled = $user->isTwoFactorEnabled($userId);
+
 include 'Views/ProfileView.php';
 if (!$isVerified){
     echo '
@@ -25,4 +27,19 @@ if (!$isVerified){
     message.error("No estas verificado");
     </script>';
     }
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['message'])) {
+    $message = $_GET['message'];
+    if ($message === 'two_factor_enabled') {
+        echo '
+        <script>
+        message.success("Autenticación de dos factores activada");
+        </script>';
+    } elseif ($message === 'two_factor_disabled') {
+        echo '
+        <script>
+        message.success("Autenticación de dos factores desactivada");
+        </script>';
+    }
+}
 ?>
