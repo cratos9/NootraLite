@@ -1476,4 +1476,11 @@ document.getElementById('mev-sheet-delete').addEventListener('click', function()
     });
 });
 
+var _upPanel = document.getElementById('upcoming-panel');
+if (_upPanel) {
+    _upPanel.addEventListener('scroll', function() {
+        _upPanel.classList.toggle('is-scrolled', _upPanel.scrollTop > 4);
+    });
+}
+
 lucide.createIcons();
