@@ -513,7 +513,7 @@
     .view-chip { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; white-space: nowrap; font-family: 'Poppins', sans-serif; }
     .view-chip.active { background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; border-color: transparent; }
 
-    .mobile-cal-panel { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
+    .mobile-cal-panel { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; animation: mobileCalIn 0.26s cubic-bezier(0.4, 0, 0.2, 1) both; }
 
     .mini-cal { padding: 12px 16px; }
     .mini-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -538,6 +538,33 @@
     .mobile-ev-time { font-size: 11px; color: var(--text-muted); }
 
 }
+
+/* animaciones entrada mobile */
+@keyframes mobileCalIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes miniDayIn {
+    from { opacity: 0; transform: scale(0.72); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes mobCardSlide {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes miniGridNext {
+    from { opacity: 0.3; transform: translateX(10px); }
+    to   { opacity: 1;   transform: translateX(0); }
+}
+@keyframes miniGridPrev {
+    from { opacity: 0.3; transform: translateX(-10px); }
+    to   { opacity: 1;   transform: translateX(0); }
+}
+
+.mini-day-cell { animation: miniDayIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.mobile-ev-card { animation: mobCardSlide 0.16s ease both; }
+.mini-cal-grid.mini-fade-next { animation: miniGridNext 0.2s ease; }
+.mini-cal-grid.mini-fade-prev { animation: miniGridPrev 0.2s ease; }
 
 /* panel full-screen móvil para nuevo/editar evento */
 .mobile-form-panel {
