@@ -12,6 +12,7 @@ class MessageModel {
         $sql = "SELECT c.id, c.user1_id, c.user2_id,
                        m.body AS last_msg, m.attachment_type AS last_attachment_type,
                        m.deleted_for_all AS last_deleted_for_all, m.created_at AS last_time,
+                       m.sender_id AS last_sender_id,
                        u.username AS other_name,
                        u.id   AS other_user_id,
                        IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
@@ -27,7 +28,11 @@ class MessageModel {
                        IF(c.user1_id = ?,
                           c.typing_u2_at IS NOT NULL AND c.typing_u2_at > DATE_SUB(NOW(), INTERVAL 3 SECOND),
                           c.typing_u1_at IS NOT NULL AND c.typing_u1_at > DATE_SUB(NOW(), INTERVAL 3 SECOND)
-                       ) AS is_typing
+                       ) AS is_typing,
+                       IF(c.user1_id = ?,
+                          c.recording_u2_at IS NOT NULL AND c.recording_u2_at > DATE_SUB(NOW(), INTERVAL 4 SECOND),
+                          c.recording_u1_at IS NOT NULL AND c.recording_u1_at > DATE_SUB(NOW(), INTERVAL 4 SECOND)
+                       ) AS is_recording
                 FROM conversations c
                 LEFT JOIN messages m ON m.id = (
                     SELECT id FROM messages
@@ -41,7 +46,7 @@ class MessageModel {
                 WHERE c.user1_id = ? OR c.user2_id = ?
                 ORDER BY last_time DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
+        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

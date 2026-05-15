@@ -51,15 +51,6 @@ $att_icons = [
     'contact'  => 'user',
 ];
 
-// stmt para detectar si el último mensaje fue enviado por mí
-$stmtSender = $pdo->prepare(
-    'SELECT sender_id FROM messages
-     WHERE conversation_id = ?
-       AND NOT (sender_id = ? AND deleted_for_sender = 1)
-       AND NOT (sender_id != ? AND deleted_for_receiver = 1 AND deleted_for_all = 0)
-     ORDER BY created_at DESC LIMIT 1'
-);
-
 foreach ($convs as &$c) {
     // color único, misma lógica que messages-utils.js
     $c['avatar_color'] = $avColors[avHash($c['other_name'] ?? 'U') % count($avColors)];
@@ -106,47 +97,21 @@ foreach ($convs as &$c) {
         $c['preview_is_system'] = false;
     }
 
-    // ¿el último mensaje fue mío?
-    try {
-        $stmtSender->execute([$c['id'], $uid, $uid]);
-        $row          = $stmtSender->fetch(PDO::FETCH_ASSOC);
-        $c['is_mine'] = $row ? ((int)$row['sender_id'] === $uid) : false;
-    } catch (Exception $e) {
-        $c['is_mine'] = false;
-    }
+    // ¿el último mensaje fue mío? — viene directo de getConversations
+    $c['is_mine'] = isset($c['last_sender_id']) && (int)$c['last_sender_id'] === $uid;
 
     // flag de no leído (mensajes sin leer O marcado como no leído)
     $c['is_unread'] = ($c['unread'] > 0 || !empty($c['force_unread']));
 
+    // is_recording viene directo de getConversations
+    $c['is_recording'] = !empty($c['is_recording']);
+
     // limpiar campos internos que el front no necesita
     unset($c['user1_id'], $c['user2_id'], $c['last_msg'], $c['last_time'],
           $c['last_attachment_type'], $c['is_favorite'], $c['is_pinned'],
-          $c['is_muted'], $c['last_deleted_for_all']);
+          $c['is_muted'], $c['last_deleted_for_all'], $c['last_sender_id']);
 }
 unset($c);
-
-// estado de grabación (recording_u*_at) — batch query sobre las convs
-if (!empty($convs)) {
-    $ids = array_map('intval', array_column($convs, 'id'));
-    $ph  = implode(',', array_fill(0, count($ids), '?'));
-    try {
-        $recStmt = $pdo->prepare(
-            "SELECT id,
-                IF(user1_id = ?,
-                    recording_u2_at IS NOT NULL AND recording_u2_at > DATE_SUB(NOW(), INTERVAL 4 SECOND),
-                    recording_u1_at IS NOT NULL AND recording_u1_at > DATE_SUB(NOW(), INTERVAL 4 SECOND)
-                ) AS is_recording
-             FROM conversations WHERE id IN ($ph)"
-        );
-        $recStmt->execute(array_merge([$uid], $ids));
-        $recMap = [];
-        foreach ($recStmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $recMap[(int)$r['id']] = (bool)$r['is_recording'];
-        }
-    } catch (Exception $e) { $recMap = []; }
-    foreach ($convs as &$c) { $c['is_recording'] = $recMap[(int)$c['id']] ?? false; }
-    unset($c);
-}
 
 echo json_encode([
     'ok'            => true,
