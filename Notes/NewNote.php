@@ -1,7 +1,9 @@
 <?php
 
 include_once '../includes/Remember.php';
+include_once '../Models/BookModel.php';
 include_once '../Models/NoteModel.php';
+include_once '../Models/SubcriptionsModel.php';
 
 
 $errors = [];
@@ -14,6 +16,9 @@ try {
 }
 
 $note = new Note($conn);
+$book = new Book($conn);
+$subscriptions = new SubscriptionsModel($conn);
+$subscription = $subscriptions->getSubcription($_SESSION['user']['id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'];
@@ -30,6 +35,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($bookId <= 0) {
         $errors[] = 'ID del cuaderno no válido.';
+    }
+
+    if (empty($errors)) {
+        $bookData = $book->getBookById((int)$bookId, $_SESSION['user']['id']);
+        if (!$bookData) {
+            $errors[] = 'No se encontró el cuaderno o no tienes permiso para usarlo.';
+        }
+    }
+
+    if (empty($errors) && $subscription) {
+        $currentNotes = $subscriptions->countNotesByNotebook($_SESSION['user']['id'], (int)$bookId);
+        $maxNotes = (int)($subscription['max_notes_per_notebook'] ?? 0);
+
+        if ($currentNotes >= $maxNotes) {
+            $errors[] = 'Has alcanzado el límite de notas permitido para este cuaderno.';
+        }
     }
 
     if (empty($errors)) {

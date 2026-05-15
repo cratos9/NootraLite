@@ -12,3 +12,6 @@ ALTER TABLE users ADD COLUMN plan ENUM('free','pro','mega') NOT NULL DEFAULT 'fr
 
 # Eliminar columna plan de users — el plan vive en subscriptions.plan_type, 05/05/2026
 ALTER TABLE users DROP COLUMN plan;
+
+# Agregar columna para el estado de dos pasos, 14/05/2026
+ALTER TABLE users ADD COLUMN is_two_factor BOOLEAN NOT NULL DEFAULT FALSE;

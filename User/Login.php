@@ -57,6 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare($sql);
             $stmt->execute([$token, $userInfo['id']]);
         }
+        if ($user->IsTwoFactorEnabled($userInfo['id'])) {
+            $_SESSION['pending_2fa_user'] = $userInfo;
+            unset($_SESSION['user']);
+            header('Location: TwoFactorAuth.php');
+            exit();
+        }
         header("Location: ../Dashboard/index.php");
         exit();
     } else {

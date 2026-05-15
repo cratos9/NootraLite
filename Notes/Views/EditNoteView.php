@@ -63,6 +63,7 @@
         </main>
 
         <script src="../js/Notes/TextEditor.js"></script>
+        <script src="../js/Notes/autoguardado.js"></script>
         <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
         <script>
             let iaTimer = null;
