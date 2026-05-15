@@ -51,7 +51,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
             <i data-lucide="message-circle"></i> <span>Mensajes</span>
             <span class="nav-msg-badge" id="navMsgBadge" style="display:none"></span>
         </a>
-        <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="#" data-tooltip="Notas rápidas">
+      <a class="nav-item <?= ($activePage ?? '') === 'quick-notes' ? 'active' : '' ?>" href="../QuickNotes/index.php" data-tooltip="Notas rápidas">
             <i data-lucide="notepad-text"></i> <span>Notas rápidas</span>
         </a>
     </nav>

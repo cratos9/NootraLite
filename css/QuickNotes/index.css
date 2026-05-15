@@ -1,0 +1,133 @@
+body{
+    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+main{
+    padding: 20px;
+    padding-top: 10px;
+    width: 100%;
+    margin-left: 60px;
+}
+
+.new-note {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--text-primary);
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.new-note:hover {
+    background: var(--accent-purple-dim);
+    color: var(--accent-purple);
+    border-color: var(--accent-purple);
+}
+
+.notes {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+}
+
+.note-card {
+    position: relative;
+    width: 100%;
+    min-height: 275px;
+    height: 100%;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.2s, filter 0.15s ease;
+}
+
+.note-info {
+    margin: 0;
+    width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+    display: flex;
+    flex-direction: column;
+}
+
+.note-card:hover {
+    transform: translateY(-2px);
+    filter: brightness(0.85);
+}
+
+.trash {
+    position: absolute;
+    display: none;
+    top: 8px;
+    right: 8px;
+    color: black;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    width: 150px;
+    height: 150px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.note-card:hover .trash {
+    display: block;
+}
+
+@media screen and (max-width:768px) {
+    main{
+        padding: 10px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .new-note{
+        margin: auto;
+        margin-top: 40px;
+        margin-bottom: 40px;
+        width: fit-content;
+    }
+
+    .notes{
+        gap: 10px;
+        grid-template-columns: 1fr;
+    }
+
+    .note-card{
+        min-height: 220px;
+        height: auto;
+    }
+}
+
+@media  screen and (max-width: 480px){
+    main{
+        padding: 10px;
+        padding-bottom: 55px;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notes{
+        gap: 10px;
+    }
+
+    .note-card{
+        min-height: 200px;
+    }
+}
