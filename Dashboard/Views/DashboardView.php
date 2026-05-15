@@ -116,6 +116,7 @@ if (dashBellBtn && dashBellDropdown) {
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
+<script src="../js/dashboard/dashboard.js"></script>
 <script>lucide.createIcons(); document.fonts.ready.then(function(){ document.documentElement.style.visibility=''; });</script>
 </body>
 </html>

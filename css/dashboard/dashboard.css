@@ -757,3 +757,47 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
     .dpt-label { display: none; }
     .dash-go-btn { font-size: 10px; padding: 10px 16px; }
 }
+
+/* privacy preview — grid overlay cross-fade */
+.dash-msg-row .dash-msg-preview {
+    display: grid;
+    height: 14px;
+    margin-top: 2px;
+    overflow: hidden;
+}
+.dash-privacy-bars {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.dash-privacy-bars span {
+    display: block; height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(124,58,237,.3), rgba(124,58,237,.15));
+    animation: dashPrivBarPulse 2s ease-in-out infinite;
+}
+.dash-privacy-bars span:nth-child(1) { width: 46px; }
+.dash-privacy-bars span:nth-child(2) { width: 32px; animation-delay: .28s; }
+.dash-privacy-bars span:nth-child(3) { width: 18px; animation-delay: .56s; }
+@keyframes dashPrivBarPulse {
+    0%, 100% { opacity: .45; }
+    50%       { opacity: .85; }
+}
+.dash-privacy-text {
+    grid-area: 1 / 1;
+    align-self: center;
+    font-size: 11px; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.dash-msg-card.dash-msg-revealed .dash-privacy-bars { opacity: 0; transform: translateY(-4px); }
+.dash-msg-card.dash-msg-revealed .dash-privacy-text { opacity: 1; transform: translateY(0); }
+.dash-msg-me { color: var(--text-muted); font-style: normal; }
+
+.light-mode .dash-privacy-bars span { background: linear-gradient(90deg, rgba(124,58,237,.2), rgba(124,58,237,.1)); }
+.light-mode .dash-privacy-text { color: #64748b; }
