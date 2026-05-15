@@ -16,7 +16,8 @@ class MessageModel {
                        u.id   AS other_user_id,
                        IF(TIMESTAMPDIFF(SECOND, u.last_seen, NOW()) < 45, 1, 0) AS is_online,
                        (SELECT COUNT(*) FROM messages
-                        WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread,
+                        WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0
+                          AND created_at > IF(c.user1_id = ?, COALESCE(c.cleared_at_u1, '1970-01-01'), COALESCE(c.cleared_at_u2, '1970-01-01'))) AS unread,
                        IF(c.user1_id = ?, c.is_favorite_u1, c.is_favorite_u2)     AS is_favorite,
                        IF(c.user1_id = ?, c.is_pinned_u1,   c.is_pinned_u2)       AS is_pinned,
                        IF(c.user1_id = ?, c.is_muted_u1,    c.is_muted_u2)        AS is_muted,
@@ -33,13 +34,14 @@ class MessageModel {
                     WHERE conversation_id = c.id
                       AND NOT (sender_id = ? AND deleted_for_sender = 1)
                       AND NOT (sender_id != ? AND deleted_for_receiver = 1 AND deleted_for_all = 0)
+                      AND created_at > IF(c.user1_id = ?, COALESCE(c.cleared_at_u1, '1970-01-01'), COALESCE(c.cleared_at_u2, '1970-01-01'))
                     ORDER BY created_at DESC LIMIT 1
                 )
                 LEFT JOIN users u ON u.id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
                 WHERE c.user1_id = ? OR c.user2_id = ?
                 ORDER BY last_time DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
+        $stmt->execute([$uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -54,15 +56,16 @@ class MessageModel {
                     m.deleted_for_all,
                     uc.username AS contact_name
              FROM messages m
+             JOIN conversations c ON c.id = m.conversation_id
              LEFT JOIN messages r ON r.id = m.reply_to_id
              LEFT JOIN users uc ON m.attachment_type = \'contact\' AND m.attachment_url = uc.id
              WHERE m.conversation_id = ?
                AND NOT (m.sender_id = ? AND m.deleted_for_sender = 1)
-               /* receiver: solo ocultar si NO es tombstone activo (deleted_for_all=1 = receiver aún debe ver "Mensaje eliminado") */
                AND NOT (m.sender_id != ? AND m.deleted_for_receiver = 1 AND m.deleted_for_all = 0)
+               AND m.created_at > IF(c.user1_id = ?, COALESCE(c.cleared_at_u1, \'1970-01-01\'), COALESCE(c.cleared_at_u2, \'1970-01-01\'))
              ORDER BY m.created_at ASC'
         );
-        $stmt->execute([$conv_id, $uid, $uid]);
+        $stmt->execute([$conv_id, $uid, $uid, $uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
