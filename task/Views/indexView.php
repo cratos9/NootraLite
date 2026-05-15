@@ -35,7 +35,7 @@
 </head>
 
 <body>
-
+<main>
 <header>
 
     <div class="task-header">
@@ -62,7 +62,6 @@
 
 </header>
 
-<main>
 
     <div class="task-list">
 
