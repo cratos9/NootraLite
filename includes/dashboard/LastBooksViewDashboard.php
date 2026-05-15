@@ -17,7 +17,7 @@
             <?php endforeach; ?>
         <?php else: ?>
             <div class="dash-no-books">
-                <i data-lucide="book-off" class="icon-book-off"></i>
+                <i data-lucide="book-x" class="icon-book-off"></i>
                 <p>No has accedido a ningún libro recientemente.</p>
             </div>
         <?php endif; ?>
