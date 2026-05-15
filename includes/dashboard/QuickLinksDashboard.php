@@ -1,6 +1,6 @@
 <div class="dash-card" style="--sd:.32s">
   <div class="dash-card-head">
-    <span class="dash-card-title"><i data-lucide="zap"></i> Accesos rápidos</span>
+    <span class="dash-card-title"><span class="dash-head-icon amber"><i data-lucide="zap"></i></span> Accesos rápidos</span>
   </div>
   <div class="dash-quick-links" id="dashQuickLinks"></div>
 </div>
