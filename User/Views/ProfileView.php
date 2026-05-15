@@ -57,6 +57,22 @@
                         </form>
                     </div>
                 <?php endif; ?>
+                <?php if ($isVerified and !$isTwoFactorEnabled): ?>
+                    <div class="info">
+                        <form action="ActiveTwoFactorAuthentication.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email">Activar autenticación de dos factores</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+                <?php if ($isVerified and $isTwoFactorEnabled): ?>
+                    <div class="info">
+                        <form action="DeactivateTwoFactorAuthentication.php" method="post">
+                            <input type="hidden" name="email" value="<?php echo $_SESSION['user']['email']; ?>">
+                            <button type="submit" class="btn-verify_email" onclick="return confirm('¿Estás seguro de que quieres desactivar la autenticación de dos factores?');">Desactivar autenticación de dos factores</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
             </section>
         </section>
         <section class="schoolInfo">
@@ -79,7 +95,18 @@
         <section class="useInfo">
             <header class="title"><hr class="tablet"><i data-lucide="boxes" class="icon-info"></i> Información de uso<hr></header>
             <section class="user-details">
-                <p>Aun no hay información de uso disponible. Asi que pues ni modo</p>
+                <div class="info">
+                    <p class="label">Número de archivos cargados: <?php echo htmlspecialchars($filesCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de notas: <?php echo htmlspecialchars($notesCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de libros: <?php echo htmlspecialchars($booksCount ?? 0); ?></p>
+                </div>
+                <div class="info">
+                    <p class="label">Número de eventos: <?php echo htmlspecialchars($eventsCount ?? 0); ?></p>
+                </div>
             </section>
         </section>
         <section class="options">

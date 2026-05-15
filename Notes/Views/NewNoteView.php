@@ -95,5 +95,8 @@
         </script>
         <script src="../js/includes/IA.js" defer></script>
         <script src="../js/includes/sidebar.js"></script>
+        <script>
+            message.tip("Debes guardar la nota para activar el autoguardado.");
+        </script>
     </body>
 </html>

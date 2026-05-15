@@ -6,6 +6,7 @@ include_once '../includes/Remember.php';
 require_once '../core/IA.php';
 require_once '../config/db.php';
 require_once '../config/encrypt.php';
+require_once '../Models/SubcriptionsModel.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -53,6 +54,16 @@ if ($conversationId === '') {
 try {
     $database = new Database();
     $conn = $database->connect();
+    $subscriptions = new SubscriptionsModel($conn);
+
+    if (!$subscriptions->canUseQuery($_SESSION['user']['id'])) {
+        http_response_code(429);
+        echo json_encode([
+            'ok' => false,
+            'message' => 'Has alcanzado el límite de consultas de tu suscripción.'
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     $memoryMessages = [];
     if ($conversationId !== '') {
@@ -140,6 +151,8 @@ try {
         $tokensUsed,
         $responseTimeMs
     ]);
+
+    $subscriptions->useQuerie($_SESSION['user']['id']);
 
     echo json_encode([
         'ok' => true,
