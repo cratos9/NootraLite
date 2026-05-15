@@ -2413,6 +2413,13 @@ body { height: 100vh; overflow: hidden; }
     background: rgba(124,58,237,0.07);
     border-color: rgba(124,58,237,0.18);
 }
+.msg-deleted-animate {
+    animation: msgDeletedIn .3s ease both;
+}
+@keyframes msgDeletedIn {
+    from { opacity: 0; transform: translateY(3px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* botón enlace en modal */
 .btn-modal-link {
@@ -3652,6 +3659,7 @@ body { height: 100vh; overflow: hidden; }
     gap: 5px;
     color: #ef4444;
     font-style: italic;
+    overflow: visible;
 }
 .conv-rec-dot {
     width: 7px;
@@ -3659,7 +3667,11 @@ body { height: 100vh; overflow: hidden; }
     border-radius: 50%;
     background: #ef4444;
     flex-shrink: 0;
-    animation: recDotPulse 1.4s ease-in-out infinite;
+    animation: convRecDotBlink 1.2s ease-in-out infinite;
+}
+@keyframes convRecDotBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.15; }
 }
 .conv-rec-waves {
     display: inline-flex;

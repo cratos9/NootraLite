@@ -20,7 +20,8 @@ var recordingSignalInterval = null;
 var fetchingMessages = false;
 var infoMsgCurrent  = null;
 var infoRelInterval = null;
-var lastMsgId    = 0;
+var lastMsgId        = 0;
+var lastDeletedCount = -1;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
 var bookmarkedIds = [];
@@ -172,8 +173,9 @@ function openConversation(convId, name) {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
     if (statusPollInterval) { clearInterval(statusPollInterval); statusPollInterval = null; }
-    lastMsgId = 0;
-    activeConvId = convId;
+    lastMsgId        = 0;
+    lastDeletedCount = -1;
+    activeConvId     = convId;
     activeConvName = name;
     cancelReply();
 
@@ -253,6 +255,7 @@ function openConversation(convId, name) {
             scrollToBottom();
             updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
+            lastDeletedCount = res.deleted_count !== undefined ? (res.deleted_count | 0) : 0;
             pollInterval = setInterval(pollMessages, 1000);
             if (typingPollInterval) clearInterval(typingPollInterval);
             typingPollInterval = setInterval(pollTyping, 500);
@@ -290,12 +293,19 @@ function pollMessages() {
                 return;
             }
             var msgs = res.messages;
-            var newestId = parseInt(msgs[msgs.length - 1].id);
+            var newestId     = parseInt(msgs[msgs.length - 1].id);
+            var freshDeleted = res.deleted_count !== undefined ? (res.deleted_count | 0) : lastDeletedCount;
+            var hasNewDeletions = freshDeleted !== lastDeletedCount && lastDeletedCount >= 0;
             if (newestId <= lastMsgId) {
+                if (hasNewDeletions) {
+                    lastDeletedCount = freshDeleted;
+                    _applyDeletions(msgs);
+                }
                 _applyRemoteActivity(res);
                 return;
             }
-            lastMsgId = newestId;
+            lastMsgId        = newestId;
+            lastDeletedCount = freshDeleted;
             var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
             renderMessages(msgs);
             _applyRemoteActivity(res);
@@ -334,6 +344,28 @@ function pollTyping() {
             }
         })
         .catch(function() {});
+}
+
+function _applyDeletions(msgs) {
+    for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (!parseInt(m.deleted_for_all)) continue;
+        var row = chatMessages.querySelector('[data-msg-id="' + m.id + '"]');
+        if (!row) continue;
+        var bubble = row.querySelector('.msg-bubble');
+        if (!bubble || bubble.querySelector('.msg-deleted')) continue;
+        var replyPrev = bubble.querySelector('.reply-preview');
+        var footer    = bubble.querySelector('.msg-footer');
+        bubble.innerHTML = '';
+        if (replyPrev) bubble.appendChild(replyPrev);
+        var del = document.createElement('div');
+        del.className   = 'msg-deleted msg-deleted-animate';
+        del.textContent = 'Mensaje eliminado';
+        bubble.appendChild(del);
+        if (footer) bubble.appendChild(footer);
+        var actBtn = row.querySelector('.msg-actions-btn');
+        if (actBtn) actBtn.style.visibility = 'hidden';
+    }
 }
 
 function _applyRemoteActivity(res) {
@@ -521,7 +553,8 @@ document.getElementById('btnConfirmClear').addEventListener('click', function() 
                 chatMessages.innerHTML = '<div class="msgs-empty"><i data-lucide="message-circle-dashed"></i><p>No hay mensajes aún</p></div>';
                 lucide.createIcons({ nodes: [chatMessages] });
             }, total);
-            lastMsgId = 0;
+            lastMsgId        = 0;
+            lastDeletedCount = 0;
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
                     conversations[i].last_msg = '';

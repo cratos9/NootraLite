@@ -61,6 +61,25 @@ try {
     $tStmt->execute([$uid, $uid, $conv_id]);
     $tRow = $tStmt->fetch(PDO::FETCH_ASSOC);
 
+    $clrStmt = $pdo->prepare(
+        'SELECT IF(user1_id = ?, cleared_at_u1, cleared_at_u2) FROM conversations WHERE id = ?'
+    );
+    $clrStmt->execute([$uid, $conv_id]);
+    $clearedAt = $clrStmt->fetchColumn() ?: null;
+
+    if ($clearedAt) {
+        $delStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM messages WHERE conversation_id = ? AND deleted_for_all = 1 AND created_at > ?'
+        );
+        $delStmt->execute([$conv_id, $clearedAt]);
+    } else {
+        $delStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM messages WHERE conversation_id = ? AND deleted_for_all = 1'
+        );
+        $delStmt->execute([$conv_id]);
+    }
+    $deletedCount = (int)$delStmt->fetchColumn();
+
     echo json_encode([
         'ok'                => true,
         'messages'          => $msgs,
@@ -70,6 +89,7 @@ try {
         'bookmarked_ids'    => $bookmarkedIds,
         'other_typing'      => $tRow ? (bool)$tRow['other_typing']    : false,
         'other_recording'   => $tRow ? (bool)$tRow['other_recording'] : false,
+        'deleted_count'     => $deletedCount,
     ]);
 } catch (Exception $e) {
     echo json_encode(['ok' => false, 'error' => 'error al obtener mensajes']);
