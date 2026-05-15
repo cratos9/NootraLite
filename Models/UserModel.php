@@ -52,6 +52,13 @@ class User{
     }
 
     public function UpdateProfile($userId, $username, $email, $bio, $full_name, $phone, $country, $city, $institution, $carrer, $student_id){
+        $oldEmail = $_SESSION['user']['email'] ?? null;
+        if ($email !== $oldEmail) {
+            $sql = "UPDATE users SET is_verified = 0 WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([$userId]);
+            $_SESSION['user']['is_verified'] = 0;
+        }
         $full_name = encrypt_data($full_name);
         $country = encrypt_data($country);
         $city = encrypt_data($city);
@@ -161,7 +168,6 @@ class User{
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo $user['is_verified'] . "is verified";
         return $user == 1 ? true : false;
     }
 
@@ -190,6 +196,26 @@ class User{
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         return $user['id'];
+    }
+
+    public function IsTwoFactorEnabled($userId){
+        $sql = "SELECT is_two_factor FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user['is_two_factor'] == 1 ? true : false;
+    }
+
+    public function EnableTwoFactor($userId){
+        $sql = "UPDATE users SET is_two_factor = 1 WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$userId]);
+    }
+
+    public function DisableTwoFactor($userId){
+        $sql = "UPDATE users SET is_two_factor = 0 WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$userId]);
     }
 
 }
