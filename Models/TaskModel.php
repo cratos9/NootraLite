@@ -25,12 +25,13 @@ class TaskModel
     }
 
     // crear tarea
-    public function create( $uid, $title, $description, $priority, $category, $tags, $start_dt, $end_dt, $all_day, $color, $reminder_datetime, $evente_type) {
+    public function create($uid, $title, $description, $priority, $category, $tags, $start_dt, $end_dt, $all_day) {
+        $title = encrypt_data($title);
         $description = encrypt_data($description);
         $category = encrypt_data($category);
         $tags = encrypt_data($tags);
-        $stmt = $this->db->prepare( "INSERT INTO tasks  (user_id, title, description, status, priority, category, tags, start_datetime, end_datetime, all_day)  VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)" );
-        $stmt->execute([ $uid, $title, $description, $priority, $category, $tags, $start_dt, $end_dt, $all_day]);
+        $stmt = $this->db->prepare("INSERT INTO tasks (user_id, title, description, status, priority, category, tags, start_datetime, end_datetime, all_day) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$uid, $title, $description, $priority, $category, $tags, $start_dt, $end_dt, $all_day]);
         return $this->db->lastInsertId();
     }
 
