@@ -58,7 +58,7 @@
     <div class="dash-lower">
       <div class="dash-center">
         <?php include '../includes/dashboard/ActivityDashboard.php'; ?>
-        <!-- mensajes: próxima sesión -->
+        <?php include '../includes/dashboard/MessagesDashboard.php'; ?>
       </div>
       <aside class="dash-right">
         <?php include '../includes/dashboard/QuickLinksDashboard.php'; ?>
