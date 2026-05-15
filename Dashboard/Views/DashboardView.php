@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="../css/includes/sidebar.css">
   <link rel="stylesheet" href="../css/includes/toast.css">
   <link rel="stylesheet" href="../css/dashboard/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard/BooksDashboard.css">
 </head>
 <body>
 <?php include '../includes/sidebar.php'; ?>
@@ -64,6 +65,8 @@
         <!-- calendario: próxima sesión -->
       </aside>
     </div>
+    <?php include '../includes/dashboard/LastBooksViewDashboard.php'; ?>
+    <?php include '../includes/dashboard/LastNotesViewDashboard.php'; ?>
   </div>
 
 </div>

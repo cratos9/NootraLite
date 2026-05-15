@@ -28,6 +28,14 @@ class Book{
     }
 
     public function getBookById($bookId, $userId){
+        $date = new DateTime();
+        $query = "UPDATE notebooks SET last_accessed = :last_accessed WHERE id = :book_id AND user_id = :user_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':last_accessed', $date->format('Y-m-d H:i:s'), PDO::PARAM_STR);
+        $stmt->bindParam(':book_id', $bookId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+
         $query = "SELECT * FROM notebooks WHERE id = :book_id AND user_id = :user_id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':book_id', $bookId, PDO::PARAM_INT);
@@ -100,6 +108,15 @@ class Book{
         $sql = "UPDATE notebooks SET title = ?, description = ?, color = ?, category = ?, semester = ?, tags = ? WHERE parent_id = ? AND id = ? AND user_id = ?";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([$title, $description, $color, $category, $semester, $tags, $parentId, $childBookId, $userId]);
+    }
+
+    public function getLastAccessedBooksByUserId($userId, $limit = 3){
+        $query = "SELECT * FROM notebooks WHERE user_id = :user_id ORDER BY last_accessed DESC LIMIT :limit";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
