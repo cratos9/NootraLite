@@ -27,16 +27,14 @@ $total_unread = (int)array_sum(array_column($all, 'unread'));
 
 $convs = array_slice($all, 0, 3);
 
-$colors = [
-    ['#7c3aed', '#a855f7'],
-    ['#2563eb', '#3b82f6'],
-    ['#059669', '#10b981'],
-    ['#d97706', '#f59e0b'],
-    ['#dc2626', '#ef4444'],
-    ['#7c3aed', '#ec4899'],
-    ['#0891b2', '#06b6d4'],
-    ['#65a30d', '#84cc16'],
-];
+// mismo array y hash que messages-utils.js para consistencia entre módulos
+$avColors = ['#7c3aed','#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#3b82f6','#8b5cf6'];
+function avHash($name) {
+    $sum = 0;
+    $len = mb_strlen($name, 'UTF-8');
+    for ($i = 0; $i < $len; $i++) $sum += mb_ord(mb_substr($name, $i, 1, 'UTF-8'), 'UTF-8');
+    return $sum;
+}
 
 $att_labels = [
     'image'    => 'Imagen',
@@ -63,10 +61,8 @@ $stmtSender = $pdo->prepare(
 );
 
 foreach ($convs as &$c) {
-    // color de avatar determinístico por nombre
-    $idx = abs(crc32($c['other_name'] ?? 'U')) % count($colors);
-    $c['avatar_from'] = $colors[$idx][0];
-    $c['avatar_to']   = $colors[$idx][1];
+    // color único, misma lógica que messages-utils.js
+    $c['avatar_color'] = $avColors[avHash($c['other_name'] ?? 'U') % count($avColors)];
 
     // iniciales (1 o 2 palabras)
     $parts = preg_split('/\s+/', trim($c['other_name'] ?? 'U'));
@@ -87,6 +83,9 @@ foreach ($convs as &$c) {
         $c['time_fmt'] = date('H:i', $ts);
     } elseif ($now - $ts < 172800) {
         $c['time_fmt'] = 'Ayer';
+    } elseif ($now - $ts < 604800) {
+        $dias = ['dom','lun','mar','mié','jue','vie','sáb'];
+        $c['time_fmt'] = $dias[(int)date('w', $ts)];
     } else {
         $c['time_fmt'] = date('d/m', $ts);
     }
@@ -125,6 +124,29 @@ foreach ($convs as &$c) {
           $c['is_muted'], $c['last_deleted_for_all']);
 }
 unset($c);
+
+// estado de grabación (recording_u*_at) — batch query sobre las convs
+if (!empty($convs)) {
+    $ids = array_map('intval', array_column($convs, 'id'));
+    $ph  = implode(',', array_fill(0, count($ids), '?'));
+    try {
+        $recStmt = $pdo->prepare(
+            "SELECT id,
+                IF(user1_id = ?,
+                    recording_u2_at IS NOT NULL AND recording_u2_at > DATE_SUB(NOW(), INTERVAL 4 SECOND),
+                    recording_u1_at IS NOT NULL AND recording_u1_at > DATE_SUB(NOW(), INTERVAL 4 SECOND)
+                ) AS is_recording
+             FROM conversations WHERE id IN ($ph)"
+        );
+        $recStmt->execute(array_merge([$uid], $ids));
+        $recMap = [];
+        foreach ($recStmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $recMap[(int)$r['id']] = (bool)$r['is_recording'];
+        }
+    } catch (Exception $e) { $recMap = []; }
+    foreach ($convs as &$c) { $c['is_recording'] = $recMap[(int)$c['id']] ?? false; }
+    unset($c);
+}
 
 echo json_encode([
     'ok'            => true,
