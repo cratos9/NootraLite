@@ -6,8 +6,14 @@
       <span class="dash-msg-badge" id="msgBadge" style="display:none"></span>
     </span>
     <button class="dash-privacy-toggle visible" id="msgPrivacyToggle" aria-label="Alternar privacidad">
+      <span class="dpt-icon-wrap" id="dptIconWrap">
+        <i data-lucide="eye" class="dpt-icon-eye"></i>
+        <i data-lucide="eye-off" class="dpt-icon-lock"></i>
+      </span>
       <span class="dpt-label" id="dptLabel">Visible</span>
-      <span class="dpt-track"><span class="dpt-thumb"></span></span>
+      <span class="acm-switch" aria-checked="true" id="dptSwitch" role="switch">
+        <span class="acm-switch-thumb"></span>
+      </span>
     </button>
   </div>
 

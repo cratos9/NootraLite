@@ -7,14 +7,22 @@ var msgPrivacyRevealed = (function() {
     try { return localStorage.getItem('nootra_msg_privacy') !== 'false'; } catch(e) { return true; }
 })();
 
-function applyPrivacyState() {
+function applyPrivacyState(animate) {
     var card   = document.getElementById('recentMsgCard');
     var toggle = document.getElementById('msgPrivacyToggle');
     var lbl    = document.getElementById('dptLabel');
+    var sw     = document.getElementById('dptSwitch');
+    var icon   = document.getElementById('dptIconWrap');
     if (!card) return;
     card.classList.toggle('dash-msg-revealed', msgPrivacyRevealed);
     if (toggle) toggle.classList.toggle('visible', msgPrivacyRevealed);
     if (lbl) lbl.textContent = msgPrivacyRevealed ? 'Visible' : 'Privado';
+    if (sw)  sw.setAttribute('aria-checked', msgPrivacyRevealed ? 'true' : 'false');
+    if (animate && icon) {
+        icon.classList.remove('dpt-pop');
+        void icon.offsetWidth;
+        icon.classList.add('dpt-pop');
+    }
 }
 
 function buildMsgRow(c, i) {
@@ -97,9 +105,9 @@ if (_privBtn) {
     _privBtn.addEventListener('click', function() {
         msgPrivacyRevealed = !msgPrivacyRevealed;
         try { localStorage.setItem('nootra_msg_privacy', String(msgPrivacyRevealed)); } catch(e) {}
-        applyPrivacyState();
+        applyPrivacyState(true);
     });
 }
 
-applyPrivacyState();
+applyPrivacyState(false);
 loadRecentMessages();
