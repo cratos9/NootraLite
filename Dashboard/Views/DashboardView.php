@@ -62,7 +62,7 @@
       </div>
       <aside class="dash-right">
         <?php include '../includes/dashboard/QuickLinksDashboard.php'; ?>
-        <!-- calendario: próxima sesión -->
+        <?php include '../includes/dashboard/CalendarDashboard.php'; ?>
       </aside>
     </div>
     <?php include '../includes/dashboard/LastBooksViewDashboard.php'; ?>
