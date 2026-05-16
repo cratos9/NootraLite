@@ -6,6 +6,7 @@
       <span class="dash-cal-year-grad" id="dashCalMonthYear"></span>
     </span>
     <div class="dash-cal-nav">
+      <button class="dash-cal-nav-btn dash-cal-today-btn" id="dashCalToday" aria-label="Mes actual">Hoy</button>
       <button class="dash-cal-nav-btn" id="dashCalPrev" aria-label="Mes anterior">
         <i data-lucide="chevron-left"></i>
       </button>

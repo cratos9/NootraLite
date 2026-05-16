@@ -946,3 +946,66 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
 .light-mode .dash-cal-hdr-d:nth-child(7) { color: rgba(236,72,153,.5); }
 .light-mode .dash-cal-cell.cal-sat,
 .light-mode .dash-cal-cell.cal-sun { color: rgba(236,72,153,.75); }
+
+/* D20 — light mode chart */
+.light-mode .dash-bar-s::after { background: rgba(241,245,249,.97); color: #1e293b; border-color: rgba(124,58,237,.12); }
+.light-mode .dash-chart-day.today { color: #7c3aed; }
+.light-mode .dash-bar-s.today { box-shadow: 0 0 10px rgba(124,58,237,.2), 0 3px 8px rgba(236,72,153,.1); }
+
+/* D21 — responsive tablet (768px) */
+@media (max-width: 768px) {
+    .dash-content { padding: 18px; gap: 14px; }
+    .dash-lower { gap: 12px; }
+    .dash-greet-h { font-size: 22px; }
+    .dash-chart-area { padding: 20px 16px 10px; }
+}
+
+/* D21 — responsive móvil (480px) */
+@media (max-width: 480px) {
+    .dash-content { padding: 14px; gap: 10px; }
+    .dash-lower { gap: 10px; }
+    .dash-chart-area { padding: 16px 12px 10px; }
+    .dash-chart-bars-stub { height: 80px; }
+    .dash-greet-sub { font-size: 11px; }
+}
+
+/* D23 — stat card link al módulo */
+.dash-stat { position: relative; }
+.dash-stat-go {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    background: transparent;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .18s, transform .18s cubic-bezier(.34,1.56,.64,1), color .15s, background .15s;
+    z-index: 2;
+}
+.dash-stat:hover .dash-stat-go { opacity: 1; transform: translateY(0); }
+.dash-stat-go:hover { color: #a78bfa; background: rgba(124,58,237,.14); }
+.dash-stat-go svg { width: 11px; height: 11px; }
+.light-mode .dash-stat-go:hover { color: #7c3aed; background: rgba(124,58,237,.08); }
+
+/* D23 — botón "Hoy" en el calendario */
+.dash-cal-today-btn {
+    font-size: 9px; font-weight: 700;
+    color: #a78bfa;
+    padding: 0 9px;
+    width: auto;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    border-color: rgba(124,58,237,.22);
+    background: rgba(124,58,237,.06);
+}
+.dash-cal-today-btn:hover {
+    color: #c4b5fd !important;
+    border-color: rgba(124,58,237,.45) !important;
+    background: rgba(124,58,237,.14) !important;
+    transform: scale(1.05) !important;
+}
+.light-mode .dash-cal-today-btn { color: #7c3aed; border-color: rgba(124,58,237,.2); background: rgba(124,58,237,.04); }
+.light-mode .dash-cal-today-btn:hover { color: #6d28d9 !important; border-color: rgba(124,58,237,.35) !important; background: rgba(124,58,237,.1) !important; }
