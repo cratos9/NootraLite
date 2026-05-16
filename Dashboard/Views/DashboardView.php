@@ -25,10 +25,18 @@
     </div>
     <div class="dash-topbar-right">
 
-      <div class="dash-search-wrap">
-        <i data-lucide="search" class="dash-search-icon"></i>
-        <input type="text" class="dash-search-input" id="dashSearchInput"
-               placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite" readonly>
+      <div class="dash-search-outer" id="dashSearchOuter">
+        <div class="dash-search-wrap" id="dashSearchWrap">
+          <i data-lucide="search" class="dash-search-icon" id="dashSearchIconBtn"></i>
+          <input type="text" class="dash-search-input" id="dashSearchInput"
+                 placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite"
+                 autocomplete="off" spellcheck="false">
+          <button class="dash-search-clear" id="dashSearchClear" aria-label="Limpiar búsqueda" style="display:none">
+            <i data-lucide="x"></i>
+          </button>
+          <kbd class="dash-search-kbd" aria-hidden="true">/</kbd>
+        </div>
+        <div class="dash-search-drop" id="dashSearchDrop"></div>
       </div>
 
       <div class="dash-bell-wrap">
@@ -53,6 +61,11 @@
   </header>
 
   <div class="dash-content">
+<script>
+window._dashPrefetch = fetch('../Dashboard/get_dashboard.php')
+    .then(function(r){ return r.json(); })
+    .catch(function(){ return {}; });
+</script>
     <?php include '../includes/dashboard/GreetingDashboard.php'; ?>
     <?php include '../includes/dashboard/StatsDashboard.php'; ?>
     <div class="dash-lower">
@@ -62,7 +75,7 @@
       </div>
       <aside class="dash-right">
         <?php include '../includes/dashboard/QuickLinksDashboard.php'; ?>
-        <!-- calendario: próxima sesión -->
+        <?php include '../includes/dashboard/CalendarDashboard.php'; ?>
       </aside>
     </div>
     <?php include '../includes/dashboard/LastBooksViewDashboard.php'; ?>

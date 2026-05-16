@@ -1,31 +1,35 @@
 <section class="dash-stats">
-  <div class="dash-stat" id="statMessages" style="--sd:.05s">
+  <div class="dash-stat" id="statMessages" style="--sd:.05s" data-module="../messages/messages.php">
     <div class="dash-stat-icon red"><i data-lucide="message-circle"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Mensajes sin leer</span>
       <span class="dash-stat-num dash-stat-loading" id="statMsgNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../messages/messages.php" aria-label="Ir a mensajes"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statEvents" style="--sd:.10s">
+  <div class="dash-stat" id="statEvents" style="--sd:.10s" data-module="../calendar/calendar.php">
     <div class="dash-stat-icon teal"><i data-lucide="calendar"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Eventos de hoy</span>
       <span class="dash-stat-num dash-stat-loading" id="statEvtNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../calendar/calendar.php" aria-label="Ir al calendario"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statTasks" style="--sd:.15s">
+  <div class="dash-stat" id="statTasks" style="--sd:.15s" data-module="../task/index.php">
     <div class="dash-stat-icon amber"><i data-lucide="alert-circle"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Tareas pendientes</span>
       <span class="dash-stat-num dash-stat-loading" id="statTaskNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../task/index.php" aria-label="Ir a tareas"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statNotes" style="--sd:.20s">
+  <div class="dash-stat" id="statNotes" style="--sd:.20s" data-module="../Books/Books.php">
     <div class="dash-stat-icon purple"><i data-lucide="notebook-pen"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Notas esta semana</span>
       <span class="dash-stat-num dash-stat-loading" id="statNoteNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../Books/Books.php" aria-label="Ir a cuadernos"><i data-lucide="arrow-up-right"></i></a>
   </div>
 </section>
 <script>
@@ -86,43 +90,53 @@
         if (nEl) { nEl.id = s.numId; nEl.classList.add('dash-stat-loading'); }
         if (iWr) iWr.className = 'dash-stat-icon '+s.color;
         card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
-        card.addEventListener('click', function(){ swapStat(i); });
     });
 
     function swapStat(i) {
         var card = document.getElementById(slots[i]);
         if (!card) return;
         var body = card.querySelector('.dash-stat-body');
+        var iWr  = card.querySelector('.dash-stat-icon');
         current[i] = (current[i]+1) % statGroups[i].stats.length;
         var s = statGroups[i].stats[current[i]];
         body.classList.add('stat-out');
+        if (iWr) { iWr.classList.remove('icon-in'); iWr.classList.add('icon-out'); }
         setTimeout(function() {
-            var iWr = card.querySelector('.dash-stat-icon');
             var lEl = card.querySelector('.dash-stat-lbl');
             var nEl = card.querySelector('.dash-stat-num');
-            if (iWr) { iWr.innerHTML='<i data-lucide="'+s.icon+'"></i>'; iWr.className='dash-stat-icon '+s.color; }
+            if (iWr) {
+                iWr.innerHTML = '<i data-lucide="'+s.icon+'"></i>';
+                iWr.className = 'dash-stat-icon '+s.color+' icon-in';
+            }
             if (lEl) lEl.textContent = s.lbl;
             if (nEl) {
                 nEl.id = s.numId;
                 var val = cache[s.key];
-                if (val !== undefined) animateNum(nEl, val);
-                else { nEl.textContent='—'; nEl.classList.add('dash-stat-loading'); }
+                nEl.textContent = '—';
+                nEl.classList.add('dash-stat-loading');
+                if (val !== undefined) {
+                    setTimeout(function() { animateNum(nEl, val); }, 80);
+                }
             }
             card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
             lucide.createIcons();
             body.classList.remove('stat-out');
             body.classList.add('stat-in');
-            setTimeout(function(){ body.classList.remove('stat-in'); }, 280);
-        }, 180);
+            setTimeout(function() {
+                body.classList.remove('stat-in');
+                if (iWr) iWr.classList.remove('icon-in');
+            }, 340);
+        }, 155);
     }
 
     slots.forEach(function(_,i){
         setTimeout(function(){ setInterval(function(){ swapStat(i); }, 7000); }, 3000+i*1800);
     });
 
-    fetch('../Dashboard/get_stats.php')
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
+    var _sfetch = window._dashPrefetch
+        ? window._dashPrefetch.then(function(d){ return d.stats || {}; })
+        : fetch('../Dashboard/get_stats.php').then(function(r){ return r.json(); });
+    _sfetch.then(function(data) {
             cache = data;
             slots.forEach(function(_, i) {
                 var s   = statGroups[i].stats[current[i]];
