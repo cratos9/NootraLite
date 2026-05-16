@@ -50,7 +50,7 @@ function buildMsgRow(c, i) {
     var hasUnread = c.is_unread || parseInt(c.unread) > 0;
     var delay     = 'animation:dashFadeUp .28s cubic-bezier(.34,1.56,.64,1) ' + (i * .07) + 's both';
 
-    return '<a class="dash-msg-row' + (hasUnread ? ' unread' : '') + '" href="../messages/messages.php" style="' + delay + '">' +
+    return '<a class="dash-msg-row' + (hasUnread ? ' unread' : '') + '" href="../messages/messages.php?conv=' + escHtml(c.id) + '" style="' + delay + '">' +
         '<div class="dash-msg-av-wrap">' +
         '<div class="dash-msg-av" style="background-color:' + escHtml(c.avatar_color) + '">' + escHtml(c.initials) + '</div>' +
         (c.is_online == 1 ? '<span class="dash-msg-online"></span>' : '') +
