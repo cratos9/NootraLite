@@ -9,6 +9,9 @@ var chatActive     = document.getElementById('chatActive');
 var chatHeader     = document.getElementById('chatHeader');
 var chatMessages   = document.getElementById('chatMessages');
 
+var typingPollInterval = null;
+var statusPollInterval = null;
+
 var lastKnownStatus = { isOnline: null, lastSeen: null };
 
 var swipeRow = null, swipeX = 0, swipeY = 0, swipeDone = false;
