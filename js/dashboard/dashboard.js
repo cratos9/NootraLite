@@ -238,3 +238,90 @@ document.addEventListener('visibilitychange', function() {
 
 applyPrivacyState(false);
 loadRecentMessages();
+
+// ── widget calendario ──────────────────────────────────────────────
+var _calNow = new Date();
+var _calY   = _calNow.getFullYear();
+var _calM   = _calNow.getMonth() + 1; // 1-indexed
+
+var CAL_MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function _renderCalGrid(dir, eventDays) {
+    var body  = document.getElementById('dashCalBody');
+    var mName = document.getElementById('dashCalMonthName');
+    var mYear = document.getElementById('dashCalMonthYear');
+    if (!body) return;
+
+    if (mName) mName.textContent = CAL_MONTHS[_calM - 1];
+    if (mYear) mYear.textContent = _calY;
+
+    var now    = new Date();
+    var todayY = now.getFullYear();
+    var todayM = now.getMonth() + 1;
+    var todayD = now.getDate();
+
+    var firstDow   = new Date(_calY, _calM - 1, 1).getDay();
+    var startOff   = firstDow === 0 ? 6 : firstDow - 1;
+    var daysInMon  = new Date(_calY, _calM, 0).getDate();
+    var daysInPrev = new Date(_calY, _calM - 1, 0).getDate();
+    var evts       = eventDays || [];
+
+    var html = '';
+    for (var i = startOff; i > 0; i--) {
+        html += '<div class="dash-cal-cell empty">' + (daysInPrev - i + 1) + '</div>';
+    }
+    for (var d = 1; d <= daysInMon; d++) {
+        var dow     = new Date(_calY, _calM - 1, d).getDay();
+        var isToday = (_calY === todayY && _calM === todayM && d === todayD);
+        var isPast  = !isToday && new Date(_calY, _calM - 1, d) < new Date(todayY, todayM - 1, todayD);
+
+        var cls = 'dash-cal-cell';
+        if (isToday) cls += ' today';
+        else if (isPast) cls += ' cal-past';
+        if (dow === 6) cls += ' cal-sat';
+        if (dow === 0) cls += ' cal-sun';
+        if (evts.indexOf(d) !== -1) cls += ' has-event';
+
+        html += '<div class="' + cls + '" data-num="' + d + '">' + (isToday ? '' : d) + '</div>';
+    }
+    var total  = startOff + daysInMon;
+    var remain = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (var j = 1; j <= remain; j++) {
+        html += '<div class="dash-cal-cell empty">' + j + '</div>';
+    }
+
+    if (dir) {
+        body.classList.remove('cal-in-prev', 'cal-in-next');
+        void body.offsetWidth;
+        body.classList.add(dir === 'prev' ? 'cal-in-prev' : 'cal-in-next');
+    }
+    body.innerHTML = html;
+}
+
+function loadCalendar(dir) {
+    fetch('../Dashboard/get_month_events.php?year=' + _calY + '&month=' + _calM)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { _renderCalGrid(dir, data.event_days || []); })
+        .catch(function() { _renderCalGrid(dir, []); });
+}
+
+var _calPrevBtn = document.getElementById('dashCalPrev');
+var _calNextBtn = document.getElementById('dashCalNext');
+
+if (_calPrevBtn) {
+    _calPrevBtn.addEventListener('click', function() {
+        _calM--;
+        if (_calM < 1) { _calM = 12; _calY--; }
+        loadCalendar('prev');
+    });
+}
+if (_calNextBtn) {
+    _calNextBtn.addEventListener('click', function() {
+        _calM++;
+        if (_calM > 12) { _calM = 1; _calY++; }
+        loadCalendar('next');
+    });
+}
+
+loadCalendar(null);
