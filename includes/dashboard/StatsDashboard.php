@@ -96,27 +96,37 @@
         var card = document.getElementById(slots[i]);
         if (!card) return;
         var body = card.querySelector('.dash-stat-body');
+        var iWr  = card.querySelector('.dash-stat-icon');
         current[i] = (current[i]+1) % statGroups[i].stats.length;
         var s = statGroups[i].stats[current[i]];
         body.classList.add('stat-out');
+        if (iWr) { iWr.classList.remove('icon-in'); iWr.classList.add('icon-out'); }
         setTimeout(function() {
-            var iWr = card.querySelector('.dash-stat-icon');
             var lEl = card.querySelector('.dash-stat-lbl');
             var nEl = card.querySelector('.dash-stat-num');
-            if (iWr) { iWr.innerHTML='<i data-lucide="'+s.icon+'"></i>'; iWr.className='dash-stat-icon '+s.color; }
+            if (iWr) {
+                iWr.innerHTML = '<i data-lucide="'+s.icon+'"></i>';
+                iWr.className = 'dash-stat-icon '+s.color+' icon-in';
+            }
             if (lEl) lEl.textContent = s.lbl;
             if (nEl) {
                 nEl.id = s.numId;
                 var val = cache[s.key];
-                if (val !== undefined) animateNum(nEl, val);
-                else { nEl.textContent='—'; nEl.classList.add('dash-stat-loading'); }
+                nEl.textContent = '—';
+                nEl.classList.add('dash-stat-loading');
+                if (val !== undefined) {
+                    setTimeout(function() { animateNum(nEl, val); }, 80);
+                }
             }
             card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
             lucide.createIcons();
             body.classList.remove('stat-out');
             body.classList.add('stat-in');
-            setTimeout(function(){ body.classList.remove('stat-in'); }, 280);
-        }, 180);
+            setTimeout(function() {
+                body.classList.remove('stat-in');
+                if (iWr) iWr.classList.remove('icon-in');
+            }, 340);
+        }, 155);
     }
 
     slots.forEach(function(_,i){
