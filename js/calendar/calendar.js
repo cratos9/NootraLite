@@ -164,6 +164,20 @@ function renderCalendar(month, year) {
 // modal
 var modalOverlay = document.getElementById('modal-overlay');
 
+function _runAnim(box, anim, cb) {
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = anim;
+    var done = false;
+    function finish() {
+        if (done) return; done = true;
+        box.removeEventListener('animationend', finish);
+        if (typeof cb === 'function') cb();
+    }
+    box.addEventListener('animationend', finish);
+    setTimeout(finish, 260);
+}
+
 function openModal(dateStr) {
     if (!dateStr) {
         var hoy = new Date();
@@ -172,20 +186,22 @@ function openModal(dateStr) {
         dateStr = hoy.getFullYear() + '-' + mm + '-' + dd;
     }
     document.getElementById('ev-date').value = dateStr;
+    var box = document.getElementById('modal-box');
+    box.style.animation = '';
     modalOverlay.classList.add('show');
+    _runAnim(box, 'modal-in .2s ease-out forwards', function() {
+        box.style.animation = '';
+    });
     lucide.createIcons();
 }
 
 function closeModal(cb) {
     var box = document.getElementById('modal-box');
-    box.classList.add('closing');
-    box.addEventListener('animationend', function handler() {
-        box.removeEventListener('animationend', handler);
+    _runAnim(box, 'modal-out .15s ease-in forwards', function() {
         modalOverlay.classList.remove('show');
-        box.classList.remove('closing');
         editingEventId = null;
         document.querySelector('.modal-title').textContent = 'Nuevo evento';
-        if (cb) cb();
+        if (typeof cb === 'function') cb();
     });
 }
 
@@ -1255,11 +1271,20 @@ function openDayDetail(day, dayEvents) {
     addBtn.onclick = function() { closeDayDetail(); openModal(dateStr); };
 
     overlay.classList.add('show');
+    var dbox = overlay.querySelector('.day-detail-box');
+    dbox.style.animation = '';
+    _runAnim(dbox, 'modal-in .2s ease-out forwards', function() {
+        dbox.style.animation = '';
+    });
     lucide.createIcons();
 }
 
 function closeDayDetail() {
-    document.getElementById('day-detail-overlay').classList.remove('show');
+    var overlay = document.getElementById('day-detail-overlay');
+    var dbox = overlay.querySelector('.day-detail-box');
+    _runAnim(dbox, 'modal-out .15s ease-in forwards', function() {
+        overlay.classList.remove('show');
+    });
 }
 
 document.getElementById('day-detail-close').addEventListener('click', closeDayDetail);
