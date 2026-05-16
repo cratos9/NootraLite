@@ -90,7 +90,6 @@
         if (nEl) { nEl.id = s.numId; nEl.classList.add('dash-stat-loading'); }
         if (iWr) iWr.className = 'dash-stat-icon '+s.color;
         card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
-        card.addEventListener('click', function(e){ if (!e.target.closest('.dash-stat-go')) swapStat(i); });
     });
 
     function swapStat(i) {

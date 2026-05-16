@@ -363,17 +363,3 @@ if (_calTodayBtn) {
     });
 }
 
-// greeting contextual tras cargar datos reales
-if (window._dashPrefetch) {
-    window._dashPrefetch.then(function(data) {
-        if (!data || !data.stats) return;
-        var sub    = document.getElementById('dashGreetSub');
-        if (!sub) return;
-        var unread = data.stats.msg_unread  || 0;
-        var tasks  = data.stats.tasks_pending || 0;
-        var parts  = [];
-        if (unread > 0) parts.push(unread + (unread === 1 ? ' mensaje sin leer' : ' mensajes sin leer'));
-        if (tasks  > 0) parts.push(tasks  + (tasks  === 1 ? ' tarea pendiente'  : ' tareas pendientes'));
-        if (parts.length) sub.textContent = 'Tienes ' + parts.join(' y ') + '.';
-    }).catch(function(){});
-}
