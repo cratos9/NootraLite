@@ -605,6 +605,9 @@ function showErr(el) {
 function renderMiniCal(month, year) {
     var grid = document.getElementById('mini-cal-grid');
     if (!grid) return;
+    grid.classList.remove('mini-fade-next', 'mini-fade-prev');
+    void grid.offsetWidth;
+    grid.classList.add('mini-fade-' + navDirection);
     grid.innerHTML = '';
 
     var days = ['L','M','M','J','V','S','D'];
@@ -638,6 +641,7 @@ function renderMiniCal(month, year) {
     for (var d = 1; d <= totalDays; d++) {
         var cell = document.createElement('div');
         cell.className = 'mini-day-cell';
+        cell.style.animationDelay = Math.min((d - 1) * 0.014, 0.28) + 's';
         cell.dataset.day = d;
 
         var num = document.createElement('div');
@@ -703,6 +707,7 @@ function renderMobileEventList(day, month, year) {
         var card = document.createElement('div');
         card.className = 'mobile-ev-card ev-' + getUrgency(ev);
         if (ev.is_done) card.classList.add('ev-done');
+        card.style.animationDelay = (i * 0.05) + 's';
 
         var bar = document.createElement('div');
         bar.className = 'mobile-ev-bar';
@@ -1057,7 +1062,12 @@ function switchView(view) {
         renderWeek(weekStart);
     } else {
         if (window.innerWidth <= 480) {
-            if (mobilePanel) mobilePanel.style.display = '';
+            if (mobilePanel) {
+                mobilePanel.style.display = '';
+                mobilePanel.style.animation = 'none';
+                void mobilePanel.offsetWidth;
+                mobilePanel.style.animation = 'mobileCalIn 0.26s cubic-bezier(0.4, 0, 0.2, 1) both';
+            }
         } else {
             if (calLayout) {
                 calLayout.style.display = '';
@@ -1101,6 +1111,7 @@ document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn, i
 });
 
 document.querySelector('.mini-prev').addEventListener('click', function() {
+    navDirection = 'prev';
     calState.month--;
     if (calState.month < 0) { calState.month = 11; calState.year--; }
     renderCalendar(calState.month, calState.year);
@@ -1109,6 +1120,7 @@ document.querySelector('.mini-prev').addEventListener('click', function() {
 });
 
 document.querySelector('.mini-next').addEventListener('click', function() {
+    navDirection = 'next';
     calState.month++;
     if (calState.month > 11) { calState.month = 0; calState.year++; }
     renderCalendar(calState.month, calState.year);
@@ -1475,5 +1487,12 @@ document.getElementById('mev-sheet-delete').addEventListener('click', function()
         closeMevSheet();
     });
 });
+
+var _upPanel = document.getElementById('upcoming-panel');
+if (_upPanel) {
+    _upPanel.addEventListener('scroll', function() {
+        _upPanel.classList.toggle('is-scrolled', _upPanel.scrollTop > 4);
+    });
+}
 
 lucide.createIcons();

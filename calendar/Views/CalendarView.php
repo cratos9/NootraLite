@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <link rel="preload" as="image" href="../assets/icon.png">
     <title>Calendario · NOOTRA</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -221,7 +222,16 @@
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
 <script src="../js/calendar/calendar.js"></script>
-<script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
+<script>
+lucide.createIcons();
+(function() {
+    var show = function() { document.documentElement.style.visibility = ''; };
+    var img = document.querySelector('img.logo-icon');
+    if (!img || img.complete) { show(); return; }
+    var t = setTimeout(show, 400);
+    img.onload = img.onerror = function() { clearTimeout(t); show(); };
+})();
+</script>
 
 </body>
 </html>

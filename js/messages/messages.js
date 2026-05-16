@@ -14,13 +14,13 @@ var pendingAttName = null;
 var pendingAttSize = 0;
 
 var pollInterval = null;
-var typingPollInterval = null;
-var statusPollInterval = null;
 var recordingSignalInterval = null;
-var fetchingMessages = false;
+var fetchingMessages    = false;
+var pollLightFetching   = false;
 var infoMsgCurrent  = null;
 var infoRelInterval = null;
-var lastMsgId    = 0;
+var lastMsgId        = 0;
+var lastDeletedCount = -1;
 var replyToId = null, replyToBody = null, replyToSender = null;
 var pinnedMsgId   = null;
 var bookmarkedIds = [];
@@ -170,10 +170,10 @@ function openConversation(convId, name) {
     typingThrottle = null;
     if (selectMode) exitSelectMode();
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-    if (typingPollInterval) { clearInterval(typingPollInterval); typingPollInterval = null; }
-    if (statusPollInterval) { clearInterval(statusPollInterval); statusPollInterval = null; }
-    lastMsgId = 0;
-    activeConvId = convId;
+    lastMsgId        = 0;
+    lastDeletedCount = -1;
+    pollLightFetching = false;
+    activeConvId     = convId;
     activeConvName = name;
     cancelReply();
 
@@ -253,11 +253,8 @@ function openConversation(convId, name) {
             scrollToBottom();
             updateStatusUI(res.is_online, res.last_seen);
             if (res.messages.length) lastMsgId = parseInt(res.messages[res.messages.length - 1].id);
-            pollInterval = setInterval(pollMessages, 1000);
-            if (typingPollInterval) clearInterval(typingPollInterval);
-            typingPollInterval = setInterval(pollTyping, 500);
-            if (statusPollInterval) clearInterval(statusPollInterval);
-            statusPollInterval = setInterval(pollStatus, 5000);
+            lastDeletedCount = res.deleted_count !== undefined ? (res.deleted_count | 0) : 0;
+            pollInterval = setInterval(pollLight, 800);
             lucide.createIcons();
         })
         .catch(function() {
@@ -265,15 +262,39 @@ function openConversation(convId, name) {
         });
 }
 
-function pollMessages() {
-    if (!activeConvId || fetchingMessages || document.hidden) return;
+function pollLight() {
+    if (!activeConvId || document.hidden || pollLightFetching) return;
+    pollLightFetching = true;
+    fetch('../messages/poll_light.php?conv_id=' + activeConvId)
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            pollLightFetching = false;
+            if (!res.ok) return;
+            updateStatusUI(res.online, res.last_seen);
+            if (res.recording) {
+                setTypingIndicator(false);
+                setRecordingIndicator(true);
+            } else {
+                setRecordingIndicator(false);
+                setTypingIndicator(res.typing);
+            }
+            var freshId  = res.last_id || 0;
+            var freshDel = res.deleted_count !== undefined ? (res.deleted_count | 0) : lastDeletedCount;
+            if ((freshId > lastMsgId || (freshDel !== lastDeletedCount && lastDeletedCount >= 0)) && !fetchingMessages) {
+                pollFull();
+            }
+        })
+        .catch(function() { pollLightFetching = false; });
+}
+
+function pollFull() {
+    if (fetchingMessages) return;
     fetchingMessages = true;
     fetch('../messages/get_messages.php?conv_id=' + activeConvId)
         .then(function(r) { return r.json(); })
         .then(function(res) {
             fetchingMessages = false;
             if (!res.ok) return;
-            if (res.is_online !== undefined) updateStatusUI(res.is_online, res.last_seen);
             if (infoMsgCurrent && res.messages) {
                 var _im = document.getElementById('infoModal');
                 if (_im && _im.classList.contains('open')) {
@@ -285,76 +306,62 @@ function pollMessages() {
                     }
                 }
             }
-            if (!res.messages || !res.messages.length) {
-                _applyRemoteActivity(res);
-                return;
-            }
-            var msgs = res.messages;
-            var newestId = parseInt(msgs[msgs.length - 1].id);
-            if (newestId <= lastMsgId) {
-                _applyRemoteActivity(res);
-                return;
-            }
-            lastMsgId = newestId;
-            var wasAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
-            renderMessages(msgs);
-            _applyRemoteActivity(res);
-            if (wasAtBottom) scrollToBottom();
-            var lastMsg = msgs[msgs.length - 1];
-            for (var ci = 0; ci < conversations.length; ci++) {
-                if (conversations[ci].id == activeConvId) {
-                    conversations[ci].last_msg = lastMsg.body || null;
-                    conversations[ci].last_attachment_type = lastMsg.body ? null : (lastMsg.attachment_type || null);
-                    conversations[ci].last_deleted_for_all = lastMsg.deleted_for_all || 0;
-                    conversations[ci].last_time = lastMsg.created_at;
-                    conversations[ci].unread = 0;
-                    break;
+            if (!res.messages || !res.messages.length) return;
+            var msgs         = res.messages;
+            var newestId     = parseInt(msgs[msgs.length - 1].id);
+            var freshDeleted = res.deleted_count !== undefined ? (res.deleted_count | 0) : lastDeletedCount;
+            var hasNewDel    = freshDeleted !== lastDeletedCount && lastDeletedCount >= 0;
+            if (newestId > lastMsgId) {
+                lastMsgId        = newestId;
+                lastDeletedCount = freshDeleted;
+                var wasAtBottom  = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
+                renderMessages(msgs);
+                if (wasAtBottom) scrollToBottom();
+                var lastMsg = msgs[msgs.length - 1];
+                for (var ci = 0; ci < conversations.length; ci++) {
+                    if (conversations[ci].id == activeConvId) {
+                        conversations[ci].last_msg = lastMsg.body || null;
+                        conversations[ci].last_attachment_type = lastMsg.body ? null : (lastMsg.attachment_type || null);
+                        conversations[ci].last_deleted_for_all = lastMsg.deleted_for_all || 0;
+                        conversations[ci].last_time = lastMsg.created_at;
+                        conversations[ci].unread = 0;
+                        break;
+                    }
                 }
+                renderConvList(convSearch.value);
+                var fd = new FormData();
+                fd.append('conv_id', activeConvId);
+                fetch('../messages/mark_read.php', { method: 'POST', body: fd });
+            } else if (hasNewDel) {
+                lastDeletedCount = freshDeleted;
+                _applyDeletions(msgs);
             }
-            renderConvList(convSearch.value);
-            var fd = new FormData();
-            fd.append('conv_id', activeConvId);
-            fetch('../messages/mark_read.php', { method: 'POST', body: fd });
         })
         .catch(function() { fetchingMessages = false; });
 }
 
-function pollTyping() {
-    if (!activeConvId || document.hidden) return;
-    fetch('../messages/poll_typing.php?conv_id=' + activeConvId)
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (!res.ok) return;
-            if (res.other_recording) {
-                setTypingIndicator(false);
-                setRecordingIndicator(true);
-            } else {
-                setRecordingIndicator(false);
-                setTypingIndicator(res.other_typing);
-            }
-        })
-        .catch(function() {});
-}
-
-function _applyRemoteActivity(res) {
-    if (res.other_recording) {
-        setTypingIndicator(false);
-        setRecordingIndicator(true);
-    } else {
-        setRecordingIndicator(false);
-        if (typeof res.other_typing !== 'undefined') setTypingIndicator(res.other_typing);
+function _applyDeletions(msgs) {
+    for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (!parseInt(m.deleted_for_all)) continue;
+        var row = chatMessages.querySelector('[data-msg-id="' + m.id + '"]');
+        if (!row) continue;
+        var bubble = row.querySelector('.msg-bubble');
+        if (!bubble || bubble.querySelector('.msg-deleted')) continue;
+        var replyPrev = bubble.querySelector('.reply-preview');
+        var footer    = bubble.querySelector('.msg-footer');
+        bubble.innerHTML = '';
+        if (replyPrev) bubble.appendChild(replyPrev);
+        var del = document.createElement('div');
+        del.className   = 'msg-deleted msg-deleted-animate';
+        del.textContent = 'Mensaje eliminado';
+        bubble.appendChild(del);
+        if (footer) bubble.appendChild(footer);
+        var actBtn = row.querySelector('.msg-actions-btn');
+        if (actBtn) actBtn.style.visibility = 'hidden';
     }
 }
 
-function pollStatus() {
-    if (!activeConvId || document.hidden) return;
-    fetch('../messages/poll_status.php?conv_id=' + activeConvId)
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (res.ok) updateStatusUI(res.is_online, res.last_seen);
-        })
-        .catch(function() {});
-}
 
 var sendingMessage = false;
 
@@ -521,7 +528,8 @@ document.getElementById('btnConfirmClear').addEventListener('click', function() 
                 chatMessages.innerHTML = '<div class="msgs-empty"><i data-lucide="message-circle-dashed"></i><p>No hay mensajes aún</p></div>';
                 lucide.createIcons({ nodes: [chatMessages] });
             }, total);
-            lastMsgId = 0;
+            lastMsgId        = 0;
+            lastDeletedCount = 0;
             for (var i = 0; i < conversations.length; i++) {
                 if (conversations[i].id == activeConvId) {
                     conversations[i].last_msg = '';
@@ -2191,7 +2199,7 @@ btnScrollBottom.addEventListener('click', function() {
 
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
-        if (activeConvId) { fetchingMessages = false; pollMessages(); }
+        if (activeConvId) { pollLightFetching = false; pollLight(); }
         loadConversations();
     }
 });

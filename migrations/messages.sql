@@ -98,3 +98,8 @@ ALTER TABLE messages ADD COLUMN deleted_for_all TINYINT(1) NOT NULL DEFAULT 0;
 ALTER TABLE conversations
   ADD COLUMN recording_u1_at DATETIME NULL,
   ADD COLUMN recording_u2_at DATETIME NULL;
+
+# Vaciar chat por usuario — cada quien tiene su propio punto de limpieza, 14/05/2026
+ALTER TABLE conversations
+  ADD COLUMN cleared_at_u1 DATETIME NULL DEFAULT NULL,
+  ADD COLUMN cleared_at_u2 DATETIME NULL DEFAULT NULL;

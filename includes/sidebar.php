@@ -217,7 +217,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
         <span class="bottom-msg-badge" id="bottomMsgBadge" style="display:none"></span>
     </a>
     <button class="bottom-nav-item bottom-nav-avatar<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-btn' : '' ?>" id="bottomNavAvatarBtn" aria-label="<?= $_sidebarLoggedIn ? 'Cuenta' : 'Iniciar sesión' ?>" aria-haspopup="true">
-        <div class="bottom-nav-avatar-circle<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-circle' : '' ?>">
+        <div class="bottom-nav-avatar-circle<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-circle' : '' ?>"<?= ($_sidebarLoggedIn && !$_sidebarAvatar) ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
             <?php if ($_sidebarLoggedIn && $_sidebarAvatar): ?>
                 <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
             <?php elseif ($_sidebarLoggedIn): ?>

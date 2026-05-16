@@ -1,6 +1,6 @@
 <div class="dash-card" id="dashActivityCard" style="--sd:.28s">
   <div class="dash-card-head">
-    <span class="dash-card-title"><i data-lucide="bar-chart-2"></i> Actividad semanal</span>
+    <span class="dash-card-title"><span class="dash-head-icon purple"><i data-lucide="bar-chart-2"></i></span> Actividad semanal</span>
     <span class="dash-card-meta" id="dashActivityMeta">esta semana</span>
   </div>
   <div class="dash-chart-area">

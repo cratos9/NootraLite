@@ -58,7 +58,7 @@
     <div class="dash-lower">
       <div class="dash-center">
         <?php include '../includes/dashboard/ActivityDashboard.php'; ?>
-        <!-- mensajes: próxima sesión -->
+        <?php include '../includes/dashboard/MessagesDashboard.php'; ?>
       </div>
       <aside class="dash-right">
         <?php include '../includes/dashboard/QuickLinksDashboard.php'; ?>
@@ -116,6 +116,7 @@ if (dashBellBtn && dashBellDropdown) {
 </script>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
+<script src="../js/dashboard/dashboard.js"></script>
 <script>lucide.createIcons(); document.fonts.ready.then(function(){ document.documentElement.style.visibility=''; });</script>
 </body>
 </html>
