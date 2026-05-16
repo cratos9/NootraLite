@@ -1,31 +1,35 @@
 <section class="dash-stats">
-  <div class="dash-stat" id="statMessages" style="--sd:.05s">
+  <div class="dash-stat" id="statMessages" style="--sd:.05s" data-module="../messages/messages.php">
     <div class="dash-stat-icon red"><i data-lucide="message-circle"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Mensajes sin leer</span>
       <span class="dash-stat-num dash-stat-loading" id="statMsgNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../messages/messages.php" aria-label="Ir a mensajes"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statEvents" style="--sd:.10s">
+  <div class="dash-stat" id="statEvents" style="--sd:.10s" data-module="../calendar/calendar.php">
     <div class="dash-stat-icon teal"><i data-lucide="calendar"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Eventos de hoy</span>
       <span class="dash-stat-num dash-stat-loading" id="statEvtNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../calendar/calendar.php" aria-label="Ir al calendario"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statTasks" style="--sd:.15s">
+  <div class="dash-stat" id="statTasks" style="--sd:.15s" data-module="../task/index.php">
     <div class="dash-stat-icon amber"><i data-lucide="alert-circle"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Tareas pendientes</span>
       <span class="dash-stat-num dash-stat-loading" id="statTaskNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../task/index.php" aria-label="Ir a tareas"><i data-lucide="arrow-up-right"></i></a>
   </div>
-  <div class="dash-stat" id="statNotes" style="--sd:.20s">
+  <div class="dash-stat" id="statNotes" style="--sd:.20s" data-module="../Books/Books.php">
     <div class="dash-stat-icon purple"><i data-lucide="notebook-pen"></i></div>
     <div class="dash-stat-body">
       <span class="dash-stat-lbl">Notas esta semana</span>
       <span class="dash-stat-num dash-stat-loading" id="statNoteNum">—</span>
     </div>
+    <a class="dash-stat-go" href="../Books/Books.php" aria-label="Ir a cuadernos"><i data-lucide="arrow-up-right"></i></a>
   </div>
 </section>
 <script>
@@ -86,7 +90,7 @@
         if (nEl) { nEl.id = s.numId; nEl.classList.add('dash-stat-loading'); }
         if (iWr) iWr.className = 'dash-stat-icon '+s.color;
         card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
-        card.addEventListener('click', function(){ swapStat(i); });
+        card.addEventListener('click', function(e){ if (!e.target.closest('.dash-stat-go')) swapStat(i); });
     });
 
     function swapStat(i) {
@@ -120,9 +124,10 @@
         setTimeout(function(){ setInterval(function(){ swapStat(i); }, 7000); }, 3000+i*1800);
     });
 
-    fetch('../Dashboard/get_stats.php')
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
+    var _sfetch = window._dashPrefetch
+        ? window._dashPrefetch.then(function(d){ return d.stats || {}; })
+        : fetch('../Dashboard/get_stats.php').then(function(r){ return r.json(); });
+    _sfetch.then(function(data) {
             cache = data;
             slots.forEach(function(_, i) {
                 var s   = statGroups[i].stats[current[i]];

@@ -185,9 +185,10 @@ function _stopPoll() {
 }
 
 function loadRecentMessages() {
-    fetch('../Dashboard/get_recent_messages.php')
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
+    var p = window._dashPrefetch
+        ? window._dashPrefetch.then(function(d){ return d.messages || {ok:false}; })
+        : fetch('../Dashboard/get_recent_messages.php').then(function(r){ return r.json(); });
+    p.then(function(res) {
             if (!res.ok) return;
             _updateHeaderBadge(res.total_unread || 0);
 
@@ -300,10 +301,17 @@ function _renderCalGrid(dir, eventDays) {
 }
 
 function loadCalendar(dir) {
-    fetch('../Dashboard/get_month_events.php?year=' + _calY + '&month=' + _calM)
-        .then(function(r) { return r.json(); })
-        .then(function(data) { _renderCalGrid(dir, data.event_days || []); })
-        .catch(function() { _renderCalGrid(dir, []); });
+    var now = new Date();
+    var isCurrent = (_calY === now.getFullYear() && _calM === now.getMonth() + 1);
+    var p;
+    if (!dir && isCurrent && window._dashPrefetch) {
+        p = window._dashPrefetch.then(function(d){ return {event_days: d.event_days_current || []}; });
+    } else {
+        p = fetch('../Dashboard/get_month_events.php?year=' + _calY + '&month=' + _calM)
+                .then(function(r){ return r.json(); });
+    }
+    p.then(function(data) { _renderCalGrid(dir, data.event_days || []); })
+     .catch(function() { _renderCalGrid(dir, []); });
 }
 
 var _calPrevBtn = document.getElementById('dashCalPrev');
@@ -325,3 +333,30 @@ if (_calNextBtn) {
 }
 
 loadCalendar(null);
+
+var _calTodayBtn = document.getElementById('dashCalToday');
+if (_calTodayBtn) {
+    _calTodayBtn.addEventListener('click', function() {
+        var now = new Date();
+        var ny = now.getFullYear(), nm = now.getMonth() + 1;
+        if (ny === _calY && nm === _calM) return;
+        var dir = (ny < _calY || (ny === _calY && nm < _calM)) ? 'next' : 'prev';
+        _calY = ny; _calM = nm;
+        loadCalendar(dir);
+    });
+}
+
+// greeting contextual tras cargar datos reales
+if (window._dashPrefetch) {
+    window._dashPrefetch.then(function(data) {
+        if (!data || !data.stats) return;
+        var sub    = document.getElementById('dashGreetSub');
+        if (!sub) return;
+        var unread = data.stats.msg_unread  || 0;
+        var tasks  = data.stats.tasks_pending || 0;
+        var parts  = [];
+        if (unread > 0) parts.push(unread + (unread === 1 ? ' mensaje sin leer' : ' mensajes sin leer'));
+        if (tasks  > 0) parts.push(tasks  + (tasks  === 1 ? ' tarea pendiente'  : ' tareas pendientes'));
+        if (parts.length) sub.textContent = 'Tienes ' + parts.join(' y ') + '.';
+    }).catch(function(){});
+}

@@ -53,6 +53,11 @@
   </header>
 
   <div class="dash-content">
+<script>
+window._dashPrefetch = fetch('../Dashboard/get_dashboard.php')
+    .then(function(r){ return r.json(); })
+    .catch(function(){ return {}; });
+</script>
     <?php include '../includes/dashboard/GreetingDashboard.php'; ?>
     <?php include '../includes/dashboard/StatsDashboard.php'; ?>
     <div class="dash-lower">
