@@ -80,15 +80,20 @@ foreach (['messages'=>'sender_id','tasks'=>'user_id','notebooks'=>'user_id','not
 }
 $out['activity'] = ['counts'=>array_values($ac), 'max'=>max($ac)?:1];
 
-// calendario mes actual
+// calendario mes actual (con colores por día)
 $yr=(int)date('Y'); $mo=(int)date('n');
 $cstart=sprintf('%04d-%02d-01',$yr,$mo); $cend=date('Y-m-t',strtotime($cstart));
-$edays=[];
+$ebd=[];
 try {
-    $s=$pdo->prepare("SELECT DISTINCT DAY(start_datetime) d FROM tasks WHERE user_id=? AND DATE(start_datetime) BETWEEN ? AND ? AND is_done=0");
+    $s=$pdo->prepare("SELECT DAY(start_datetime) d, COALESCE(color,'#7c3aed') color FROM tasks WHERE user_id=? AND DATE(start_datetime) BETWEEN ? AND ? AND is_done=0 ORDER BY start_datetime");
     $s->execute([$uid,$cstart,$cend]);
-    $edays = array_map('intval', array_column($s->fetchAll(PDO::FETCH_ASSOC),'d'));
+    foreach ($s->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $dy=(int)$r['d'];
+        if (!isset($ebd[$dy])) $ebd[$dy]=[];
+        if (count($ebd[$dy])<3) $ebd[$dy][]=$r['color'];
+    }
 } catch(Exception $e){}
-$out['event_days_current'] = array_values($edays);
+$out['event_days_current']    = array_values(array_keys($ebd));
+$out['events_by_day_current'] = $ebd;
 
 echo json_encode($out);

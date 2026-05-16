@@ -1496,3 +1496,36 @@ if (_upPanel) {
 }
 
 lucide.createIcons();
+
+// auto-abrir día desde dashboard: ?day=YYYY-MM-DD
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var dayStr = params.get('day');
+    if (!dayStr) return;
+    var parts = dayStr.split('-');
+    if (parts.length !== 3) return;
+    var yr = parseInt(parts[0]), mo = parseInt(parts[1]) - 1, dy = parseInt(parts[2]);
+    if (isNaN(yr) || isNaN(mo) || isNaN(dy) || dy < 1 || dy > 31) return;
+
+    if (yr !== calState.year || mo !== calState.month) {
+        navDirection = (yr > calState.year || (yr === calState.year && mo > calState.month)) ? 'next' : 'prev';
+        calState.month = mo; calState.year = yr;
+        renderCalendar(mo, yr);
+        renderMiniCal(mo, yr);
+        renderUpcoming();
+        updateTodayBtn();
+    }
+
+    setTimeout(function() {
+        var dayEvs = events.filter(function(ev) {
+            return ev.day === dy && ev.month === mo && ev.year === yr;
+        });
+        if (dayEvs.length > 0) {
+            openDayDetail(dy, dayEvs);
+        } else {
+            var mm2 = String(mo + 1).padStart(2, '0');
+            var dd2 = String(dy).padStart(2, '0');
+            openModal(yr + '-' + mm2 + '-' + dd2);
+        }
+    }, 120);
+})();

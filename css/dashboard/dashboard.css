@@ -1009,3 +1009,28 @@ body.sidebar-pinned .dash-wrap { margin-left: 240px; }
 }
 .light-mode .dash-cal-today-btn { color: #7c3aed; border-color: rgba(124,58,237,.2); background: rgba(124,58,237,.04); }
 .light-mode .dash-cal-today-btn:hover { color: #6d28d9 !important; border-color: rgba(124,58,237,.35) !important; background: rgba(124,58,237,.1) !important; }
+
+/* celdas del calendario como enlaces */
+a.dash-cal-cell { text-decoration: none; color: inherit; cursor: pointer; }
+a.dash-cal-cell.cal-past { cursor: pointer; opacity: .38; }
+a.dash-cal-cell.cal-past:hover { opacity: .6; }
+
+/* dots de colores reales por evento */
+.dash-cal-cell.has-event::after { display: none; }
+.dash-cal-edot-row {
+    position: absolute;
+    bottom: 2px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 2px;
+    pointer-events: none;
+}
+.dash-cal-edot {
+    display: block; width: 4px; height: 4px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 4px rgba(0,0,0,.25);
+    transition: transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+.dash-cal-cell:hover .dash-cal-edot { transform: scale(1.4); }
+.dash-cal-cell.today .dash-cal-edot-row { bottom: 1px; }
+@media (max-width: 480px) {
+    .dash-cal-edot { width: 3px; height: 3px; }
+}

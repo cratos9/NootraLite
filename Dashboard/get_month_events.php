@@ -17,11 +17,20 @@ $database = new Database();
 $pdo = $database->connect();
 
 $stmt = $pdo->prepare(
-    "SELECT DISTINCT DAY(start_datetime) AS d
+    "SELECT DAY(start_datetime) AS d, COALESCE(color, '#7c3aed') AS color
      FROM tasks
-     WHERE user_id = ? AND DATE(start_datetime) BETWEEN ? AND ? AND is_done = 0"
+     WHERE user_id = ? AND DATE(start_datetime) BETWEEN ? AND ? AND is_done = 0
+     ORDER BY start_datetime"
 );
 $stmt->execute([$uid, $start, $end]);
-$days = array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'd'));
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo json_encode(['ok' => true, 'event_days' => array_values($days)]);
+$events_by_day = [];
+foreach ($rows as $r) {
+    $day = (int)$r['d'];
+    if (!isset($events_by_day[$day])) $events_by_day[$day] = [];
+    if (count($events_by_day[$day]) < 3) $events_by_day[$day][] = $r['color'];
+}
+$days = array_keys($events_by_day);
+
+echo json_encode(['ok' => true, 'event_days' => array_values($days), 'events_by_day' => $events_by_day]);
