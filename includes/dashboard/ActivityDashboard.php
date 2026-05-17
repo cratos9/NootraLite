@@ -36,9 +36,11 @@
     if (bars[idx]) bars[idx].classList.add('today');
     if (!bars.length) return;
 
-    fetch('../Dashboard/get_activity.php')
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
+    var dayNames = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+    var _afetch = window._dashPrefetch
+        ? window._dashPrefetch.then(function(d){ return d.activity || {counts:[],max:1}; })
+        : fetch('../Dashboard/get_activity.php').then(function(r){ return r.json(); });
+    _afetch.then(function(data) {
             var counts = data.counts || [0,0,0,0,0,0,0];
             var max    = data.max || 1;
             var total  = counts.reduce(function(a,b){ return a+b; }, 0);
@@ -46,7 +48,7 @@
             if (meta) meta.textContent = total+' acciones esta semana';
             bars.forEach(function(bar, i) {
                 var pct = Math.max(Math.round((counts[i]/max)*100), 4);
-                bar.setAttribute('data-count', counts[i]);
+                bar.setAttribute('data-count', dayNames[i]+': '+counts[i]);
                 bar.style.height = pct+'%';
             });
         })

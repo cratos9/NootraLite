@@ -2206,3 +2206,10 @@ document.addEventListener('visibilitychange', function() {
 
 renderConvList('');
 lucide.createIcons();
+
+(function() {
+    var cid = parseInt(new URLSearchParams(window.location.search).get('conv'));
+    if (!cid) return;
+    var conv = conversations.find(function(c) { return parseInt(c.id) === cid; });
+    if (conv) openConversation(conv.id, conv.other_name || 'Usuario');
+})();
