@@ -4,7 +4,12 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
 $q = trim($_GET['q'] ?? '');
-$uid = $_SESSION['user']['id'] ?? 1;
+$uid = $_SESSION['user']['id'] ?? null;
+
+if (!$uid) {
+    echo json_encode(['ok' => false, 'error' => 'no autenticado']);
+    exit;
+}
 
 if (strlen($q) < 2) {
     echo json_encode(['ok' => true, 'users' => []]);

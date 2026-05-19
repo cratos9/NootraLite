@@ -352,7 +352,7 @@ function renderForwardConvList(convs) {
         var name    = c.other_name || 'Usuario';
         var ini     = initials(name);
         var col     = avatarColor(name);
-        var last    = c.last_message ? escapeHtml(c.last_message).substring(0, 35) + (c.last_message.length > 35 ? '…' : '') : '';
+        var last    = c.last_msg ? escapeHtml(c.last_msg).substring(0, 35) + (c.last_msg.length > 35 ? '…' : '') : '';
         var isSelected = forwardTargetConvIds.indexOf(parseInt(c.id)) >= 0;
         var item = document.createElement('div');
         item.className = 'fw-conv-item' + (isSelected ? ' selected' : '');

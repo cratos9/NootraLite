@@ -64,7 +64,8 @@ function loadConversations() {
 }
 
 function renderConvList(filter) {
-    filter = (filter || '').toLowerCase();
+    var filterRaw = (filter || '');
+    filter = filterRaw.toLowerCase();
     var filtered = conversations.filter(function(c) {
         return !filter || (c.other_name && c.other_name.toLowerCase().indexOf(filter) >= 0);
     });
@@ -76,8 +77,17 @@ function renderConvList(filter) {
     }
 
     if (filtered.length === 0) {
-        var emptyMsg  = activeFilter === 'favorites' ? 'Sin favoritos' : activeFilter === 'unread' ? 'Sin mensajes no leídos' : 'Sin conversaciones';
-        var emptyIcon = activeFilter === 'favorites' ? 'star' : activeFilter === 'unread' ? 'mail' : 'message-circle';
+        var emptyMsg, emptyIcon;
+        if (filter) {
+            emptyMsg  = 'Sin resultados para "' + escapeHtml(filterRaw) + '"';
+            emptyIcon = 'search-x';
+        } else if (activeFilter === 'favorites') {
+            emptyMsg  = 'Sin favoritos'; emptyIcon = 'star';
+        } else if (activeFilter === 'unread') {
+            emptyMsg  = 'Sin mensajes no leídos'; emptyIcon = 'mail';
+        } else {
+            emptyMsg  = 'Sin conversaciones'; emptyIcon = 'message-circle';
+        }
         convList.innerHTML = '<div class="conv-empty"><i data-lucide="' + emptyIcon + '"></i><span>' + emptyMsg + '</span></div>';
         lucide.createIcons();
         return;
@@ -349,6 +359,10 @@ ncpUserSearch.addEventListener('input', function() {
                     '</div>';
                 }).join('');
                 lucide.createIcons({ nodes: [ncpResults] });
+            })
+            .catch(function() {
+                ncpResults.innerHTML = '<div class="ncp-hint"><i data-lucide="wifi-off"></i><span>Error de conexión</span></div>';
+                lucide.createIcons({ nodes: [ncpResults] });
             });
     }, 250);
 });
@@ -436,6 +450,9 @@ userSearch.addEventListener('input', function() {
                         startConversation(parseInt(el.getAttribute('data-uid')));
                     });
                 });
+            })
+            .catch(function() {
+                userResults.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">Error de conexión</div>';
             });
     }, 250);
 });
