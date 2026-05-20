@@ -747,7 +747,6 @@ if (_calTodayBtn) {
     var _pollTimer = null;
     var _lastUnseen = -1;
     var _hasRung = false;
-    var _testMode = false;
 
     function _getPollDelay() {
         if (_noChangeCount < 5)  return 6000;
@@ -1019,7 +1018,7 @@ if (_calTodayBtn) {
     });
 
     function fetchNotifs(forOpen) {
-        if (_testMode || _fetching) return;
+        if (_fetching) return;
         _fetching = true;
         fetch('../Dashboard/get_notifications.php')
             .then(function(r) { return r.json(); })
@@ -1336,63 +1335,6 @@ if (_calTodayBtn) {
             if (_open) { closeNotif(); bellBtn.focus(); }
         }
     });
-
-    var _testMsgStep = 0, _testCalStep = 0;
-    var _msgSteps = [
-        { conv_id: 1, name: 'Ana García',    unread: 3, avatar_color: '#7c3aed', initials: 'AG', time_fmt: '2m'   },
-        { conv_id: 2, name: 'Carlos López',  unread: 1, avatar_color: '#ec4899', initials: 'CL', time_fmt: '15m'  },
-        { conv_id: 3, name: 'Sofía Martínez',unread: 9, avatar_color: '#0ea5e9', initials: 'SM', time_fmt: 'ahora'}
-    ];
-    var _calSteps = [
-        { id: 10, title: 'Entrega de proyecto',  color: '#ef4444', time_fmt: 'Hoy · 14:00',     is_soon: false, is_now: true  },
-        { id: 11, title: 'Reunión de equipo',    color: '#10b981', time_fmt: 'Hoy · 18:30',     is_soon: true,  is_now: false },
-        { id: 12, title: 'Clase de matemáticas', color: '#f59e0b', time_fmt: 'Mañana · 09:00',  is_soon: false, is_now: false },
-        { id: 13, title: 'Defensa del proyecto', color: '#6366f1', time_fmt: 'Hoy · 16:00',     is_soon: true,  is_now: false }
-    ];
-
-    function _injectTest(d) {
-        d.ok = true;
-        _testMode  = true;
-        var _s = getSnooze(), _sc = false;
-        (d.messages || []).forEach(function(m)  { if (_s['msg_' + m.conv_id]) { delete _s['msg_' + m.conv_id]; _sc = true; } });
-        (d.events   || []).forEach(function(ev) { if (_s['ev_'  + ev.id])     { delete _s['ev_'  + ev.id];     _sc = true; } });
-        if (_sc) setSnooze(_s);
-        _hasRung   = false;
-        _lastSig   = '';
-        _prevTotal = Math.max(0, (_lastData ? _lastData.total || 0 : 0));
-        _lastData  = d;
-        updateBadge(d.total);
-        if (d.total > _prevTotal) ringBell();
-        _prevTotal = d.total;
-        renderNotifs(d);
-        if (!_open) openNotif();
-        if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
-    }
-
-    window.__notifTestMsg = function() {
-        var base = _lastData ? { messages: (_lastData.messages || []).slice(), events: (_lastData.events || []) } : { messages: [], events: [] };
-        var m = _msgSteps[_testMsgStep % _msgSteps.length];
-        _testMsgStep++;
-        var existing = base.messages.filter(function(x) { return x.conv_id !== m.conv_id; });
-        existing.push(m);
-        var total = existing.reduce(function(s, x) { return s + x.unread; }, 0) + base.events.length;
-        _injectTest({ messages: existing, events: base.events, total: total });
-    };
-
-    window.__notifTestCal = function() {
-        var base = _lastData ? { messages: (_lastData.messages || []), events: (_lastData.events || []).slice() } : { messages: [], events: [] };
-        var ev = _calSteps[_testCalStep % _calSteps.length];
-        _testCalStep++;
-        var existing = base.events.filter(function(x) { return x.id !== ev.id; });
-        existing.push(ev);
-        var total = (base.messages || []).reduce(function(s, x) { return s + x.unread; }, 0) + existing.length;
-        _injectTest({ messages: base.messages, events: existing, total: total });
-    };
-
-    var testMsgBtn = document.getElementById('dashTestNotifMsg');
-    var testCalBtn = document.getElementById('dashTestNotifCal');
-    if (testMsgBtn) testMsgBtn.addEventListener('click', function(e) { e.stopPropagation(); window.__notifTestMsg(); });
-    if (testCalBtn) testCalBtn.addEventListener('click', function(e) { e.stopPropagation(); window.__notifTestCal(); });
 
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {

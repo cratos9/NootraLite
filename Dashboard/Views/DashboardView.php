@@ -42,13 +42,6 @@
         <div class="dash-search-drop" id="dashSearchDrop"></div>
       </div>
 
-      <button class="dash-topbar-icon-btn" id="dashTestNotifMsg" title="Test notif mensajes" aria-label="Test notif mensajes">
-        <i data-lucide="message-circle"></i>
-      </button>
-      <button class="dash-topbar-icon-btn" id="dashTestNotifCal" title="Test notif calendario" aria-label="Test notif calendario">
-        <i data-lucide="calendar-days"></i>
-      </button>
-
       <div class="dash-bell-wrap">
         <button class="dash-topbar-icon-btn" id="dashBellBtn" aria-label="Notificaciones">
           <i data-lucide="bell" id="dashBellIcon"></i>
