@@ -30,8 +30,10 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
     <div class="sidebar-logo">
-        <img src="../assets/icon.png" alt="Nootra" class="logo-icon" width="36" height="36">
-        <span class="logo-text">NOOTRA</span>
+        <a class="sidebar-logo-link" href="../dashboard/index.php" aria-label="Ir al inicio">
+            <img src="../assets/icon.png" alt="Nootra" class="logo-icon" width="36" height="36">
+            <span class="logo-text">NOOTRA</span>
+        </a>
         <button class="sidebar-close" aria-label="Cerrar"><i data-lucide="x"></i></button>
     </div>
     <nav class="sidebar-nav">

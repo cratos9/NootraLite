@@ -119,7 +119,7 @@
                 }
             }
             card.style.setProperty('--card-rgb', colorRgb[s.color]||'124,58,237');
-            lucide.createIcons();
+            if (iWr) lucide.createIcons({ nodes: [iWr] });
             body.classList.remove('stat-out');
             body.classList.add('stat-in');
             setTimeout(function() {

@@ -27,7 +27,7 @@
 
       <div class="dash-search-outer" id="dashSearchOuter">
         <div class="dash-search-wrap" id="dashSearchWrap">
-          <i data-lucide="search" class="dash-search-icon" id="dashSearchIconBtn"></i>
+          <i data-lucide="search" class="dash-search-icon" id="dashSearchIconBtn" aria-hidden="true"></i>
           <input type="text" class="dash-search-input" id="dashSearchInput"
                  placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite"
                  autocomplete="off" spellcheck="false">
@@ -36,18 +36,31 @@
           </button>
           <kbd class="dash-search-kbd" aria-hidden="true">/</kbd>
         </div>
+        <button class="dash-search-cancel" id="dashSearchCancel" aria-label="Cancelar búsqueda">
+          <i data-lucide="x"></i>
+        </button>
         <div class="dash-search-drop" id="dashSearchDrop"></div>
       </div>
 
       <div class="dash-bell-wrap">
         <button class="dash-topbar-icon-btn" id="dashBellBtn" aria-label="Notificaciones">
-          <i data-lucide="bell"></i>
-          <span class="dash-bell-dot" id="dashBellDot" style="display:none"></span>
+          <i data-lucide="bell" id="dashBellIcon"></i>
+          <span class="dash-bell-badge" id="dashBellBadge"></span>
         </button>
-        <div class="dash-notif-dropdown" id="dashNotifDropdown" style="display:none">
-          <div class="dash-notif-empty">
-            <i data-lucide="bell-off"></i>
-            <span>Sin notificaciones</span>
+        <div class="dash-notif-dropdown" id="dashNotifDropdown">
+          <div class="dash-notif-handle" id="dashNotifHandle" aria-hidden="true"></div>
+          <div class="dash-notif-head">
+            <span class="dash-notif-title">Notificaciones</span>
+            <button class="dash-notif-mark-btn" id="dashNotifMark" aria-label="Marcar como vistas">
+              <i data-lucide="check-check"></i>
+              <span>Limpiar</span>
+            </button>
+          </div>
+          <div class="dash-notif-body" id="dashNotifBody">
+            <div class="dash-notif-empty">
+              <i data-lucide="bell-off"></i>
+              <span>Sin notificaciones</span>
+            </div>
           </div>
         </div>
       </div>
@@ -104,29 +117,9 @@ function dashToggleTheme() {
 }
 document.getElementById('dashThemeToggle').addEventListener('click', dashToggleTheme);
 
-var dashBellBtn      = document.getElementById('dashBellBtn');
-var dashBellDropdown = document.getElementById('dashNotifDropdown');
-var dashBellOpen     = false;
-if (dashBellBtn && dashBellDropdown) {
-    dashBellBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        dashBellOpen = !dashBellOpen;
-        if (dashBellOpen) {
-            dashBellDropdown.style.display = '';
-            dashBellDropdown.classList.add('open');
-        } else {
-            dashBellDropdown.classList.remove('open');
-            dashBellDropdown.style.display = 'none';
-        }
-    });
-    document.addEventListener('click', function() {
-        if (!dashBellOpen) return;
-        dashBellOpen = false;
-        dashBellDropdown.classList.remove('open');
-        dashBellDropdown.style.display = 'none';
-    });
-}
+
 </script>
+<div id="dashNotifCtx" class="dash-notif-ctx"></div>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
 <script src="../js/dashboard/dashboard.js"></script>
