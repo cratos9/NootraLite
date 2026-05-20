@@ -205,7 +205,7 @@ function closeModal(cb) {
     });
 }
 
-document.querySelector('.btn-add').addEventListener('click', openModal);
+document.querySelector('.btn-add').addEventListener('click', function() { openModal(); });
 document.querySelector('.btn-add-m').addEventListener('click', function() { openMobileForm(null); });
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
