@@ -233,6 +233,24 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// swipe izquierda para cerrar el sidebar en touch (mobile/tablet)
+var _swX = 0, _swY = 0;
+if (sidebar) {
+    sidebar.addEventListener('touchstart', function(e) {
+        _swX = e.touches[0].clientX;
+        _swY = e.touches[0].clientY;
+    }, { passive: true });
+    sidebar.addEventListener('touchend', function(e) {
+        var dx = e.changedTouches[0].clientX - _swX;
+        var dy = Math.abs(e.changedTouches[0].clientY - _swY);
+        if (dx < -60 && dy < 50 && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }, { passive: true });
+}
+
 if (accountModal) {
     var acmThemeRow = accountModal.querySelector('#acmThemeRow');
     if (acmThemeRow) {

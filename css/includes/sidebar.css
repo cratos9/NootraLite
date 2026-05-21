@@ -1277,3 +1277,80 @@ body {
     border-color: rgba(100,116,139,0.25) !important;
 }
 
+/* ─── Micro-animación al click en nav items ─── */
+.nav-item { transition: background 0.15s, color 0.15s, transform 0.12s; }
+.nav-item:active { transform: scale(0.97); }
+
+/* ─── Focus visible en nav items (accesibilidad teclado) ─── */
+.nav-item:focus-visible {
+    outline: 2px solid rgba(124,58,237,0.55);
+    outline-offset: -2px;
+    background: rgba(124,58,237,0.08);
+    color: var(--text-primary);
+    border-radius: 8px;
+}
+.light-mode .nav-item:focus-visible {
+    outline-color: rgba(124,58,237,0.45);
+    background: rgba(124,58,237,0.07);
+}
+
+/* ─── Active icon glow en estado colapsado ─── */
+.sidebar:not(:hover) .nav-item.active svg {
+    color: #a78bfa;
+    filter: drop-shadow(0 0 6px rgba(124,58,237,0.45));
+}
+.light-mode .sidebar:not(:hover) .nav-item.active svg {
+    color: #7c3aed;
+    filter: drop-shadow(0 0 4px rgba(124,58,237,0.35));
+}
+
+/* ─── has-unread — icono mensajes cuando hay no leídos ─── */
+.nav-item.has-unread svg {
+    color: #c4b5fd;
+    transition: color 0.25s, filter 0.25s;
+}
+.sidebar:not(:hover) .nav-item.has-unread svg {
+    filter: drop-shadow(0 0 5px rgba(167,139,250,0.65));
+}
+.light-mode .nav-item.has-unread svg { color: #7c3aed; }
+.light-mode .sidebar:not(:hover) .nav-item.has-unread svg {
+    filter: drop-shadow(0 0 4px rgba(124,58,237,0.45));
+}
+
+/* ─── Stagger reveal de spans al expandir (desktop hover) ─── */
+.sidebar:hover .sidebar-nav .nav-item:nth-child(1) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(1) span:not(.nav-msg-badge) { transition-delay: 0.04s; }
+.sidebar:hover .sidebar-nav .nav-item:nth-child(2) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(2) span:not(.nav-msg-badge) { transition-delay: 0.07s; }
+.sidebar:hover .sidebar-nav .nav-item:nth-child(3) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(3) span:not(.nav-msg-badge) { transition-delay: 0.10s; }
+.sidebar:hover .sidebar-nav .nav-item:nth-child(4) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(4) span:not(.nav-msg-badge) { transition-delay: 0.13s; }
+.sidebar:hover .sidebar-nav .nav-item:nth-child(5) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(5) span:not(.nav-msg-badge) { transition-delay: 0.16s; }
+.sidebar:hover .sidebar-nav .nav-item:nth-child(6) span:not(.nav-msg-badge),
+.sidebar.modal-open .sidebar-nav .nav-item:nth-child(6) span:not(.nav-msg-badge) { transition-delay: 0.19s; }
+
+/* ─── Sidebar nav scrollbar (si crece el menú) ─── */
+.sidebar-nav { overflow-y: auto; }
+.sidebar:not(:hover) .sidebar-nav { overflow-y: hidden; }
+.sidebar-nav { scrollbar-width: thin; scrollbar-color: rgba(124,58,237,0.15) transparent; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(124,58,237,0.2);
+    border-radius: 3px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.4); }
+
+/* ─── Bottom nav — label activo con glow suave ─── */
+@media screen and (max-width: 480px) {
+    .bottom-nav-item.active span {
+        text-shadow: 0 0 12px rgba(167,139,250,0.35);
+    }
+    .bottom-nav-item:focus-visible {
+        outline: none;
+        background: rgba(124,58,237,0.08);
+        border-radius: 12px;
+    }
+}
+
