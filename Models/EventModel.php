@@ -9,7 +9,7 @@ class EventModel {
 
     public function getAll($uid) {
         $stmt = $this->db->prepare(
-            "SELECT id, title, color, start_datetime, all_day, is_done FROM tasks WHERE user_id = ? ORDER BY start_datetime"
+            "SELECT id, title, color, start_datetime, all_day, is_done FROM tasks WHERE user_id = ? AND event_type = 'calendar' ORDER BY start_datetime"
         );
         $stmt->execute([$uid]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -17,7 +17,7 @@ class EventModel {
 
     public function create($uid, $title, $start_dt, $all_day, $color) {
         $stmt = $this->db->prepare(
-            "INSERT INTO tasks (user_id, title, start_datetime, all_day, color) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO tasks (user_id, title, start_datetime, all_day, color, event_type) VALUES (?, ?, ?, ?, ?, 'calendar')"
         );
         $stmt->execute([$uid, $title, $start_dt, $all_day, $color]);
         return $this->db->lastInsertId();
