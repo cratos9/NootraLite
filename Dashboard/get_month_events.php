@@ -19,7 +19,7 @@ $pdo = $database->connect();
 $stmt = $pdo->prepare(
     "SELECT DAY(start_datetime) AS d, COALESCE(color, '#7c3aed') AS color
      FROM tasks
-     WHERE user_id = ? AND DATE(start_datetime) BETWEEN ? AND ? AND is_done = 0
+     WHERE user_id = ? AND event_type = 'calendar' AND DATE(start_datetime) BETWEEN ? AND ? AND is_done = 0
      ORDER BY start_datetime"
 );
 $stmt->execute([$uid, $start, $end]);
