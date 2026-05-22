@@ -1935,3 +1935,92 @@ a.dash-cal-cell.cal-past:hover { opacity: .6; }
 @media (max-width: 480px) {
     .dash-cal-edot { width: 3px; height: 3px; }
 }
+
+@keyframes skelDiag {
+    0%   { background-position: -200% -200%; }
+    100% { background-position:  200%  200%; }
+}
+.dash-skel-line,
+.dash-skel-av {
+    background: linear-gradient(
+        135deg,
+        #1a1a2e 25%,
+        rgba(45,45,78,.9) 50%,
+        #1a1a2e 75%
+    ) !important;
+    background-size: 300% 300% !important;
+    animation: skelDiag 1.6s ease infinite !important;
+}
+.light-mode .dash-skel-line,
+.light-mode .dash-skel-av {
+    background: linear-gradient(
+        135deg,
+        #e2e8f0 25%,
+        #f1f5f9 50%,
+        #e2e8f0 75%
+    ) !important;
+    background-size: 300% 300% !important;
+    animation: skelDiag 1.6s ease infinite !important;
+}
+
+@keyframes onlineRing {
+    0%   { transform: scale(1);   opacity: .7; }
+    100% { transform: scale(2.4); opacity: 0;  }
+}
+.dash-msg-online {
+    position: absolute;
+    overflow: visible;
+}
+.dash-msg-online::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #10b981;
+    animation: onlineRing 1.8s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes previewFlashAlt {
+    0%   { background: rgba(251,191,36,.2); border-radius: 4px; }
+    60%  { background: rgba(251,191,36,.08); }
+    100% { background: transparent; }
+}
+.dash-preview-flash {
+    animation: previewFlashAlt 1s ease both !important;
+}
+
+/* mejoras animaciones notificaciones */
+@keyframes dashBellRing {
+    0%,100% { transform: rotate(0deg) scale(1);      }
+    8%      { transform: rotate(-18deg) scale(1.05); }
+    20%     { transform: rotate(15deg);              }
+    32%     { transform: rotate(-12deg);             }
+    44%     { transform: rotate(9deg);               }
+    56%     { transform: rotate(-5deg);              }
+    68%     { transform: rotate(3deg);               }
+    80%     { transform: rotate(-1deg);              }
+}
+.dash-topbar-icon-btn.bell-ringing svg {
+    animation: dashBellRing .75s cubic-bezier(.36,.07,.19,.97) both !important;
+    transform-origin: top center !important;
+}
+@keyframes dashBadgeBump {
+    0%   { transform: scale(1);    }
+    35%  { transform: scale(1.5);  }
+    60%  { transform: scale(.88);  }
+    80%  { transform: scale(1.15); }
+    100% { transform: scale(1);    }
+}
+@keyframes dashNotifItemIn {
+    from { opacity:0; transform:translateX(16px); }
+    to   { opacity:1; transform:translateX(0);    }
+}
+@keyframes dashNotifEmptyFloat {
+    0%,100% { transform: translateY(0);    }
+    50%     { transform: translateY(-8px); }
+}
+.dash-notif-empty svg {
+    animation: dashEmptyIcon .5s cubic-bezier(.34,1.56,.64,1) .06s both,
+               dashNotifEmptyFloat 2.8s ease-in-out 0.56s infinite;
+}
