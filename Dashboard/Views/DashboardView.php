@@ -123,6 +123,22 @@ document.getElementById('dashThemeToggle').addEventListener('click', dashToggleT
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
 <script src="../js/dashboard/dashboard.js"></script>
-<script>lucide.createIcons(); document.fonts.ready.then(function(){ document.documentElement.style.visibility=''; });</script>
+<script>
+lucide.createIcons();
+(function() {
+    var show = function() {
+        document.body.classList.add('page-entered');
+        document.documentElement.style.visibility = '';
+        var bar = document.createElement('div');
+        bar.className = 'page-bar';
+        document.body.appendChild(bar);
+        bar.addEventListener('animationend', function() { if (bar.parentNode) bar.remove(); }, { once: true });
+    };
+    var img = document.querySelector('img.logo-icon');
+    if (!img || img.complete) { document.fonts.ready.then(show); return; }
+    var t = setTimeout(function(){ document.fonts.ready.then(show); }, 350);
+    img.onload = img.onerror = function() { clearTimeout(t); document.fonts.ready.then(show); };
+})();
+</script>
 </body>
 </html>

@@ -225,7 +225,14 @@
 <script>
 lucide.createIcons();
 (function() {
-    var show = function() { document.documentElement.style.visibility = ''; };
+    var show = function() {
+        document.body.classList.add('page-entered');
+        document.documentElement.style.visibility = '';
+        var bar = document.createElement('div');
+        bar.className = 'page-bar';
+        document.body.appendChild(bar);
+        bar.addEventListener('animationend', function() { if (bar.parentNode) bar.remove(); }, { once: true });
+    };
     var img = document.querySelector('img.logo-icon');
     if (!img || img.complete) { show(); return; }
     var t = setTimeout(show, 400);
