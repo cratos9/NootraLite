@@ -563,6 +563,22 @@ var currentUsername = <?= json_encode($_SESSION['user']['username'] ?? 'yo') ?>;
 <script src="../js/messages/messages-ui.js?v=<?= filemtime('../js/messages/messages-ui.js') ?>"></script>
 <script src="../js/messages/messages-conv.js?v=<?= filemtime('../js/messages/messages-conv.js') ?>"></script>
 <script src="../js/messages/messages.js?v=<?= filemtime('../js/messages/messages.js') ?>"></script>
-<script>lucide.createIcons(); document.documentElement.style.visibility='';</script>
+<script>
+lucide.createIcons();
+(function() {
+    var show = function() {
+        document.body.classList.add('page-entered');
+        document.documentElement.style.visibility = '';
+        var bar = document.createElement('div');
+        bar.className = 'page-bar';
+        document.body.appendChild(bar);
+        bar.addEventListener('animationend', function() { if (bar.parentNode) bar.remove(); }, { once: true });
+    };
+    var img = document.querySelector('img.logo-icon');
+    if (!img || img.complete) { show(); return; }
+    var t = setTimeout(show, 350);
+    img.onload = img.onerror = function() { clearTimeout(t); show(); };
+})();
+</script>
 </body>
 </html>

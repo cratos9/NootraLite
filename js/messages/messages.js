@@ -28,6 +28,15 @@ var selectMode = false;
 var selectedMsgIds = [];
 var typingThrottle = null;
 
+function _markMsgNew(rowEl) {
+    if (!rowEl) return;
+    rowEl.classList.add('is-new');
+    rowEl.addEventListener('animationend', function h() {
+        rowEl.removeEventListener('animationend', h);
+        rowEl.classList.remove('is-new');
+    }, { once: true });
+}
+
 function locationCoordsText(url) {
     var m = url.match(/[?&]q=([-\d.]+),([-\d.]+)/);
     if (!m) return 'Abrir en Google Maps';
@@ -312,10 +321,17 @@ function pollFull() {
             var freshDeleted = res.deleted_count !== undefined ? (res.deleted_count | 0) : lastDeletedCount;
             var hasNewDel    = freshDeleted !== lastDeletedCount && lastDeletedCount >= 0;
             if (newestId > lastMsgId) {
+                var prevLastId   = lastMsgId;
                 lastMsgId        = newestId;
                 lastDeletedCount = freshDeleted;
                 var wasAtBottom  = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 60;
                 renderMessages(msgs);
+                chatMessages.querySelectorAll('.msg-row[data-msg-id]').forEach(function(row) {
+                    if (parseInt(row.getAttribute('data-msg-id')) > prevLastId) {
+                        _markMsgNew(row);
+                        if (!wasAtBottom && typeof _sdwBump === 'function') _sdwBump();
+                    }
+                });
                 if (wasAtBottom) scrollToBottom();
                 var lastMsg = msgs[msgs.length - 1];
                 for (var ci = 0; ci < conversations.length; ci++) {
@@ -412,7 +428,9 @@ function sendMessage() {
     html += '<div class="msg-footer"><span class="msg-time">' + formatMsgTime(new Date().toISOString()) + '</span></div>';
     html += '</div></div>';
     chatMessages.insertAdjacentHTML('beforeend', html);
-    lucide.createIcons({ nodes: [chatMessages.lastElementChild] });
+    var _newRow = chatMessages.lastElementChild;
+    lucide.createIcons({ nodes: [_newRow] });
+    _markMsgNew(_newRow);
     scrollToBottom();
 
     var fd = new FormData();
@@ -2172,6 +2190,7 @@ var scrollBottomVisible = false;
 chatMessages.addEventListener('scroll', function() {
     var distFromBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
     var shouldShow = distFromBottom > 180;
+    if (!shouldShow) { _sdwNewCount = 0; if (typeof _sdwUpdateBadge === 'function') _sdwUpdateBadge(); }
     if (shouldShow === scrollBottomVisible) return;
     scrollBottomVisible = shouldShow;
     if (shouldShow) {
@@ -2195,7 +2214,26 @@ chatMessages.addEventListener('scroll', function() {
 
 btnScrollBottom.addEventListener('click', function() {
     scrollToBottom();
+    _sdwNewCount = 0;
+    _sdwUpdateBadge();
 });
+
+var _sdwNewCount = 0;
+function _sdwUpdateBadge() {
+    var b = btnScrollBottom.querySelector('.sdw-badge');
+    if (!b) {
+        b = document.createElement('span');
+        b.className = 'sdw-badge';
+        btnScrollBottom.appendChild(b);
+    }
+    b.textContent = _sdwNewCount > 9 ? '9+' : _sdwNewCount;
+    b.style.display = _sdwNewCount > 0 ? 'flex' : 'none';
+}
+function _sdwBump() {
+    var dist = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+    if (dist > 150) { _sdwNewCount++; _sdwUpdateBadge(); }
+}
+window._sdwBump = _sdwBump;
 
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
