@@ -265,3 +265,18 @@ if (accountModal) {
         });
     }
 }
+
+// animación de salida al navegar entre módulos
+(function() {
+    var navLinks = document.querySelectorAll('.sidebar-nav .nav-item, .bottom-nav a.bottom-nav-item');
+    navLinks.forEach(function(a) {
+        if (a.tagName !== 'A' || !a.getAttribute('href') || a.getAttribute('href') === '#') return;
+        a.addEventListener('click', function(e) {
+            var href = this.href;
+            if (!href || href === window.location.href) return;
+            e.preventDefault();
+            document.body.classList.add('page-exiting');
+            setTimeout(function() { window.location.href = href; }, 200);
+        });
+    });
+})();

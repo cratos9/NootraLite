@@ -1331,16 +1331,9 @@ body {
 .sidebar:hover .sidebar-nav .nav-item:nth-child(6) span:not(.nav-msg-badge),
 .sidebar.modal-open .sidebar-nav .nav-item:nth-child(6) span:not(.nav-msg-badge) { transition-delay: 0.19s; }
 
-/* ─── Sidebar nav scrollbar (si crece el menú) ─── */
-.sidebar-nav { overflow-y: auto; }
-.sidebar:not(:hover) .sidebar-nav { overflow-y: hidden; }
-.sidebar-nav { scrollbar-width: thin; scrollbar-color: rgba(124,58,237,0.15) transparent; }
-.sidebar-nav::-webkit-scrollbar { width: 3px; }
-.sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(124,58,237,0.2);
-    border-radius: 3px;
-}
-.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.4); }
+/* ─── Sidebar nav: sin scrollbar ─── */
+.sidebar-nav { overflow: hidden; }
+.sidebar-nav::-webkit-scrollbar { display: none; }
 
 /* ─── Bottom nav — label activo con glow suave ─── */
 @media screen and (max-width: 480px) {
@@ -1352,5 +1345,47 @@ body {
         background: rgba(124,58,237,0.08);
         border-radius: 12px;
     }
+}
+
+/* ─── Transiciones de página ─── */
+@keyframes pageEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pageExit {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes barSweep {
+    0%   { transform: scaleX(0); opacity: 1; }
+    65%  { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0; }
+}
+.page-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #7c3aed, #ec4899);
+    transform-origin: left center;
+    animation: barSweep 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 9999;
+    pointer-events: none;
+}
+body.page-entered .dash-topbar {
+    animation: pageEnter 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+body.page-entered .dash-content {
+    animation: pageEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.05s both;
+}
+body.page-entered .messages-main,
+body.page-entered .main {
+    animation: pageEnter 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+body.page-exiting .dash-topbar,
+body.page-exiting .dash-content,
+body.page-exiting .messages-main,
+body.page-exiting .main {
+    animation: pageExit 0.18s ease-in both;
+    pointer-events: none;
 }
 
