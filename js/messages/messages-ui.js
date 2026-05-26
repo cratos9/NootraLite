@@ -9,6 +9,9 @@ var chatActive     = document.getElementById('chatActive');
 var chatHeader     = document.getElementById('chatHeader');
 var chatMessages   = document.getElementById('chatMessages');
 
+var typingPollInterval = null;
+var statusPollInterval = null;
+
 var lastKnownStatus = { isOnline: null, lastSeen: null };
 
 var swipeRow = null, swipeX = 0, swipeY = 0, swipeDone = false;
@@ -349,7 +352,7 @@ function renderForwardConvList(convs) {
         var name    = c.other_name || 'Usuario';
         var ini     = initials(name);
         var col     = avatarColor(name);
-        var last    = c.last_message ? escapeHtml(c.last_message).substring(0, 35) + (c.last_message.length > 35 ? '…' : '') : '';
+        var last    = c.last_msg ? escapeHtml(c.last_msg).substring(0, 35) + (c.last_msg.length > 35 ? '…' : '') : '';
         var isSelected = forwardTargetConvIds.indexOf(parseInt(c.id)) >= 0;
         var item = document.createElement('div');
         item.className = 'fw-conv-item' + (isSelected ? ' selected' : '');

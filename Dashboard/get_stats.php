@@ -33,31 +33,31 @@ try {
 } catch(Exception $e) {}
 
 try {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE user_id=? AND DATE(start_datetime)=CURDATE()');
+    $st = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE user_id=? AND event_type='calendar' AND DATE(start_datetime)=CURDATE()");
     $st->execute([$uid]);
     $out['events_today'] = (int)$st->fetchColumn();
 } catch(Exception $e) {}
 
 try {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE user_id=? AND start_datetime BETWEEN NOW() AND DATE_ADD(NOW(),INTERVAL 3 DAY)');
+    $st = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE user_id=? AND event_type='calendar' AND start_datetime BETWEEN NOW() AND DATE_ADD(NOW(),INTERVAL 3 DAY)");
     $st->execute([$uid]);
     $out['events_deadline'] = (int)$st->fetchColumn();
 } catch(Exception $e) {}
 
 try {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE user_id=? AND YEARWEEK(start_datetime,1)=YEARWEEK(NOW(),1)');
+    $st = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE user_id=? AND event_type='calendar' AND YEARWEEK(start_datetime,1)=YEARWEEK(NOW(),1)");
     $st->execute([$uid]);
     $out['events_week'] = (int)$st->fetchColumn();
 } catch(Exception $e) {}
 
 try {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE user_id=? AND is_done=0');
+    $st = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE user_id=? AND (event_type IS NULL OR event_type != 'calendar') AND is_done=0");
     $st->execute([$uid]);
     $out['tasks_pending'] = (int)$st->fetchColumn();
 } catch(Exception $e) {}
 
 try {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM tasks WHERE user_id=? AND is_done=1');
+    $st = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE user_id=? AND (event_type IS NULL OR event_type != 'calendar') AND is_done=1");
     $st->execute([$uid]);
     $out['tasks_done'] = (int)$st->fetchColumn();
 } catch(Exception $e) {}

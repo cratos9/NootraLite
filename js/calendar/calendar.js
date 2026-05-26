@@ -164,6 +164,20 @@ function renderCalendar(month, year) {
 // modal
 var modalOverlay = document.getElementById('modal-overlay');
 
+function _runAnim(box, anim, cb) {
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = anim;
+    var done = false;
+    function finish() {
+        if (done) return; done = true;
+        box.removeEventListener('animationend', finish);
+        if (typeof cb === 'function') cb();
+    }
+    box.addEventListener('animationend', finish);
+    setTimeout(finish, 260);
+}
+
 function openModal(dateStr) {
     if (!dateStr) {
         var hoy = new Date();
@@ -172,24 +186,26 @@ function openModal(dateStr) {
         dateStr = hoy.getFullYear() + '-' + mm + '-' + dd;
     }
     document.getElementById('ev-date').value = dateStr;
+    var box = document.getElementById('modal-box');
+    box.style.animation = '';
     modalOverlay.classList.add('show');
+    _runAnim(box, 'modal-in .2s ease-out forwards', function() {
+        box.style.animation = '';
+    });
     lucide.createIcons();
 }
 
 function closeModal(cb) {
     var box = document.getElementById('modal-box');
-    box.classList.add('closing');
-    box.addEventListener('animationend', function handler() {
-        box.removeEventListener('animationend', handler);
+    _runAnim(box, 'modal-out .15s ease-in forwards', function() {
         modalOverlay.classList.remove('show');
-        box.classList.remove('closing');
         editingEventId = null;
         document.querySelector('.modal-title').textContent = 'Nuevo evento';
-        if (cb) cb();
+        if (typeof cb === 'function') cb();
     });
 }
 
-document.querySelector('.btn-add').addEventListener('click', openModal);
+document.querySelector('.btn-add').addEventListener('click', function() { openModal(); });
 document.querySelector('.btn-add-m').addEventListener('click', function() { openMobileForm(null); });
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
@@ -605,6 +621,9 @@ function showErr(el) {
 function renderMiniCal(month, year) {
     var grid = document.getElementById('mini-cal-grid');
     if (!grid) return;
+    grid.classList.remove('mini-fade-next', 'mini-fade-prev');
+    void grid.offsetWidth;
+    grid.classList.add('mini-fade-' + navDirection);
     grid.innerHTML = '';
 
     var days = ['L','M','M','J','V','S','D'];
@@ -638,6 +657,7 @@ function renderMiniCal(month, year) {
     for (var d = 1; d <= totalDays; d++) {
         var cell = document.createElement('div');
         cell.className = 'mini-day-cell';
+        cell.style.animationDelay = Math.min((d - 1) * 0.014, 0.28) + 's';
         cell.dataset.day = d;
 
         var num = document.createElement('div');
@@ -703,6 +723,7 @@ function renderMobileEventList(day, month, year) {
         var card = document.createElement('div');
         card.className = 'mobile-ev-card ev-' + getUrgency(ev);
         if (ev.is_done) card.classList.add('ev-done');
+        card.style.animationDelay = (i * 0.05) + 's';
 
         var bar = document.createElement('div');
         bar.className = 'mobile-ev-bar';
@@ -1057,7 +1078,12 @@ function switchView(view) {
         renderWeek(weekStart);
     } else {
         if (window.innerWidth <= 480) {
-            if (mobilePanel) mobilePanel.style.display = '';
+            if (mobilePanel) {
+                mobilePanel.style.display = '';
+                mobilePanel.style.animation = 'none';
+                void mobilePanel.offsetWidth;
+                mobilePanel.style.animation = 'mobileCalIn 0.26s cubic-bezier(0.4, 0, 0.2, 1) both';
+            }
         } else {
             if (calLayout) {
                 calLayout.style.display = '';
@@ -1101,6 +1127,7 @@ document.querySelectorAll('#view-toggle-desk .view-btn').forEach(function(btn, i
 });
 
 document.querySelector('.mini-prev').addEventListener('click', function() {
+    navDirection = 'prev';
     calState.month--;
     if (calState.month < 0) { calState.month = 11; calState.year--; }
     renderCalendar(calState.month, calState.year);
@@ -1109,6 +1136,7 @@ document.querySelector('.mini-prev').addEventListener('click', function() {
 });
 
 document.querySelector('.mini-next').addEventListener('click', function() {
+    navDirection = 'next';
     calState.month++;
     if (calState.month > 11) { calState.month = 0; calState.year++; }
     renderCalendar(calState.month, calState.year);
@@ -1243,11 +1271,20 @@ function openDayDetail(day, dayEvents) {
     addBtn.onclick = function() { closeDayDetail(); openModal(dateStr); };
 
     overlay.classList.add('show');
+    var dbox = overlay.querySelector('.day-detail-box');
+    dbox.style.animation = '';
+    _runAnim(dbox, 'modal-in .2s ease-out forwards', function() {
+        dbox.style.animation = '';
+    });
     lucide.createIcons();
 }
 
 function closeDayDetail() {
-    document.getElementById('day-detail-overlay').classList.remove('show');
+    var overlay = document.getElementById('day-detail-overlay');
+    var dbox = overlay.querySelector('.day-detail-box');
+    _runAnim(dbox, 'modal-out .15s ease-in forwards', function() {
+        overlay.classList.remove('show');
+    });
 }
 
 document.getElementById('day-detail-close').addEventListener('click', closeDayDetail);
@@ -1476,4 +1513,44 @@ document.getElementById('mev-sheet-delete').addEventListener('click', function()
     });
 });
 
+var _upPanel = document.getElementById('upcoming-panel');
+if (_upPanel) {
+    _upPanel.addEventListener('scroll', function() {
+        _upPanel.classList.toggle('is-scrolled', _upPanel.scrollTop > 4);
+    });
+}
+
 lucide.createIcons();
+
+// auto-abrir día desde dashboard: ?day=YYYY-MM-DD
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var dayStr = params.get('day');
+    if (!dayStr) return;
+    var parts = dayStr.split('-');
+    if (parts.length !== 3) return;
+    var yr = parseInt(parts[0]), mo = parseInt(parts[1]) - 1, dy = parseInt(parts[2]);
+    if (isNaN(yr) || isNaN(mo) || isNaN(dy) || dy < 1 || dy > 31) return;
+
+    if (yr !== calState.year || mo !== calState.month) {
+        navDirection = (yr > calState.year || (yr === calState.year && mo > calState.month)) ? 'next' : 'prev';
+        calState.month = mo; calState.year = yr;
+        renderCalendar(mo, yr);
+        renderMiniCal(mo, yr);
+        renderUpcoming();
+        updateTodayBtn();
+    }
+
+    setTimeout(function() {
+        var dayEvs = events.filter(function(ev) {
+            return ev.day === dy && ev.month === mo && ev.year === yr;
+        });
+        if (dayEvs.length > 0) {
+            openDayDetail(dy, dayEvs);
+        } else {
+            var mm2 = String(mo + 1).padStart(2, '0');
+            var dd2 = String(dy).padStart(2, '0');
+            openModal(yr + '-' + mm2 + '-' + dd2);
+        }
+    }, 120);
+})();

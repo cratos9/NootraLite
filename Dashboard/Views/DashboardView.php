@@ -25,21 +25,42 @@
     </div>
     <div class="dash-topbar-right">
 
-      <div class="dash-search-wrap">
-        <i data-lucide="search" class="dash-search-icon"></i>
-        <input type="text" class="dash-search-input" id="dashSearchInput"
-               placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite" readonly>
+      <div class="dash-search-outer" id="dashSearchOuter">
+        <div class="dash-search-wrap" id="dashSearchWrap">
+          <i data-lucide="search" class="dash-search-icon" id="dashSearchIconBtn" aria-hidden="true"></i>
+          <input type="text" class="dash-search-input" id="dashSearchInput"
+                 placeholder="Buscar en NootraLite..." aria-label="Buscar en NootraLite"
+                 autocomplete="off" spellcheck="false">
+          <button class="dash-search-clear" id="dashSearchClear" aria-label="Limpiar búsqueda" style="display:none">
+            <i data-lucide="x"></i>
+          </button>
+          <kbd class="dash-search-kbd" aria-hidden="true">/</kbd>
+        </div>
+        <button class="dash-search-cancel" id="dashSearchCancel" aria-label="Cancelar búsqueda">
+          <i data-lucide="x"></i>
+        </button>
+        <div class="dash-search-drop" id="dashSearchDrop"></div>
       </div>
 
       <div class="dash-bell-wrap">
         <button class="dash-topbar-icon-btn" id="dashBellBtn" aria-label="Notificaciones">
-          <i data-lucide="bell"></i>
-          <span class="dash-bell-dot" id="dashBellDot" style="display:none"></span>
+          <i data-lucide="bell" id="dashBellIcon"></i>
+          <span class="dash-bell-badge" id="dashBellBadge"></span>
         </button>
-        <div class="dash-notif-dropdown" id="dashNotifDropdown" style="display:none">
-          <div class="dash-notif-empty">
-            <i data-lucide="bell-off"></i>
-            <span>Sin notificaciones</span>
+        <div class="dash-notif-dropdown" id="dashNotifDropdown">
+          <div class="dash-notif-handle" id="dashNotifHandle" aria-hidden="true"></div>
+          <div class="dash-notif-head">
+            <span class="dash-notif-title">Notificaciones</span>
+            <button class="dash-notif-mark-btn" id="dashNotifMark" aria-label="Marcar como vistas">
+              <i data-lucide="check-check"></i>
+              <span>Limpiar</span>
+            </button>
+          </div>
+          <div class="dash-notif-body" id="dashNotifBody">
+            <div class="dash-notif-empty">
+              <i data-lucide="bell-off"></i>
+              <span>Sin notificaciones</span>
+            </div>
           </div>
         </div>
       </div>
@@ -53,16 +74,21 @@
   </header>
 
   <div class="dash-content">
+<script>
+window._dashPrefetch = fetch('../Dashboard/get_dashboard.php')
+    .then(function(r){ return r.json(); })
+    .catch(function(){ return {}; });
+</script>
     <?php include '../includes/dashboard/GreetingDashboard.php'; ?>
     <?php include '../includes/dashboard/StatsDashboard.php'; ?>
     <div class="dash-lower">
       <div class="dash-center">
         <?php include '../includes/dashboard/ActivityDashboard.php'; ?>
-        <!-- mensajes: próxima sesión -->
+        <?php include '../includes/dashboard/MessagesDashboard.php'; ?>
       </div>
       <aside class="dash-right">
         <?php include '../includes/dashboard/QuickLinksDashboard.php'; ?>
-        <!-- calendario: próxima sesión -->
+        <?php include '../includes/dashboard/CalendarDashboard.php'; ?>
       </aside>
     </div>
     <?php include '../includes/dashboard/LastBooksViewDashboard.php'; ?>
@@ -91,31 +117,28 @@ function dashToggleTheme() {
 }
 document.getElementById('dashThemeToggle').addEventListener('click', dashToggleTheme);
 
-var dashBellBtn      = document.getElementById('dashBellBtn');
-var dashBellDropdown = document.getElementById('dashNotifDropdown');
-var dashBellOpen     = false;
-if (dashBellBtn && dashBellDropdown) {
-    dashBellBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        dashBellOpen = !dashBellOpen;
-        if (dashBellOpen) {
-            dashBellDropdown.style.display = '';
-            dashBellDropdown.classList.add('open');
-        } else {
-            dashBellDropdown.classList.remove('open');
-            dashBellDropdown.style.display = 'none';
-        }
-    });
-    document.addEventListener('click', function() {
-        if (!dashBellOpen) return;
-        dashBellOpen = false;
-        dashBellDropdown.classList.remove('open');
-        dashBellDropdown.style.display = 'none';
-    });
-}
+
 </script>
+<div id="dashNotifCtx" class="dash-notif-ctx"></div>
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
-<script>lucide.createIcons(); document.fonts.ready.then(function(){ document.documentElement.style.visibility=''; });</script>
+<script src="../js/dashboard/dashboard.js"></script>
+<script>
+lucide.createIcons();
+(function() {
+    var show = function() {
+        document.body.classList.add('page-entered');
+        document.documentElement.style.visibility = '';
+        var bar = document.createElement('div');
+        bar.className = 'page-bar';
+        document.body.appendChild(bar);
+        bar.addEventListener('animationend', function() { if (bar.parentNode) bar.remove(); }, { once: true });
+    };
+    var img = document.querySelector('img.logo-icon');
+    if (!img || img.complete) { document.fonts.ready.then(show); return; }
+    var t = setTimeout(function(){ document.fonts.ready.then(show); }, 350);
+    img.onload = img.onerror = function() { clearTimeout(t); document.fonts.ready.then(show); };
+})();
+</script>
 </body>
 </html>

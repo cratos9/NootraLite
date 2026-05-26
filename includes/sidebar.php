@@ -26,12 +26,17 @@ $_avColors = ['#7c3aed','#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#3b82
 $_acSum = 0; foreach (str_split($_sidebarUsername) as $c) $_acSum += ord($c);
 $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
 ?>
-<script>if(localStorage.getItem('theme')==='light')(document.body||document.documentElement).classList.add('light-mode')</script>
+<script>
+if(localStorage.getItem('theme')==='light')(document.body||document.documentElement).classList.add('light-mode');
+(function(){var l=document.createElement('link');l.rel='preload';l.as='image';l.href='../assets/icon.png';document.head.appendChild(l);})();
+</script>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar">
     <div class="sidebar-logo">
-        <img src="../assets/icon.png" alt="Nootra" class="logo-icon" width="36" height="36">
-        <span class="logo-text">NOOTRA</span>
+        <a class="sidebar-logo-link" href="../dashboard/index.php" aria-label="Ir al inicio">
+            <img src="../assets/icon.png" alt="Nootra" class="logo-icon" width="36" height="36" fetchpriority="high">
+            <span class="logo-text">NOOTRA</span>
+        </a>
         <button class="sidebar-close" aria-label="Cerrar"><i data-lucide="x"></i></button>
     </div>
     <nav class="sidebar-nav">
@@ -217,7 +222,7 @@ $_sidebarAvatarColor = $_avColors[$_acSum % count($_avColors)];
         <span class="bottom-msg-badge" id="bottomMsgBadge" style="display:none"></span>
     </a>
     <button class="bottom-nav-item bottom-nav-avatar<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-btn' : '' ?>" id="bottomNavAvatarBtn" aria-label="<?= $_sidebarLoggedIn ? 'Cuenta' : 'Iniciar sesión' ?>" aria-haspopup="true">
-        <div class="bottom-nav-avatar-circle<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-circle' : '' ?>">
+        <div class="bottom-nav-avatar-circle<?= !$_sidebarLoggedIn ? ' bottom-nav-guest-circle' : '' ?>"<?= ($_sidebarLoggedIn && !$_sidebarAvatar) ? ' style="background-color:' . $_sidebarAvatarColor . '"' : '' ?>>
             <?php if ($_sidebarLoggedIn && $_sidebarAvatar): ?>
                 <img src="<?= $_sidebarAvatar ?>" alt="<?= htmlspecialchars($_sidebarUsername) ?>">
             <?php elseif ($_sidebarLoggedIn): ?>

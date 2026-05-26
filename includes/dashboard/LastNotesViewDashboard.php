@@ -17,7 +17,7 @@
             <?php endforeach; ?>
         <?php else: ?>
             <div class="dash-no-books">
-                <i data-lucide="notepad" class="icon-book-off"></i>
+                <i data-lucide="notepad-text" class="icon-book-off"></i>
                 <p>No has accedido a ninguna nota recientemente.</p>
             </div>
         <?php endif; ?>

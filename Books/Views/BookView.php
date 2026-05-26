@@ -36,39 +36,60 @@
             </div>
         </section>
         <section class="notes">
-            <a href="../Notes/NewNote.php?book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-note">Nueva nota</a>
-            <?php if (empty($notes)): ?>
-                <p class="no-notes">No hay notas disponibles.</p>
-            <?php else: ?>
-                <?php foreach ($notes as $note): ?>
-                    <article class="card">
-                        <h4 class="title"><?= htmlspecialchars(decrypt_data($note['title'])) ?></h4>
-                        <?php
-                        $noteContent = isset($note['content']) ? strip_tags(decrypt_data($note['content'])) : 'Sin contenido';
-                        $noteExcerpt = (function_exists('mb_strlen') && function_exists('mb_substr'))
-                            ? (mb_strlen($noteContent) > 50 ? mb_substr($noteContent, 0, 50) . '...' : $noteContent)
-                            : (strlen($noteContent) > 50 ? substr($noteContent, 0, 50) . '...' : $noteContent);
-                        ?>
-                        <p><?= htmlspecialchars($noteExcerpt) ?></p>
-                        <div class="options">
-                            <a href="../Notes/Note.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="view">Ver</a>
-                            <a href="../Notes/EditNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit">Editar</a>
-                            <a href="../Notes/DeleteNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <div class="section-toolbar">
+                <a href="../Notes/NewNote.php?book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-note">Nueva nota</a>
+                <button type="button" class="sort-toggle" data-sort-target="notes" aria-label="Cambiar orden de notas">
+                    <i data-lucide="arrow-up-down" class="sort-icon"></i>
+                    <span class="sort-toggle-text">
+                        <span class="sort-toggle-kicker">Organizar notas</span>
+                        <span class="sort-toggle-label" data-sort-label="notes">A-Z</span>
+                    </span>
+                </button>
+            </div>
+            <div class="section-list" data-sort-list="notes">
+                <?php if (empty($notes)): ?>
+                    <p class="no-notes">No hay notas disponibles.</p>
+                <?php else: ?>
+                    <?php foreach ($notes as $note): ?>
+                        <article class="card" data-item-title="<?= htmlspecialchars(decrypt_data($note['title'])) ?>" data-item-date="<?= !empty($note['last_accessed']) ? (int) strtotime($note['last_accessed']) : '' ?>">
+                            <h4 class="title"><?= htmlspecialchars(decrypt_data($note['title'])) ?></h4>
+                            <?php
+                            $noteContent = isset($note['content']) ? strip_tags(decrypt_data($note['content'])) : 'Sin contenido';
+                            $noteExcerpt = (function_exists('mb_strlen') && function_exists('mb_substr'))
+                                ? (mb_strlen($noteContent) > 50 ? mb_substr($noteContent, 0, 50) . '...' : $noteContent)
+                                : (strlen($noteContent) > 50 ? substr($noteContent, 0, 50) . '...' : $noteContent);
+                            ?>
+                            <p><?= htmlspecialchars($noteExcerpt) ?></p>
+                            <div class="options">
+                                <a href="../Notes/Note.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="view">Ver</a>
+                                <a href="../Notes/EditNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="edit">Editar</a>
+                                <a href="../Notes/DeleteNote.php?note_id=<?= htmlspecialchars($note['id'] ?? '') ?>&book_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="delete" onclick="return confirm('¿Estás seguro de que quieres eliminar esta nota?');">Eliminar</a>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </section>
         <section class="books-children">
             <?php if (!$IsVerified): ?>
                 <p class="verification-warning">Tu cuenta no está verificada. No puedes crear sublibros.</p>
             <?php else: ?>
-                <a href="../Books/NewBook.php?parent_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-book-child">Nuevo sublibro</a>
-                <?php if (empty($booksChildren)): ?>
-                    <p class="no-books-children">No hay sublibros disponibles.</p>
+                <div class="section-toolbar">
+                    <a href="../Books/NewBook.php?parent_id=<?= htmlspecialchars($bookData['id'] ?? '') ?>" class="add-book-child">Nuevo sublibro</a>
+                    <button type="button" class="sort-toggle" data-sort-target="children" aria-label="Cambiar orden de sublibros">
+                        <i data-lucide="arrow-up-down" class="sort-icon"></i>
+                        <span class="sort-toggle-text">
+                            <span class="sort-toggle-kicker">Organizar sublibros</span>
+                            <span class="sort-toggle-label" data-sort-label="children">A-Z</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="section-list" data-sort-list="children">
+                    <?php if (empty($booksChildren)): ?>
+                        <p class="no-books-children">No hay sublibros disponibles.</p>
                     <?php else: ?>
                         <?php foreach ($booksChildren as $child): ?>
-                            <article class="card" style="border-color: <?= htmlspecialchars($child['color'] ?? '#000') ?>">
+                            <article class="card" style="border-color: <?= htmlspecialchars($child['color'] ?? '#000') ?>" data-item-title="<?= htmlspecialchars(decrypt_data($child['title'])) ?>" data-item-date="<?= !empty($child['last_accessed']) ? (int) strtotime($child['last_accessed']) : '' ?>">
                                 <h4 class="title"><?= htmlspecialchars(decrypt_data($child['title'])) ?></h4>
                                 <?php
                             $bookDescription = isset($child['description']) ? strip_tags(decrypt_data($child['description'])) : 'Sin descripción';
@@ -85,6 +106,7 @@
                         </article>
                         <?php endforeach; ?>
                     <?php endif; ?>
+                </div>
                 <?php endif; ?>
         </section>
         <section class="attachments">
@@ -113,6 +135,7 @@
         </section>
         <script>lucide.createIcons({attrs: {'stroke-width': 1.6, stroke: 'currentColor'}});</script>
         <script src="../js/includes/sidebar.js"></script>
+        <script src="../js/Books/BookView.js" defer></script>
     </main>
 </body>
 </html>
