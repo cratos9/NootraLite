@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../css/includes/toast.css">
   <link rel="stylesheet" href="../css/dashboard/dashboard.css">
   <link rel="stylesheet" href="../css/dashboard/BooksDashboard.css">
+  <link rel="stylesheet" href="../css/dashboard/QuickNotesDashboard.css">
 </head>
 <body>
 <?php include '../includes/sidebar.php'; ?>
@@ -93,6 +94,7 @@ window._dashPrefetch = fetch('../Dashboard/get_dashboard.php')
     </div>
     <?php include '../includes/dashboard/LastBooksViewDashboard.php'; ?>
     <?php include '../includes/dashboard/LastNotesViewDashboard.php'; ?>
+    <?php include '../includes/dashboard/LastQuickNotesDashboard.php'; ?>
   </div>
 
 </div>
