@@ -122,6 +122,7 @@ document.getElementById('dashThemeToggle').addEventListener('click', dashToggleT
 
 </script>
 <div id="dashNotifCtx" class="dash-notif-ctx"></div>
+
 <script src="../js/includes/sidebar.js"></script>
 <script src="../js/includes/toast.js"></script>
 <script src="../js/dashboard/dashboard.js"></script>
