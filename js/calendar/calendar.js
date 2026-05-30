@@ -394,25 +394,7 @@ document.getElementById('pop-done').addEventListener('click', function() {
 document.getElementById('pop-edit').addEventListener('click', function() {
     var ev = events.find(function(e) { return e.id === currentEventId; });
     if (!ev) return;
-
-    editingEventId = ev.id;
-    document.querySelector('.modal-title').textContent = 'Editar evento';
-    document.getElementById('ev-title').value = ev.title;
-    // fecha: reconstruir de year/month/day
-    var mm = String(ev.month + 1).padStart(2, '0');
-    var dd = String(ev.day).padStart(2, '0');
-    document.getElementById('ev-date').value = ev.year + '-' + mm + '-' + dd;
-    document.getElementById('ev-time').value  = ev.time || '';
-
-    document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
-    var match = document.querySelector('.swatch[data-color="' + ev.color + '"]');
-    if (match) match.classList.add('active');
-    else document.querySelector('.swatch').classList.add('active');
-
-    closePopup(function() {
-        modalOverlay.classList.add('show');
-        lucide.createIcons();
-    });
+    closePopup(function() { openEventEditModal(ev); });
 });
 
 var deleteTimer = null;
@@ -479,9 +461,10 @@ function openEventEditModal(ev) {
     var match = document.querySelector('.swatch[data-color="' + ev.color + '"]');
     if (match) match.classList.add('active');
     else document.querySelector('.swatch').classList.add('active');
-    var saveBtn = document.querySelector('.btn-save-ev');
-    if (saveBtn) saveBtn.textContent = 'Guardar cambios';
+    var box = document.getElementById('modal-box');
+    box.style.animation = '';
     modalOverlay.classList.add('show');
+    _runAnim(box, 'modal-in .2s ease-out forwards', function() { box.style.animation = ''; });
     lucide.createIcons();
 }
 
@@ -545,17 +528,13 @@ function closePopup(callback) {
 
 document.addEventListener('click', function(e) {
     if (e.target.closest('.cal-event')) {
+        if (e.detail >= 2) return;
         var el = e.target.closest('.cal-event');
         var evId = el.dataset.id ? parseInt(el.dataset.id) : null;
         var ev = events.find(function(e) { return e.id === evId; });
         if (!ev) return;
         clearActiveCell();
-        if (calClickTimer) { clearTimeout(calClickTimer); calClickTimer = null; return; }
-        var _ev = ev, _el = el;
-        calClickTimer = setTimeout(function() {
-            calClickTimer = null;
-            openEventEditModal(_ev);
-        }, 220);
+        openEventEditModal(ev);
     } else if (e.target.closest('.cal-more')) {
         var moreCell = e.target.closest('.cal-cell');
         var moreDayNum = moreCell ? moreCell.querySelector('.cal-day-num') : null;
@@ -591,7 +570,6 @@ document.addEventListener('click', function(e) {
 document.addEventListener('dblclick', function(e) {
     var calEv = e.target.closest('.cal-event');
     if (calEv && window.innerWidth > 480) {
-        if (calClickTimer) { clearTimeout(calClickTimer); calClickTimer = null; }
         var evId = calEv.dataset.id ? parseInt(calEv.dataset.id) : null;
         var ev = events.find(function(ev) { return ev.id === evId; });
         if (ev) showEventPopupAt(ev, calEv);
@@ -602,7 +580,6 @@ document.addEventListener('contextmenu', function(e) {
     var calEv = e.target.closest('.cal-event');
     if (calEv && window.innerWidth > 480) {
         e.preventDefault();
-        if (calClickTimer) { clearTimeout(calClickTimer); calClickTimer = null; }
         var evId = calEv.dataset.id ? parseInt(calEv.dataset.id) : null;
         var ev = events.find(function(ev) { return ev.id === evId; });
         if (ev) showEventPopupAt(ev, calEv);
@@ -856,15 +833,13 @@ function renderAgenda(month, year) {
         item.appendChild(dot);
         item.appendChild(makeCheckBtn(ev.id, !!ev.is_done));
         (function(evData, itemEl) {
-            var _agTimer = null;
-            itemEl.addEventListener('click', function() {
+            itemEl.addEventListener('click', function(e) {
                 if (window.innerWidth <= 480) { openMobileEventSheet(evData.id); return; }
-                if (_agTimer) { clearTimeout(_agTimer); _agTimer = null; return; }
-                _agTimer = setTimeout(function() { _agTimer = null; openEventEditModal(evData); }, 220);
+                if (e.detail >= 2) return;
+                openEventEditModal(evData);
             });
             itemEl.addEventListener('dblclick', function() {
                 if (window.innerWidth <= 480) return;
-                if (_agTimer) { clearTimeout(_agTimer); _agTimer = null; }
                 showEventPopupAt(evData, itemEl);
             });
             itemEl.addEventListener('contextmenu', function(e) {
@@ -1000,19 +975,16 @@ function renderWeek(startDate) {
                 card.appendChild(content);
                 if (window.innerWidth > 480) card.appendChild(makeCheckBtn(ev.id, !!ev.is_done));
                 card.dataset.evId = ev.id;
-                var _wTimer = null;
                 card.addEventListener('click', function(e) {
                     e.stopPropagation();
                     var t = document.getElementById('week-tip'); if (t) t.style.opacity = '0';
                     if (window.innerWidth <= 480) { openMobileEventSheet(ev.id); return; }
-                    if (_wTimer) { clearTimeout(_wTimer); _wTimer = null; return; }
-                    var _wEv = ev;
-                    _wTimer = setTimeout(function() { _wTimer = null; openEventEditModal(_wEv); }, 220);
+                    if (e.detail >= 2) return;
+                    openEventEditModal(ev);
                 });
                 card.addEventListener('dblclick', function(e) {
                     e.stopPropagation();
                     if (window.innerWidth <= 480) return;
-                    if (_wTimer) { clearTimeout(_wTimer); _wTimer = null; }
                     showEventPopupAt(ev, card);
                 });
                 card.addEventListener('contextmenu', function(e) {
